@@ -3,6 +3,7 @@ import { useGame } from "../store/gameStore";
 import { turnInfo } from "./turn";
 import { CtrlButton } from "./ui";
 import { ControlPairButton } from "../net/pairing";
+import { TeamSetup } from "./TeamSetup";
 import { BuzzInPicker } from "./BuzzInPicker";
 import { AnswerKey } from "./AnswerKey";
 import {
@@ -60,12 +61,7 @@ export function ControlView() {
 
       {/* Body */}
       <div className="flex flex-col gap-3 p-3">
-        {g.state.phase === "setup" && (
-          <CtrlButton tone="pink" className="py-3 text-lg" onClick={() => g.dispatch({ type: "START_GAME" })}>
-            ▶ Start game
-          </CtrlButton>
-        )}
-
+        <TeamSetup />
         <BuzzInPicker />
         <AnswerKey />
         <ScoreOverride />

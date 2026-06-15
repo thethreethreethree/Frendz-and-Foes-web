@@ -62,9 +62,10 @@ describe("question navigation", () => {
       { type: "START_GAME" },
     );
     expect(s.currentQuestionIndex).toBe(0);
-    s = reducer(s, { type: "NEXT_QUESTION" });
-    s = reducer(s, { type: "NEXT_QUESTION" });
-    expect(s.currentQuestionIndex).toBe(2);
+    // Advance to the last question (length-agnostic so it survives bank changes).
+    const last = SAMPLE_QUESTIONS.length - 1;
+    for (let i = 0; i < last; i++) s = reducer(s, { type: "NEXT_QUESTION" });
+    expect(s.currentQuestionIndex).toBe(last);
     expect(s.phase).toBe("playing");
     s = reducer(s, { type: "NEXT_QUESTION" }); // past the last → finished
     expect(s.phase).toBe("finished");
