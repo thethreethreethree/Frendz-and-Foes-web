@@ -1,0 +1,27 @@
+{
+  "name": "frendz-and-foes",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Frendz and Foes — a Family Feud-style survey game show (web version)",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:sync": "node --test --test-force-exit test/sync.test.mjs",
+    "typecheck": "tsc -b",
+    "dev:web": "npm run dev --workspace @ff/web",
+    "dev:server": "node apps/server/index.js",
+    "build": "npm run build --workspace @ff/web",
+    "start": "node apps/server/index.js"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
+}

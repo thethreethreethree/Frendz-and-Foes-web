@@ -1,0 +1,16 @@
+# Render Blueprint — one web service that builds the frontend and runs the relay server.
+# The server serves the built app AND the Socket.IO relay on the same origin, so real-time
+# sync works with zero extra config. Deploys automatically on every push to the repo.
+services:
+  - type: web
+    name: frendz-and-foes
+    env: node
+    plan: free
+    # --include=dev is required: Render sets NODE_ENV=production, which would otherwise skip
+    # the build tools (vite, tailwind) needed to build the frontend.
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: 22.15.0

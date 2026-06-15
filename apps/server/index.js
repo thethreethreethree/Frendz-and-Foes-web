@@ -1,0 +1,105 @@
+// Frendz and Foes — real-time relay server.
+//
+// Deliberately "dumb": it does NOT run the game engine. The host phone is the single source of
+// truth; this server just keeps the last snapshot per room and fans out updates so the display
+// (and spectators) stay in lockstep. Two message kinds:
+//   - "sync"  : the authoritative game snapshot { state, buzzersArmed }. Stored + relayed, and
+//               replayed to anyone who joins late (so a refreshed display catches up instantly).
+//   - "pulse" : one-shot cues that aren't game state (sfx, banner, timer start/stop). Relayed,
+//               never stored.
+// Presence counts are broadcast so each side can show a live connection status.
+
+import { createServer } from "node:http";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+import { existsSync } from "node:fs";
+import express from "express";
+import { Server } from "socket.io";
+
+const PORT = process.env.PORT || 8787;
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const app = express();
+app.get("/healthz", (_req, res) => res.json({ ok: true }));
+
+// In production, optionally serve the built web app so the whole thing is one process on the LAN.
+const webDist = join(__dirname, "../web/dist");
+if (existsSync(webDist)) {
+  app.use(express.static(webDist));
+  app.get("*", (_req, res) => res.sendFile(join(webDist, "index.html")));
+}
+
+const httpServer = createServer(app);
+const io = new Server(httpServer, { cors: { origin: "*" } });
+
+/** room code -> { snapshot, peers: Map<socketId, role> } */
+const rooms = new Map();
+
+function getRoom(code) {
+  let r = rooms.get(code);
+  if (!r) {
+    r = { snapshot: null, peers: new Map() };
+    rooms.set(code, r);
+  }
+  return r;
+}
+
+function presence(room) {
+  const roles = [...room.peers.values()];
+  return {
+    total: roles.length,
+    host: roles.filter((r) => r === "host").length,
+    display: roles.filter((r) => r === "display").length,
+    spectator: roles.filter((r) => r === "spectator").length,
+  };
+}
+
+io.on("connection", (socket) => {
+  let code = null;
+
+  socket.on("join", ({ room, role }) => {
+    if (typeof room !== "string" || !room) return;
+    code = room.toUpperCase();
+    socket.data.role = role || "display";
+    socket.join(code);
+    const r = getRoom(code);
+    r.peers.set(socket.id, socket.data.role);
+    console.log(`[ff-server] ${socket.data.role} joined ${code} (peers: ${r.peers.size})`);
+
+    // Catch a late joiner up with the latest snapshot.
+    if (r.snapshot) socket.emit("sync", r.snapshot);
+    io.to(code).emit("presence", presence(r));
+  });
+
+  socket.on("sync", (snapshot) => {
+    if (!code) return;
+    const r = getRoom(code);
+    r.snapshot = snapshot;
+    socket.to(code).emit("sync", snapshot);
+  });
+
+  socket.on("pulse", (pulse) => {
+    if (!code) return;
+    socket.to(code).emit("pulse", pulse);
+  });
+
+  socket.on("disconnect", () => {
+    if (!code) return;
+    const r = rooms.get(code);
+    if (!r) return;
+    r.peers.delete(socket.id);
+    if (r.peers.size === 0) {
+      // Keep the snapshot a while so a quick refresh still resumes; drop empty rooms lazily.
+      setTimeout(() => {
+        const cur = rooms.get(code);
+        if (cur && cur.peers.size === 0) rooms.delete(code);
+      }, 60_000);
+    } else {
+      io.to(code).emit("presence", presence(r));
+    }
+  });
+});
+
+httpServer.listen(PORT, () => {
+  console.log(`[ff-server] relay listening on http://localhost:${PORT}`);
+});
