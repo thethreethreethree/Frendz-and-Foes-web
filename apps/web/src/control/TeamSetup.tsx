@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { buildRandomizedGame, RANDOM_POOL, SAMPLE_QUESTIONS } from "@ff/engine";
 import { useGame } from "../store/gameStore";
 import { Section, CtrlButton } from "./ui";
 
@@ -10,20 +11,29 @@ const PALETTE = [
 const MIN_TEAMS = 3;
 const MAX_TEAMS = 12;
 
+type Mode = "standard" | "randomize";
+
 interface EditTeam {
   id: string;
   name: string;
   color: string;
 }
 
-// Custom team names/colors (3–12), plus Start / Reset. Editing teams or resetting restarts the
-// game via the engine's newGame (scores cleared, back to the title screen).
+// Custom team names/colors (3–12), survey mode, plus Start / Reset. Each game-building action
+// rebuilds the question set from the chosen mode — Standard = the fixed deck, Randomize Survey =
+// a fresh random draw from the 120-question pool.
 export function TeamSetup() {
-  const { state, newGame, dispatch } = useGame();
+  const { state, newGame, startNewGame } = useGame();
   const [teams, setTeams] = useState<EditTeam[]>(() =>
     state.teams.map((t, i) => ({ id: t.id, name: t.name, color: t.color ?? PALETTE[i % PALETTE.length] })),
   );
+  const [mode, setMode] = useState<Mode>("standard");
   const [open, setOpen] = useState(state.phase === "setup");
+
+  const questions = () => (mode === "randomize" ? buildRandomizedGame(RANDOM_POOL) : SAMPLE_QUESTIONS);
+
+  const cleanedTeams = () =>
+    teams.map((t, i) => ({ id: t.id, name: t.name.trim() || `Team ${i + 1}`, color: t.color }));
 
   const update = (id: string, patch: Partial<EditTeam>) =>
     setTeams((ts) => ts.map((t) => (t.id === id ? { ...t, ...patch } : t)));
@@ -40,29 +50,45 @@ export function TeamSetup() {
   const removeTeam = (id: string) =>
     setTeams((ts) => (ts.length > MIN_TEAMS ? ts.filter((t) => t.id !== id) : ts));
 
-  const applyTeams = () => {
-    const cleaned = teams.map((t, i) => ({
-      id: t.id,
-      name: t.name.trim() || `Team ${i + 1}`,
-      color: t.color,
-    }));
-    newGame(cleaned);
-  };
-
   const resetGame = () => {
     if (window.confirm("Reset the game? Scores are cleared and you return to the start screen. Teams are kept.")) {
-      newGame(state.teams.map((t) => ({ id: t.id, name: t.name, color: t.color })));
+      newGame(state.teams.map((t) => ({ id: t.id, name: t.name, color: t.color })), questions());
     }
   };
 
   return (
     <Section title="Teams & setup">
+      {/* Survey mode */}
+      <div className="mb-2">
+        <div className="mb-1 text-[10px] font-black uppercase text-ink/50">Survey mode</div>
+        <div className="grid grid-cols-2 gap-1.5">
+          <button
+            onClick={() => setMode("standard")}
+            className={`rounded-lg border-2 px-2 py-2 text-xs font-bold ${
+              mode === "standard" ? "border-ink bg-ink text-white" : "border-ink/15 bg-white text-ink"
+            }`}
+          >
+            Standard
+            <span className="block text-[9px] font-semibold opacity-70">The fixed deck</span>
+          </button>
+          <button
+            onClick={() => setMode("randomize")}
+            className={`rounded-lg border-2 px-2 py-2 text-xs font-bold ${
+              mode === "randomize" ? "border-grape bg-grape text-white" : "border-ink/15 bg-white text-ink"
+            }`}
+          >
+            🎲 Randomize Survey
+            <span className="block text-[9px] font-semibold opacity-70">Random from 120</span>
+          </button>
+        </div>
+      </div>
+
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <CtrlButton tone="ink" onClick={() => setOpen((o) => !o)}>
           {open ? "▾ Teams" : `▸ Teams (${state.teams.length})`}
         </CtrlButton>
         {state.phase === "setup" ? (
-          <CtrlButton tone="pink" onClick={() => dispatch({ type: "START_GAME" })}>
+          <CtrlButton tone="pink" onClick={() => startNewGame(cleanedTeams(), questions())}>
             ▶ Start game
           </CtrlButton>
         ) : (
@@ -110,7 +136,7 @@ export function TeamSetup() {
             <span className="text-xs font-semibold text-ink/40">
               {teams.length}/{MAX_TEAMS} (min {MIN_TEAMS})
             </span>
-            <CtrlButton tone="grape" onClick={applyTeams} className="ml-auto">
+            <CtrlButton tone="grape" onClick={() => newGame(cleanedTeams(), questions())} className="ml-auto">
               Apply teams (restart)
             </CtrlButton>
           </div>

@@ -4,26 +4,8 @@
 // the game rules. Round 1 = q1–q10, Round 2 = q11–q20, then the bonus question. IDs are stable
 // (a1 = top-points answer) so tests and saved games stay valid.
 
-import type { Question, RoundKind } from "./types.js";
-
-type RawAnswer = [text: string, surveyCount: number];
-
-function makeQuestion(id: string, kind: RoundKind, prompt: string, raw: RawAnswer[]): Question {
-  const sorted = [...raw].sort((a, b) => b[1] - a[1]).slice(0, 8);
-  return {
-    id,
-    kind,
-    prompt,
-    answers: sorted.map(([text, surveyCount], i) => ({
-      id: `${id}-a${i + 1}`,
-      text,
-      surveyCount,
-      rankPoints: 8 - i, // 8 for the most popular, descending
-      revealed: false,
-      awardedTeamId: null,
-    })),
-  };
-}
+import type { Question } from "./types.js";
+import { makeQuestion } from "./qmake.js";
 
 // --- Round 1 ---------------------------------------------------------------------------------
 
@@ -361,8 +343,8 @@ export const SAMPLE_BONUS: Question = makeQuestion(
   ],
 );
 
-/** Full game: Round 1 (10) + Round 2 (10) + bonus. */
-export const SAMPLE_QUESTIONS: Question[] = [
+/** The 20 curated regular questions (Round 1 + Round 2), in deck order. */
+export const STANDARD_REGULARS: Question[] = [
   SAMPLE_REGULAR_1,
   SAMPLE_REGULAR_2,
   Q3,
@@ -383,5 +365,7 @@ export const SAMPLE_QUESTIONS: Question[] = [
   Q18,
   Q19,
   Q20,
-  SAMPLE_BONUS,
 ];
+
+/** Standard game: the fixed deck — Round 1 (10) + Round 2 (10) + bonus. */
+export const SAMPLE_QUESTIONS: Question[] = [...STANDARD_REGULARS, SAMPLE_BONUS];

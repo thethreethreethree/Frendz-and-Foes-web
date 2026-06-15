@@ -81,6 +81,11 @@ export interface GameStore {
     teams: Array<Pick<Team, "id" | "name"> & Partial<Pick<Team, "color">>>,
     questions?: GameState["questions"],
   ) => void;
+  /** Create a fresh game with the given teams/questions AND start it in one step. */
+  startNewGame: (
+    teams: Array<Pick<Team, "id" | "name"> & Partial<Pick<Team, "color">>>,
+    questions?: GameState["questions"],
+  ) => void;
   connection: ConnectionInfo;
 }
 
@@ -247,6 +252,15 @@ export function GameProvider({ children, room }: { children: ReactNode; room?: s
       setBuzzersArmed,
       newGame: (teams, questions) => {
         setHistory(initHistory(createGame({ teams, questions: questions ?? SAMPLE_QUESTIONS })));
+        setBuzzersArmed(false);
+        setTimerEndsAt(null);
+      },
+      startNewGame: (teams, questions) => {
+        setHistory(
+          engineDispatch(initHistory(createGame({ teams, questions: questions ?? SAMPLE_QUESTIONS })), {
+            type: "START_GAME",
+          }),
+        );
         setBuzzersArmed(false);
         setTimerEndsAt(null);
       },

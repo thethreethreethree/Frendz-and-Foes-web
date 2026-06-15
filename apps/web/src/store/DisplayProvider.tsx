@@ -102,6 +102,7 @@ export function DisplayProvider({
       buzzersArmed,
       setBuzzersArmed: noop,
       newGame: noop,
+      startNewGame: noop,
       connection: { connected, presence, room, role },
     }),
     [state, announcement, timerRemaining, buzzersArmed, connected, presence, room, role],
