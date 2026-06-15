@@ -8,14 +8,17 @@ export default {
         sans: ['"Outfit"', "system-ui", "sans-serif"],
       },
       colors: {
-        // Graffiti / street-art palette pulled from the El Nido deck.
-        ink: "#15131a",
-        concrete: "#c9c5bd",
+        // Refreshed palette: cream canvas, deep-navy outlines, paint-splatter accents
+        // (matches the new brain/lightbulb brand art).
+        ink: "#15263f",
+        concrete: "#efeae0", // cream canvas (kept the name so existing classes shift over)
+        cream: "#f4f1ea",
         pink: "#ff2e9a",
-        teal: "#1fd1c6",
-        sun: "#ffd23f",
+        teal: "#16a3a3",
+        sun: "#f7c948",
         grape: "#8a4bff",
-        tang: "#ff6b35",
+        tang: "#f0612f",
+        coral: "#ef5a3c",
         // Buzzer colors per the game rules.
         buzz: {
           green: "#22c55e",

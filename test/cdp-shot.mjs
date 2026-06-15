@@ -24,9 +24,14 @@ const disp = spawn(EDGE, [
 
 try {
   await delay(5000); // real time for both to connect + sync
+  const host = new URL(displayUrl).host; // derive from the actual URL (no hardcoded port)
   const list = await (await fetch(`http://localhost:${PORT}/json/list`)).json();
   const page = list.find(
-    (t) => t.type === "page" && t.webSocketDebuggerUrl && /localhost:8788/.test(t.url),
+    (t) =>
+      t.type === "page" &&
+      t.webSocketDebuggerUrl &&
+      t.url.includes(host) &&
+      t.url.includes("display"),
   );
   if (!page) throw new Error("no display page target; got: " + JSON.stringify(list.map((t) => t.url)));
 
