@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { currentQuestion } from "@ff/engine";
 import { useGame } from "../store/gameStore";
 import { Logo } from "./Logo";
+import { FloatingAccents } from "./Icons";
 import { AnswerBoard } from "./AnswerBoard";
 import { Scoreboard } from "./Scoreboard";
 import { Participants } from "./Participants";
@@ -43,6 +44,8 @@ export function DisplayView() {
           </div>
         </div>
       )}
+
+      {state.phase === "setup" && <FloatingAccents />}
 
       {/* Center stage */}
       <main className="flex flex-1 flex-col items-center justify-center gap-6 py-4">

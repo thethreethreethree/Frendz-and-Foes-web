@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useGame } from "../store/gameStore";
+import { FloatingAccents } from "./Icons";
 
 const KIND_STYLES: Record<string, string> = {
   title: "text-pink",
@@ -32,6 +33,7 @@ export function Announcement() {
           transition={{ type: "spring", stiffness: 200, damping: 20 }}
           className="absolute inset-0 z-30 grid place-items-center bg-ink/70 backdrop-blur-sm"
         >
+          <FloatingAccents tone="light" />
           <div className="ff-sticker animate-pop bg-white px-12 py-10 text-center">
             <div
               className={`ff-title text-7xl ${KIND_STYLES[announcement.kind] ?? "text-ink"}`}

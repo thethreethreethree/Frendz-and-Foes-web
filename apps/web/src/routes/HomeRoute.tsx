@@ -1,10 +1,12 @@
 import { Link } from "react-router-dom";
 import { Logo } from "../display/Logo";
+import { FloatingAccents } from "../display/Icons";
 
 export function HomeRoute() {
   return (
-    <div className="ff-backdrop grid h-full place-items-center p-6">
-      <div className="flex flex-col items-center text-center">
+    <div className="ff-backdrop relative grid h-full place-items-center p-6">
+      <FloatingAccents />
+      <div className="relative flex flex-col items-center text-center">
         <Logo className="text-6xl" />
         <p className="mt-3 font-display text-3xl tracking-wide text-ink/70">EL NIDO EDITION</p>
         <div className="mt-10 flex flex-col items-center gap-3">
