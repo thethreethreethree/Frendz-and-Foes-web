@@ -1,13 +1,9 @@
-Brand assets for Frendz & Foes.
+Brand assets for Frendz & Foes (served at /brand/... by the app).
 
-Drop your image files here (this folder is served at /brand/... by the app).
+  brain.jpg   <- the brain + lightbulb artwork, used as the app BACKGROUND
+                 (Home + Display) via a cream scrim in index.css (.ff-backdrop).
+                 Optimized to ~1600px / ~200KB from the original in /Media Assets.
 
-Needed:
-  brain.png   <- the colorful brain + lightbulb artwork (used as the hero on the
-                 Home and Display title screens). Transparent PNG looks best.
-
-Optional (the app already recreates these in code, but a file here overrides):
-  logo.png    <- a full "FRENDZ AND FOES" wordmark, if you have one assembled.
-
-After adding brain.png, rebuild/redeploy (git push) — the hero image appears
-automatically. If the file is missing, the app falls back to the styled logo.
+To change the background art: drop a new image here as brain.jpg (cover-fit,
+landscape works best) and rebuild/redeploy. Adjust the scrim opacity in
+apps/web/src/index.css (.ff-backdrop) if it's too strong/faint.

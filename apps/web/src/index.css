@@ -23,14 +23,16 @@ body {
 }
 
 @layer components {
-  /* Cream canvas with corner paint-splatter glows (teal / orange / coral), like the brand art. */
+  /* Brand brain/lightbulb artwork as the backdrop, with a translucent cream scrim so the
+     game's text and answer pills stay readable on top. */
   .ff-backdrop {
     background-color: theme("colors.cream");
     background-image:
-      radial-gradient(36rem 26rem at 10% 6%, rgba(22, 163, 163, 0.18), transparent 60%),
-      radial-gradient(34rem 26rem at 92% 10%, rgba(20, 38, 63, 0.16), transparent 60%),
-      radial-gradient(34rem 28rem at 88% 94%, rgba(240, 97, 47, 0.16), transparent 62%),
-      radial-gradient(30rem 24rem at 8% 92%, rgba(239, 90, 60, 0.16), transparent 60%);
+      linear-gradient(rgba(244, 241, 234, 0.62), rgba(244, 241, 234, 0.62)),
+      url("/brand/brain.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
   }
 
   .ff-title {

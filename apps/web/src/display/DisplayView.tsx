@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { currentQuestion } from "@ff/engine";
 import { useGame } from "../store/gameStore";
-import { Logo, BrainHero } from "./Logo";
+import { Logo } from "./Logo";
 import { AnswerBoard } from "./AnswerBoard";
 import { Scoreboard } from "./Scoreboard";
 import { Participants } from "./Participants";
@@ -76,10 +76,9 @@ export function DisplayView() {
 
 function TitleScene() {
   return (
-    <div className="flex flex-col items-center text-center">
-      <BrainHero className="mb-2 h-48 animate-floaty md:h-64" />
+    <div className="flex animate-floaty flex-col items-center text-center">
       <Logo className="text-7xl md:text-8xl" />
-      <p className="mt-4 font-display text-4xl tracking-wide text-ink/70">GET READY!</p>
+      <p className="mt-4 font-display text-4xl tracking-wide text-ink/80">GET READY!</p>
     </div>
   );
 }
