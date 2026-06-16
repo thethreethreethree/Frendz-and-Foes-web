@@ -9,7 +9,7 @@ import { Participants } from "./Participants";
 import { Announcement } from "./Announcement";
 
 export function DisplayView() {
-  const { state, timerRemaining, buzzersArmed } = useGame();
+  const { state, timerRemaining, buzzersArmed, scoresVisible } = useGame();
   const question = currentQuestion(state);
 
   return (
@@ -69,10 +69,12 @@ export function DisplayView() {
         {state.phase === "finished" && <WinnerScene />}
       </main>
 
-      {/* Bottom scoreboard */}
-      <footer className="pt-2">
-        <Scoreboard state={state} />
-      </footer>
+      {/* Bottom scoreboard (host can hide it) */}
+      {scoresVisible && (
+        <footer className="pt-2">
+          <Scoreboard state={state} />
+        </footer>
+      )}
     </div>
   );
 }

@@ -22,6 +22,7 @@ export function DisplayProvider({
 }) {
   const [state, setState] = useState<GameState>(PLACEHOLDER);
   const [buzzersArmed, setBuzzersArmed] = useState(false);
+  const [scoresVisible, setScoresVisible] = useState(true);
   const [announcement, setAnnouncement] = useState<Announcement | null>(null);
   const [timerEndsAt, setTimerEndsAt] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
@@ -34,6 +35,7 @@ export function DisplayProvider({
     const onSync = (snap: Snapshot) => {
       setState(snap.state);
       setBuzzersArmed(snap.buzzersArmed);
+      setScoresVisible(snap.scoresVisible ?? true);
     };
     const onPulse = (p: Pulse) => {
       switch (p.kind) {
@@ -103,11 +105,13 @@ export function DisplayProvider({
       stopTimer: noop,
       buzzersArmed,
       setBuzzersArmed: noop,
+      scoresVisible,
+      setScoresVisible: noop,
       newGame: noop,
       startNewGame: noop,
       connection: { connected, presence, room, role },
     }),
-    [state, announcement, timerRemaining, buzzersArmed, connected, presence, room, role],
+    [state, announcement, timerRemaining, buzzersArmed, scoresVisible, connected, presence, room, role],
   );
 
   return <GameCtx.Provider value={value}>{children}</GameCtx.Provider>;

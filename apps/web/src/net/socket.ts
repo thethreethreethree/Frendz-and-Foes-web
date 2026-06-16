@@ -12,6 +12,7 @@ export type Role = "host" | "display" | "spectator";
 export interface Snapshot {
   state: GameState;
   buzzersArmed: boolean;
+  scoresVisible: boolean;
 }
 
 /** One-shot cues that are not part of game state. */

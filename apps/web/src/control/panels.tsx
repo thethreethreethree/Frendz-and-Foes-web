@@ -31,9 +31,9 @@ export function ScoreOverride() {
   );
 }
 
-// Screen director — push full-screen banners to the display.
+// Screen director — push full-screen banners to the display + toggle the scoreboard.
 export function ScreenDirector() {
-  const { announce } = useGame();
+  const { announce, scoresVisible, setScoresVisible } = useGame();
   const b = (kind: any, title: string) => () => announce({ kind, title, ttl: 2500 });
   return (
     <Section title="Screen director">
@@ -43,6 +43,11 @@ export function ScreenDirector() {
         <CtrlButton tone="teal" onClick={b("round", "ROUND 2")}>Round 2</CtrlButton>
         <CtrlButton tone="sun" onClick={b("bonus", "BONUS ROUND!")}>Bonus</CtrlButton>
         <CtrlButton tone="grape" onClick={b("leaderboard", "STANDINGS")}>Standings</CtrlButton>
+      </div>
+      <div className="mt-2 border-t border-ink/10 pt-2">
+        <CtrlButton tone={scoresVisible ? "ink" : "green"} onClick={() => setScoresVisible(!scoresVisible)}>
+          {scoresVisible ? "🙈 Hide scores" : "👁 Show scores"}
+        </CtrlButton>
       </div>
     </Section>
   );

@@ -81,6 +81,9 @@ export interface GameStore {
   stopTimer: () => void;
   buzzersArmed: boolean;
   setBuzzersArmed: (v: boolean) => void;
+  /** Whether the team scoreboard is shown on the display. */
+  scoresVisible: boolean;
+  setScoresVisible: (v: boolean) => void;
   newGame: (
     teams: Array<Pick<Team, "id" | "name"> & Partial<Pick<Team, "color">>>,
     questions?: GameState["questions"],
@@ -140,6 +143,7 @@ export function GameProvider({ children, room }: { children: ReactNode; room?: s
   const nonceRef = useRef(0);
 
   const [buzzersArmed, setBuzzersArmed] = useState(false);
+  const [scoresVisible, setScoresVisible] = useState(true);
   const [timerEndsAt, setTimerEndsAt] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [sfxVariant, setSfxVariantState] = useState<Record<SfxName, number>>(
@@ -174,8 +178,8 @@ export function GameProvider({ children, room }: { children: ReactNode; room?: s
   }, [timerEndsAt]);
 
   // --- Host sync: broadcast snapshots + presence ---------------------------------------------
-  const snapshotRef = useRef({ state: history.present, buzzersArmed });
-  snapshotRef.current = { state: history.present, buzzersArmed };
+  const snapshotRef = useRef({ state: history.present, buzzersArmed, scoresVisible });
+  snapshotRef.current = { state: history.present, buzzersArmed, scoresVisible };
 
   useEffect(() => {
     if (!room) return;
@@ -197,10 +201,10 @@ export function GameProvider({ children, room }: { children: ReactNode; room?: s
     };
   }, [room]);
 
-  // Broadcast whenever game state or the buzzers flag changes.
+  // Broadcast whenever game state or a display flag changes.
   useEffect(() => {
-    if (room) emitSync(room, { state: history.present, buzzersArmed });
-  }, [room, history.present, buzzersArmed]);
+    if (room) emitSync(room, { state: history.present, buzzersArmed, scoresVisible });
+  }, [room, history.present, buzzersArmed, scoresVisible]);
 
   const dispatch = useCallback((action: Action) => {
     setHistory((h) => engineDispatch(h, action));
@@ -264,6 +268,8 @@ export function GameProvider({ children, room }: { children: ReactNode; room?: s
       stopTimer,
       buzzersArmed,
       setBuzzersArmed,
+      scoresVisible,
+      setScoresVisible,
       newGame: (teams, questions) => {
         setHistory(initHistory(createGame({ teams, questions: questions ?? SAMPLE_QUESTIONS })));
         setBuzzersArmed(false);
@@ -292,6 +298,7 @@ export function GameProvider({ children, room }: { children: ReactNode; room?: s
       stopTimer,
       timerRemaining,
       buzzersArmed,
+      scoresVisible,
       connected,
       presence,
       room,
