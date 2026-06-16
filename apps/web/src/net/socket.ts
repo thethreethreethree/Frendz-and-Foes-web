@@ -16,7 +16,7 @@ export interface Snapshot {
 
 /** One-shot cues that are not part of game state. */
 export type Pulse =
-  | { kind: "sfx"; name: SfxName }
+  | { kind: "sfx"; name: SfxName; variant: number }
   | { kind: "announce"; announcement: Announcement }
   | { kind: "timer-start"; seconds: number }
   | { kind: "timer-stop" };

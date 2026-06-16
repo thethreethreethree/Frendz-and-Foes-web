@@ -4,7 +4,7 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createGame, type GameState } from "@ff/engine";
-import { playSfx } from "../audio/sfx";
+import { playSfx, SFX_NAMES, type SfxName } from "../audio/sfx";
 import { joinRoom, type Presence, type Pulse, type Role, type Snapshot } from "../net/socket";
 import { GameCtx, type Announcement, type GameStore } from "./gameStore";
 
@@ -38,7 +38,7 @@ export function DisplayProvider({
     const onPulse = (p: Pulse) => {
       switch (p.kind) {
         case "sfx":
-          playSfx(p.name);
+          playSfx(p.name, p.variant);
           break;
         case "announce":
           setAnnouncement(p.announcement);
@@ -96,6 +96,8 @@ export function DisplayProvider({
       announce: noop,
       clearAnnouncement: () => setAnnouncement(null),
       sfx: playSfx,
+      sfxVariant: Object.fromEntries(SFX_NAMES.map((n) => [n, 0])) as Record<SfxName, number>,
+      setSfxVariant: noop,
       timerRemaining,
       startTimer: noop,
       stopTimer: noop,

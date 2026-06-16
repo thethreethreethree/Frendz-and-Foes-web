@@ -34,7 +34,7 @@ import {
   type History,
   type Team,
 } from "@ff/engine";
-import { playSfx, type SfxName } from "../audio/sfx";
+import { playSfx, SFX_NAMES, type SfxName } from "../audio/sfx";
 import {
   joinRoom,
   emitSync,
@@ -71,7 +71,11 @@ export interface GameStore {
   announcement: Announcement | null;
   announce: (a: Omit<Announcement, "nonce">) => void;
   clearAnnouncement: () => void;
-  sfx: (name: SfxName) => void;
+  /** Play a sound; omit `variant` to use the host's selected variant for that category. */
+  sfx: (name: SfxName, variant?: number) => void;
+  /** Selected variation index (0-9) per sound category. */
+  sfxVariant: Record<SfxName, number>;
+  setSfxVariant: (name: SfxName, variant: number) => void;
   timerRemaining: number | null;
   startTimer: (seconds: number) => void;
   stopTimer: () => void;
@@ -138,6 +142,9 @@ export function GameProvider({ children, room }: { children: ReactNode; room?: s
   const [buzzersArmed, setBuzzersArmed] = useState(false);
   const [timerEndsAt, setTimerEndsAt] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const [sfxVariant, setSfxVariantState] = useState<Record<SfxName, number>>(
+    () => Object.fromEntries(SFX_NAMES.map((n) => [n, 0])) as Record<SfxName, number>,
+  );
 
   const [connected, setConnected] = useState(false);
   const [presence, setPresence] = useState<Presence | null>(null);
@@ -210,12 +217,17 @@ export function GameProvider({ children, room }: { children: ReactNode; room?: s
   );
 
   const sfx = useCallback(
-    (name: SfxName) => {
-      playSfx(name);
-      if (room) emitPulse(room, { kind: "sfx", name });
+    (name: SfxName, variant?: number) => {
+      const v = variant ?? sfxVariant[name] ?? 0;
+      playSfx(name, v);
+      if (room) emitPulse(room, { kind: "sfx", name, variant: v });
     },
-    [room],
+    [room, sfxVariant],
   );
+
+  const setSfxVariant = useCallback((name: SfxName, variant: number) => {
+    setSfxVariantState((s) => ({ ...s, [name]: variant }));
+  }, []);
 
   const startTimer = useCallback(
     (seconds: number) => {
@@ -245,6 +257,8 @@ export function GameProvider({ children, room }: { children: ReactNode; room?: s
       announce,
       clearAnnouncement: () => setAnnouncement(null),
       sfx,
+      sfxVariant,
+      setSfxVariant,
       timerRemaining,
       startTimer,
       stopTimer,
@@ -272,6 +286,8 @@ export function GameProvider({ children, room }: { children: ReactNode; room?: s
       announce,
       announcement,
       sfx,
+      sfxVariant,
+      setSfxVariant,
       startTimer,
       stopTimer,
       timerRemaining,

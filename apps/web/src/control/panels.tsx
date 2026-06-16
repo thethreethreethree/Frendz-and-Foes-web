@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { currentQuestion } from "@ff/engine";
 import { useGame } from "../store/gameStore";
+import { SFX_LABELS, SFX_NAMES, SFX_VARIANTS, type SfxName } from "../audio/sfx";
 import { Section, CtrlButton } from "./ui";
 
 // Manual score override — the host's final say (safety-net feature B).
@@ -68,18 +70,66 @@ export function TimerControls() {
   );
 }
 
-// Manual sound-effects board (feature D) — the host plays DJ.
+const SFX_TONE: Record<SfxName, "green" | "tang" | "grape" | "sun" | "teal" | "ink"> = {
+  ding: "green",
+  buzzer: "tang",
+  reveal: "teal",
+  drumroll: "grape",
+  applause: "sun",
+  swoosh: "ink",
+};
+
+// Manual sound-effects board (feature D) — the host plays DJ. Each category has 10 variations;
+// the chosen one is used everywhere (manual + auto sounds) and synced to the display.
 export function SfxBoard() {
-  const { sfx } = useGame();
+  const { sfx, sfxVariant, setSfxVariant } = useGame();
+  const [pick, setPick] = useState(false);
+
   return (
     <Section title="Sound board">
+      {/* Quick-play: uses each category's selected variation */}
       <div className="flex flex-wrap gap-1.5">
-        <CtrlButton tone="green" onClick={() => sfx("ding")}>Ding ✔</CtrlButton>
-        <CtrlButton tone="tang" onClick={() => sfx("buzzer")}>Buzzer ✖</CtrlButton>
-        <CtrlButton tone="grape" onClick={() => sfx("drumroll")}>Drumroll</CtrlButton>
-        <CtrlButton tone="sun" onClick={() => sfx("applause")}>Applause</CtrlButton>
-        <CtrlButton tone="teal" onClick={() => sfx("reveal")}>Reveal</CtrlButton>
+        {SFX_NAMES.map((name) => (
+          <CtrlButton key={name} tone={SFX_TONE[name]} onClick={() => sfx(name)}>
+            {SFX_LABELS[name]}
+          </CtrlButton>
+        ))}
       </div>
+
+      <button
+        onClick={() => setPick((p) => !p)}
+        className="mt-2 text-xs font-black uppercase tracking-wide text-ink/50"
+      >
+        {pick ? "▾ Variations" : "▸ Variations (pick 1–10 per sound)"}
+      </button>
+
+      {pick && (
+        <div className="mt-1 space-y-2">
+          {SFX_NAMES.map((name) => (
+            <div key={name}>
+              <div className="mb-1 text-[10px] font-bold uppercase text-ink/40">
+                {SFX_LABELS[name]} · #{sfxVariant[name] + 1}
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {Array.from({ length: SFX_VARIANTS }, (_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      setSfxVariant(name, i);
+                      sfx(name, i); // preview the choice
+                    }}
+                    className={`h-7 w-7 rounded-md text-xs font-bold ${
+                      sfxVariant[name] === i ? "bg-ink text-white" : "bg-ink/10 text-ink"
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </Section>
   );
 }
