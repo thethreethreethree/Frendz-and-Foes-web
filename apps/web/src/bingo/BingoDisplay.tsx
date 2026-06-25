@@ -25,9 +25,9 @@ export function BingoDisplay() {
         </div>
       </header>
 
-      <main className="flex flex-1 items-center gap-6 py-4">
-        {/* Current ball + dare */}
-        <div className="flex w-[34%] shrink-0 flex-col items-center">
+      <main className="flex flex-1 flex-col items-center justify-center gap-8 py-4">
+        {/* Current ball + dare (centered) */}
+        <div className="flex flex-col items-center">
           <AnimatePresence mode="wait">
             {cur ? (
               <motion.div
@@ -49,7 +49,7 @@ export function BingoDisplay() {
             )}
           </AnimatePresence>
 
-          <div className="mt-5 min-h-[5rem] w-full">
+          <div className="mt-4 min-h-[5rem] w-full max-w-2xl">
             {cur && bingo.dareRevealed ? (
               <motion.div
                 key={`dare-${cur.id}`}
@@ -67,8 +67,8 @@ export function BingoDisplay() {
           </div>
         </div>
 
-        {/* Caller board */}
-        <div className="flex flex-1 flex-col gap-1.5">
+        {/* Caller board (centered, below the ball) */}
+        <div className="flex w-full max-w-5xl flex-col gap-1.5">
           {BINGO_LETTERS.map((letter) => (
             <div key={letter} className="flex items-center gap-1.5">
               <div
