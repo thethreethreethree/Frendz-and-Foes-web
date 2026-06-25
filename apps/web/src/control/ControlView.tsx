@@ -3,6 +3,7 @@ import { useGame } from "../store/gameStore";
 import { turnInfo } from "./turn";
 import { CtrlButton } from "./ui";
 import { ControlPairButton } from "../net/pairing";
+import { MusicControl } from "../music/MusicControl";
 import { TeamSetup } from "./TeamSetup";
 import { BuzzInPicker } from "./BuzzInPicker";
 import { AnswerKey } from "./AnswerKey";
@@ -68,6 +69,7 @@ export function ControlView() {
         <TimerControls />
         <ScreenDirector />
         <SfxBoard />
+        <MusicControl />
         <QuestionJump />
 
         <CtrlButton

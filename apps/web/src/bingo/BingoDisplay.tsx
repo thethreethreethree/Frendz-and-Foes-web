@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { BINGO_COLUMNS, BINGO_LETTERS, ballById, dareForBall } from "@ff/engine";
 import { useBingo } from "../store/bingoStore";
 import { BingoLogo } from "../display/Logo";
+import { MusicPlayer } from "../music/MusicPlayer";
 
 const COL: Record<string, { bg: string; text: string }> = {
   B: { bg: "#ff2e9a", text: "#fff" },
@@ -18,6 +19,7 @@ export function BingoDisplay() {
 
   return (
     <div className="ff-backdrop-bingo relative flex h-full w-full flex-col overflow-hidden p-6">
+      <MusicPlayer />
       <header className="flex items-center justify-between">
         <BingoLogo className="text-3xl" />
         <div className="ff-sticker bg-white px-3 py-1 text-sm font-bold text-ink">

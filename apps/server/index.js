@@ -12,7 +12,7 @@
 import { createServer } from "node:http";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import express from "express";
 import { Server } from "socket.io";
 
@@ -21,6 +21,26 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
+
+// --- Music: serve local mp3s + a dynamic manifest (host searches, display plays) ------------
+// Files live in apps/server/music (git-ignored) or wherever MUSIC_DIR points. Kept local on
+// purpose — not bundled into the public deploy.
+const musicDir = process.env.MUSIC_DIR || join(__dirname, "music");
+
+app.get("/music/songs.json", (_req, res) => {
+  let songs = [];
+  try {
+    songs = readdirSync(musicDir)
+      .filter((f) => f.toLowerCase().endsWith(".mp3"))
+      .sort((a, b) => a.localeCompare(b))
+      .map((file, i) => ({ id: String(i), title: file.replace(/\.mp3$/i, ""), file }));
+  } catch {
+    /* no music dir → empty list */
+  }
+  res.json(songs);
+});
+
+if (existsSync(musicDir)) app.use("/music", express.static(musicDir));
 
 // In production, optionally serve the built web app so the whole thing is one process on the LAN.
 const webDist = join(__dirname, "../web/dist");
@@ -81,6 +101,12 @@ io.on("connection", (socket) => {
   socket.on("pulse", (pulse) => {
     if (!code) return;
     socket.to(code).emit("pulse", pulse);
+  });
+
+  // Music playback commands from the host → relayed to the display.
+  socket.on("music", (cmd) => {
+    if (!code) return;
+    socket.to(code).emit("music", cmd);
   });
 
   socket.on("disconnect", () => {

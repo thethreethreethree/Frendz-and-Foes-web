@@ -2,6 +2,7 @@ import { ballById, dareForBall, isBingoComplete, remainingCount } from "@ff/engi
 import { useBingo } from "../store/bingoStore";
 import { BingoLogo } from "../display/Logo";
 import { ControlPairButton } from "../net/pairing";
+import { MusicControl } from "../music/MusicControl";
 import { Section, CtrlButton } from "../control/ui";
 
 // Host controller for Frendz Bingo: draw a ball, read its dare (host-only), then reveal it on
@@ -71,6 +72,8 @@ export function BingoControl() {
             {remainingCount(bingo)} left
           </span>
         </div>
+
+        <MusicControl />
 
         <Section title={`Drawn (${bingo.drawn.length})`}>
           {bingo.drawn.length === 0 ? (

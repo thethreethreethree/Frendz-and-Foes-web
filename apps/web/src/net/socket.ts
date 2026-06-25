@@ -43,6 +43,24 @@ export interface Presence {
   spectator: number;
 }
 
+export interface Song {
+  id: string;
+  title: string;
+  file: string;
+}
+
+/** Music playback commands sent host → display. */
+export type MusicCmd =
+  | { action: "play"; file: string; title: string }
+  | { action: "pause" }
+  | { action: "resume" }
+  | { action: "stop" }
+  | { action: "volume"; value: number };
+
+export function emitMusic(cmd: MusicCmd): void {
+  getSocket().emit("music", cmd);
+}
+
 export function serverUrl(): string {
   const env = import.meta.env.VITE_SERVER_URL as string | undefined;
   if (env) return env;

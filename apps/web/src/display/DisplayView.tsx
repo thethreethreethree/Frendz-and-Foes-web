@@ -3,6 +3,7 @@ import { currentQuestion } from "@ff/engine";
 import { useGame } from "../store/gameStore";
 import { Logo } from "./Logo";
 import { FloatingAccents } from "./Icons";
+import { MusicPlayer } from "../music/MusicPlayer";
 import { AnswerBoard } from "./AnswerBoard";
 import { Scoreboard } from "./Scoreboard";
 import { Participants } from "./Participants";
@@ -15,6 +16,7 @@ export function DisplayView() {
   return (
     <div className="ff-backdrop relative flex h-full w-full flex-col overflow-hidden p-6">
       <Announcement />
+      <MusicPlayer />
 
       {/* Top bar */}
       <header className="flex items-center justify-between">

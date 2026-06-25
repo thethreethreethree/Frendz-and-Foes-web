@@ -14,5 +14,9 @@ export default defineConfig({
   },
   server: {
     host: true, // expose on LAN so the host phone can reach the display during dev
+    proxy: {
+      // Music is served by the relay server; proxy it so dev (5173) can play it too.
+      "/music": "http://localhost:8787",
+    },
   },
 });
