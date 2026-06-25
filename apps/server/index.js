@@ -40,7 +40,9 @@ app.get("/music/songs.json", (_req, res) => {
   res.json(songs);
 });
 
-if (existsSync(musicDir)) app.use("/music", express.static(musicDir));
+// dotfiles: "allow" so songs whose titles start with a dot (e.g. "...Baby One More Time")
+// are served instead of being treated as hidden files.
+if (existsSync(musicDir)) app.use("/music", express.static(musicDir, { dotfiles: "allow" }));
 
 // In production, optionally serve the built web app so the whole thing is one process on the LAN.
 const webDist = join(__dirname, "../web/dist");

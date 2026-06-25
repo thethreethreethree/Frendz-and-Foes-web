@@ -6,8 +6,29 @@ import { emitMusicStatus, getSocket, type MusicCmd } from "../net/socket";
 export function MusicPlayer() {
   const ref = useRef<HTMLAudioElement | null>(null);
   const lastEmit = useRef(0);
+  const blockedRef = useRef(false);
   const [now, setNow] = useState<string | null>(null);
   const [blocked, setBlocked] = useState(false);
+
+  const markBlocked = (v: boolean) => {
+    blockedRef.current = v;
+    setBlocked(v);
+  };
+
+  // Any tap/key on the display unlocks audio and retries a blocked song — so the operator just
+  // has to click the screen once (autoplay is blocked until a user gesture).
+  useEffect(() => {
+    const onGesture = () => {
+      const a = ref.current;
+      if (a && blockedRef.current && a.src) a.play().then(() => markBlocked(false)).catch(() => {});
+    };
+    window.addEventListener("pointerdown", onGesture);
+    window.addEventListener("keydown", onGesture);
+    return () => {
+      window.removeEventListener("pointerdown", onGesture);
+      window.removeEventListener("keydown", onGesture);
+    };
+  }, []);
 
   useEffect(() => {
     const a = ref.current;
@@ -53,14 +74,14 @@ export function MusicPlayer() {
         case "play":
           a.src = `/music/${encodeURIComponent(cmd.file)}`;
           a.currentTime = 0;
-          a.play().then(() => setBlocked(false)).catch(() => setBlocked(true));
+          a.play().then(() => markBlocked(false)).catch(() => markBlocked(true));
           setNow(cmd.title);
           break;
         case "pause":
           a.pause();
           break;
         case "resume":
-          a.play().catch(() => setBlocked(true));
+          a.play().catch(() => markBlocked(true));
           break;
         case "stop":
           a.pause();
@@ -83,7 +104,7 @@ export function MusicPlayer() {
 
   const unlock = () => {
     const a = ref.current;
-    if (a) a.play().then(() => setBlocked(false)).catch(() => {});
+    if (a) a.play().then(() => markBlocked(false)).catch(() => {});
   };
 
   return (
