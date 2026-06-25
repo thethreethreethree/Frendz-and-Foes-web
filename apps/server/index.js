@@ -15,6 +15,7 @@ import { dirname, join } from "node:path";
 import { existsSync, readdirSync } from "node:fs";
 import express from "express";
 import { Server } from "socket.io";
+import { registerMurderHandlers } from "./murder.js";
 
 const PORT = process.env.PORT || 8787;
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -78,11 +79,13 @@ function presence(room) {
 
 io.on("connection", (socket) => {
   let code = null;
+  registerMurderHandlers(io, socket, rooms);
 
   socket.on("join", ({ room, role }) => {
     if (typeof room !== "string" || !room) return;
     code = room.toUpperCase();
     socket.data.role = role || "display";
+    socket.data.code = code;
     socket.join(code);
     const r = getRoom(code);
     r.peers.set(socket.id, socket.data.role);

@@ -7,7 +7,7 @@ import type { Announcement } from "../store/gameStore";
 import type { SfxName } from "../audio/sfx";
 
 export type Role = "host" | "display" | "spectator";
-export type GameType = "feud" | "bingo";
+export type GameType = "feud" | "bingo" | "murder";
 
 /** The authoritative Feud snapshot the host broadcasts. */
 export interface Snapshot {

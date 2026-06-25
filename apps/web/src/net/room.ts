@@ -11,7 +11,8 @@ export function getRoomFromUrl(): string | null {
 }
 
 export function getGameFromUrl(): GameType {
-  return new URLSearchParams(window.location.search).get("game") === "bingo" ? "bingo" : "feud";
+  const g = new URLSearchParams(window.location.search).get("game");
+  return g === "bingo" || g === "murder" ? g : "feud";
 }
 
 export function setUrlGame(game: GameType): void {
@@ -36,4 +37,9 @@ export function setUrlRoom(room: string): void {
 /** URL that opens the host controller already paired to this room + game. */
 export function controllerUrl(room: string): string {
   return `${window.location.origin}/?room=${room}&game=${getGameFromUrl()}#/control`;
+}
+
+/** URL players scan to join a Murder game from their own phones. */
+export function playerJoinUrl(room: string): string {
+  return `${window.location.origin}/?room=${room}&game=murder#/play`;
 }

@@ -3,6 +3,7 @@ import { DisplayProvider } from "../store/DisplayProvider";
 import { BingoDisplayProvider } from "../store/bingoStore";
 import { DisplayView } from "../display/DisplayView";
 import { BingoDisplay } from "../bingo/BingoDisplay";
+import { MurderDisplay } from "../murder/MurderDisplay";
 import { DisplayPairing } from "../net/pairing";
 import { GamePicker } from "./GamePicker";
 import { getGameFromUrl, generateRoomCode, getRoomFromUrl, setUrlGame, setUrlRoom } from "../net/room";
@@ -31,6 +32,11 @@ export function DisplayRoute() {
         }}
       />
     );
+  }
+
+  if (game === "murder") {
+    // Murder is server-authoritative (its own socket events); no Feud/Bingo provider needed.
+    return <MurderDisplay room={room} />;
   }
 
   if (game === "bingo") {

@@ -26,6 +26,13 @@ export function GamePicker({ onPick }: { onPick: (g: GameType) => void }) {
             <BingoLogo className="text-xl" />
             <div className="mt-2 text-sm font-bold text-ink/60">Draw a ball, do the dare</div>
           </button>
+          <button
+            onClick={() => onPick("murder")}
+            className="ff-sticker flex w-64 flex-col items-center bg-white px-6 py-6 transition hover:-translate-y-1"
+          >
+            <div className="ff-title text-3xl text-ink">🔪 MURDER</div>
+            <div className="mt-1 text-sm font-bold text-ink/60">Wink, kill, deduce</div>
+          </button>
         </div>
       </div>
     </div>
