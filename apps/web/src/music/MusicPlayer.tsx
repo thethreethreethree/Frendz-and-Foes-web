@@ -1,12 +1,48 @@
 import { useEffect, useRef, useState } from "react";
-import { getSocket, type MusicCmd } from "../net/socket";
+import { emitMusicStatus, getSocket, type MusicCmd } from "../net/socket";
 
-// Lives on the DISPLAY. Plays whatever the host selects (relayed over the socket) through this
-// screen's speakers. Shows a small "now playing" chip. Mount inside a `relative` container.
+// Lives on the DISPLAY. Plays whatever the host selects, handles seek, and reports playback
+// progress back so the host's scrubber stays in sync. Mount inside a `relative` container.
 export function MusicPlayer() {
   const ref = useRef<HTMLAudioElement | null>(null);
+  const lastEmit = useRef(0);
   const [now, setNow] = useState<string | null>(null);
   const [blocked, setBlocked] = useState(false);
+
+  useEffect(() => {
+    const a = ref.current;
+    if (!a) return;
+    const status = (ended = false) =>
+      emitMusicStatus({
+        currentTime: a.currentTime || 0,
+        duration: Number.isFinite(a.duration) ? a.duration : 0,
+        playing: !a.paused && !a.ended,
+        ended,
+      });
+    const onTime = () => {
+      const t = Date.now();
+      if (t - lastEmit.current > 400) {
+        lastEmit.current = t;
+        status();
+      }
+    };
+    const onMeta = () => status();
+    const onPlay = () => status();
+    const onPause = () => status();
+    const onEnded = () => status(true);
+    a.addEventListener("timeupdate", onTime);
+    a.addEventListener("loadedmetadata", onMeta);
+    a.addEventListener("play", onPlay);
+    a.addEventListener("pause", onPause);
+    a.addEventListener("ended", onEnded);
+    return () => {
+      a.removeEventListener("timeupdate", onTime);
+      a.removeEventListener("loadedmetadata", onMeta);
+      a.removeEventListener("play", onPlay);
+      a.removeEventListener("pause", onPause);
+      a.removeEventListener("ended", onEnded);
+    };
+  }, []);
 
   useEffect(() => {
     const s = getSocket();
@@ -31,6 +67,9 @@ export function MusicPlayer() {
           a.currentTime = 0;
           setNow(null);
           break;
+        case "seek":
+          if (Number.isFinite(cmd.value)) a.currentTime = cmd.value;
+          break;
         case "volume":
           a.volume = cmd.value;
           break;
@@ -42,7 +81,6 @@ export function MusicPlayer() {
     };
   }, []);
 
-  // Browsers block autoplay until the display gets a gesture; one click unlocks it.
   const unlock = () => {
     const a = ref.current;
     if (a) a.play().then(() => setBlocked(false)).catch(() => {});

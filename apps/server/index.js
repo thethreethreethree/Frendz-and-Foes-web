@@ -109,6 +109,12 @@ io.on("connection", (socket) => {
     socket.to(code).emit("music", cmd);
   });
 
+  // Playback progress from the display → relayed back to the host's scrubber.
+  socket.on("musicstatus", (status) => {
+    if (!code) return;
+    socket.to(code).emit("musicstatus", status);
+  });
+
   socket.on("disconnect", () => {
     if (!code) return;
     const r = rooms.get(code);

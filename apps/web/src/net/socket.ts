@@ -55,10 +55,23 @@ export type MusicCmd =
   | { action: "pause" }
   | { action: "resume" }
   | { action: "stop" }
+  | { action: "seek"; value: number }
   | { action: "volume"; value: number };
 
 export function emitMusic(cmd: MusicCmd): void {
   getSocket().emit("music", cmd);
+}
+
+/** Playback progress reported display → host (so the host scrubber tracks the real audio). */
+export interface MusicStatus {
+  currentTime: number;
+  duration: number;
+  playing: boolean;
+  ended: boolean;
+}
+
+export function emitMusicStatus(status: MusicStatus): void {
+  getSocket().emit("musicstatus", status);
 }
 
 export function serverUrl(): string {
