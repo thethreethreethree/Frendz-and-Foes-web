@@ -3,6 +3,8 @@
 // mode. Randomness lives in the DRAW action (run on the host); the resulting state is what syncs
 // to the display, so followers never need to re-roll.
 
+import { DARES } from "./bingoDares.js";
+
 export interface BingoBall {
   id: string; // e.g. "B1", "O75"
   letter: "B" | "I" | "N" | "G" | "O";
@@ -30,85 +32,8 @@ export const BINGO_COLUMNS: Record<string, BingoBall[]> = Object.fromEntries(
   BINGO_LETTERS.map((l) => [l, BINGO_BALLS.filter((b) => b.letter === l)]),
 );
 
-// Placeholder dares (one per ball, indexed to BINGO_BALLS order). Replace these with the real
-// list when the dares file is provided — same length/order and everything keeps working.
-export const DEFAULT_DARES: string[] = [
-  "Do your best dance move for 10 seconds.",
-  "Speak in a foreign accent until your next turn.",
-  "Take a selfie with the person on your left.",
-  "Do 10 jumping jacks.",
-  "Sing the chorus of any song.",
-  "Do your best animal impression.",
-  "Give a 10-second motivational speech.",
-  "Swap seats with someone across the room.",
-  "Tell an embarrassing travel story.",
-  "Strike a superhero pose for 10 seconds.",
-  "Do your best catwalk strut.",
-  "Talk in slow motion until your next turn.",
-  "Compliment three different people.",
-  "Do your best robot dance.",
-  "Say the alphabet backwards from J.",
-  "Imitate another player until they guess who.",
-  "Do your best evil villain laugh.",
-  "Balance on one foot for 15 seconds.",
-  "Tell a joke — if no one laughs, do it again.",
-  "Do your best impression of a tour guide.",
-  "Air-guitar for 10 seconds.",
-  "Make up a 4-line rap about the room.",
-  "Do your best slow-motion victory celebration.",
-  "Speak only in questions until your next turn.",
-  "Do your best runway model face.",
-  "Hum a song and let others guess it.",
-  "Do 5 push-ups (or 5 squats).",
-  "Pretend to be a news reporter for 15 seconds.",
-  "Do your best dramatic movie death scene.",
-  "Give someone a high-five and a nickname.",
-  "Do your best impression of a baby.",
-  "Talk like a pirate until your next turn.",
-  "Do an interpretive dance of your last meal.",
-  "Strike three different yoga poses.",
-  "Say a tongue twister three times fast.",
-  "Do your best impression of the host.",
-  "Pretend you're stuck in an invisible box.",
-  "Do your best slow clap and get others to join.",
-  "Whisper everything until your next turn.",
-  "Do your best 'caught on camera' surprised face.",
-  "Make the funniest face you can for 5 seconds.",
-  "Do your best impression of a flight attendant.",
-  "Walk like a runway model to the door and back.",
-  "Do your best impression of a robot waking up.",
-  "Give a toast to the group.",
-  "Do your best impression of a famous singer.",
-  "Pretend to swim across the room.",
-  "Do your best impression of a cat.",
-  "Tell everyone your most-used emoji and why.",
-  "Do your best impression of a sports commentator.",
-  "Do a dramatic reading of the last text you sent.",
-  "Do your best impression of a DJ hyping a crowd.",
-  "Freeze like a statue for 15 seconds.",
-  "Do your best impression of a waiter taking an order.",
-  "Make up a secret handshake with someone.",
-  "Do your best impression of a weather forecaster.",
-  "Act out your morning routine in 10 seconds.",
-  "Do your best impression of a superhero landing.",
-  "Pretend to be a malfunctioning robot.",
-  "Do your best impression of a game show host.",
-  "Give an Oscar acceptance speech.",
-  "Do your best impression of a tourist taking photos.",
-  "Do the most dramatic sigh you can.",
-  "Do your best impression of a yoga instructor.",
-  "Pretend you just won the lottery.",
-  "Do your best impression of a drill sergeant.",
-  "Act like you're walking against a strong wind.",
-  "Do your best impression of a sleepy person.",
-  "Do your best impression of a fashion critic.",
-  "Pretend to be a mime trapped in a box.",
-  "Do your best impression of a motivational coach.",
-  "Do your best impression of a dramatic soap opera.",
-  "Act out catching something falling from the sky.",
-  "Do your best impression of a karaoke superstar.",
-  "Take a bow like you just finished a performance.",
-];
+/** One dare per ball, in BINGO_BALLS order (B1 first … O75 last). See bingoDares.ts. */
+export const DEFAULT_DARES: string[] = DARES;
 
 export interface BingoState {
   /** Ball ids in the order they were drawn. */
@@ -155,7 +80,7 @@ export function ballById(id: string | null): BingoBall | null {
   return id ? (BINGO_BALLS.find((b) => b.id === id) ?? null) : null;
 }
 
-/** The dare text for a ball, from the supplied dares (defaults to placeholders). */
+/** The dare text for a ball, from the supplied dares (defaults to the real list). */
 export function dareForBall(id: string | null, dares: string[] = DEFAULT_DARES): string {
   const idx = BINGO_BALLS.findIndex((b) => b.id === id);
   return idx >= 0 ? (dares[idx] ?? "Dare coming soon.") : "";
