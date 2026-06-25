@@ -12,6 +12,17 @@ export function Logo({ className = "" }: { className?: string }) {
   );
 }
 
+// Bingo wordmark recreated from the brand sheet: FRENDZ (blue) / BINGO (gold) / NIGHT (pink).
+export function BingoLogo({ className = "" }: { className?: string }) {
+  return (
+    <div className={`flex flex-wrap items-center justify-center gap-2 ${className}`}>
+      <Badge className="bg-gradient-to-b from-sky-400 to-blue-600 text-white">FRENDZ</Badge>
+      <Badge className="bg-gradient-to-b from-amber-300 to-amber-500 text-ink">BINGO</Badge>
+      <Badge className="bg-gradient-to-b from-pink to-rose-600 text-white">NIGHT</Badge>
+    </div>
+  );
+}
+
 function Badge({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <span

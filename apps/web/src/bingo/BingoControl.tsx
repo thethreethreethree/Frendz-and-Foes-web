@@ -1,5 +1,6 @@
 import { ballById, dareForBall, isBingoComplete, remainingCount } from "@ff/engine";
 import { useBingo } from "../store/bingoStore";
+import { BingoLogo } from "../display/Logo";
 import { ControlPairButton } from "../net/pairing";
 import { Section, CtrlButton } from "../control/ui";
 
@@ -14,8 +15,11 @@ export function BingoControl() {
     <div className="mx-auto flex h-full w-full max-w-md flex-col overflow-y-auto overflow-x-hidden bg-concrete/40 text-ink">
       {/* Command bar */}
       <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-ink/10 bg-white/95 px-3 py-2 backdrop-blur">
-        <span className="font-display text-xl text-ink">BINGO · {bingo.drawn.length}/75</span>
-        <ControlPairButton />
+        <BingoLogo className="text-base" />
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-ink/50">{bingo.drawn.length}/75</span>
+          <ControlPairButton />
+        </div>
       </div>
 
       <div className="flex flex-col gap-3 p-3">

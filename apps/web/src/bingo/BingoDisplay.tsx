@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { BINGO_COLUMNS, BINGO_LETTERS, ballById, dareForBall } from "@ff/engine";
 import { useBingo } from "../store/bingoStore";
-import { Logo } from "../display/Logo";
+import { BingoLogo } from "../display/Logo";
 
 const COL: Record<string, { bg: string; text: string }> = {
   B: { bg: "#ff2e9a", text: "#fff" },
@@ -19,14 +19,9 @@ export function BingoDisplay() {
   return (
     <div className="ff-backdrop relative flex h-full w-full flex-col overflow-hidden p-6">
       <header className="flex items-center justify-between">
-        <Logo className="text-3xl" />
-        <div className="flex items-center gap-3">
-          <div className="ff-sticker bg-white px-3 py-1 text-sm font-bold text-ink">
-            {bingo.drawn.length}/75 drawn
-          </div>
-          <div className="ff-sticker bg-ink px-4 py-1.5 font-display text-2xl tracking-widest text-white">
-            BINGO
-          </div>
+        <BingoLogo className="text-3xl" />
+        <div className="ff-sticker bg-white px-3 py-1 text-sm font-bold text-ink">
+          {bingo.drawn.length}/75 drawn
         </div>
       </header>
 

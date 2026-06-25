@@ -1,4 +1,4 @@
-import { Logo } from "../display/Logo";
+import { Logo, BingoLogo } from "../display/Logo";
 import { FloatingAccents } from "../display/Icons";
 import type { GameType } from "../net/socket";
 
@@ -21,10 +21,10 @@ export function GamePicker({ onPick }: { onPick: (g: GameType) => void }) {
           </button>
           <button
             onClick={() => onPick("bingo")}
-            className="ff-sticker w-64 bg-white px-6 py-6 transition hover:-translate-y-1"
+            className="ff-sticker flex w-64 flex-col items-center bg-white px-6 py-6 transition hover:-translate-y-1"
           >
-            <div className="ff-title text-3xl text-grape">FRENDZ BINGO</div>
-            <div className="mt-1 text-sm font-bold text-ink/60">Draw a ball, do the dare</div>
+            <BingoLogo className="text-xl" />
+            <div className="mt-2 text-sm font-bold text-ink/60">Draw a ball, do the dare</div>
           </button>
         </div>
       </div>
