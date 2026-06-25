@@ -19,7 +19,7 @@ const host = spawn(EDGE, [
 const disp = spawn(EDGE, [
   "--headless=new", "--disable-gpu", "--hide-scrollbars",
   "--no-first-run", "--disable-sync", "--no-default-browser-check",
-  "--window-size=1280,720", `--remote-debugging-port=${PORT}`,
+  "--window-size=1920,1080", `--remote-debugging-port=${PORT}`,
   `--user-data-dir=${process.env.TEMP}\\ff-cdp-disp-${stamp}`,
   displayUrl,
 ]);

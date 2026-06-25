@@ -25,7 +25,7 @@ export function BingoDisplay() {
         </div>
       </header>
 
-      <main className="flex flex-1 flex-col items-center justify-center gap-8 py-4">
+      <main className="mx-auto flex w-full max-w-[1500px] flex-1 flex-col items-center justify-center gap-6 py-4">
         {/* Current ball + dare (centered) */}
         <div className="flex flex-col items-center">
           <AnimatePresence mode="wait">
@@ -68,7 +68,7 @@ export function BingoDisplay() {
         </div>
 
         {/* Caller board (centered, below the ball) */}
-        <div className="flex w-full max-w-5xl flex-col gap-1.5">
+        <div className="flex w-full flex-col gap-1.5">
           {BINGO_LETTERS.map((letter) => (
             <div key={letter} className="flex items-center gap-1.5">
               <div
