@@ -1,10 +1,18 @@
 import { useState } from "react";
 import { DisplayProvider } from "../store/DisplayProvider";
+import { BingoDisplayProvider } from "../store/bingoStore";
 import { DisplayView } from "../display/DisplayView";
+import { BingoDisplay } from "../bingo/BingoDisplay";
 import { DisplayPairing } from "../net/pairing";
-import { getRoomFromUrl, generateRoomCode, setUrlRoom } from "../net/room";
+import { GamePicker } from "./GamePicker";
+import { getGameFromUrl, generateRoomCode, getRoomFromUrl, setUrlGame, setUrlRoom } from "../net/room";
+import type { GameType } from "../net/socket";
 
 export function DisplayRoute() {
+  // The host picks a game first (unless one is already in the URL), then pairing/QR shows.
+  const [game, setGame] = useState<GameType | null>(() =>
+    new URLSearchParams(window.location.search).has("game") ? getGameFromUrl() : null,
+  );
   // Pick a room once: use the URL's, or mint a fresh one and pin it to the URL.
   const [room] = useState(() => {
     const existing = getRoomFromUrl();
@@ -13,6 +21,26 @@ export function DisplayRoute() {
     setUrlRoom(code);
     return code;
   });
+
+  if (!game) {
+    return (
+      <GamePicker
+        onPick={(g) => {
+          setUrlGame(g);
+          setGame(g);
+        }}
+      />
+    );
+  }
+
+  if (game === "bingo") {
+    return (
+      <BingoDisplayProvider room={room} role="display">
+        <BingoDisplay />
+        <DisplayPairing />
+      </BingoDisplayProvider>
+    );
+  }
 
   return (
     <DisplayProvider room={room} role="display">

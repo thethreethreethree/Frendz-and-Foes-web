@@ -40,9 +40,11 @@ import {
   emitSync,
   emitPulse,
   getSocket,
+  type ConnectionInfo,
   type Presence,
   type Role,
 } from "../net/socket";
+import { ConnectionCtx } from "../net/connection";
 
 export type AnnouncementKind = "title" | "round" | "bonus" | "leaderboard" | "custom";
 
@@ -54,12 +56,7 @@ export interface Announcement {
   nonce: number;
 }
 
-export interface ConnectionInfo {
-  connected: boolean;
-  presence: Presence | null;
-  room: string | null;
-  role: Role | null;
-}
+export type { ConnectionInfo };
 
 export interface GameStore {
   state: GameState;
@@ -305,7 +302,11 @@ export function GameProvider({ children, room }: { children: ReactNode; room?: s
     ],
   );
 
-  return <GameCtx.Provider value={value}>{children}</GameCtx.Provider>;
+  return (
+    <GameCtx.Provider value={value}>
+      <ConnectionCtx.Provider value={value.connection}>{children}</ConnectionCtx.Provider>
+    </GameCtx.Provider>
+  );
 }
 
 export function useGame(): GameStore {

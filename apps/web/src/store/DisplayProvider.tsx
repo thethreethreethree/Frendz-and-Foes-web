@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createGame, type GameState } from "@ff/engine";
 import { playSfx, SFX_NAMES, type SfxName } from "../audio/sfx";
 import { joinRoom, type Presence, type Pulse, type Role, type Snapshot } from "../net/socket";
+import { ConnectionCtx } from "../net/connection";
 import { GameCtx, type Announcement, type GameStore } from "./gameStore";
 
 const PLACEHOLDER: GameState = createGame({ teams: [], questions: [] });
@@ -114,5 +115,9 @@ export function DisplayProvider({
     [state, announcement, timerRemaining, buzzersArmed, scoresVisible, connected, presence, room, role],
   );
 
-  return <GameCtx.Provider value={value}>{children}</GameCtx.Provider>;
+  return (
+    <GameCtx.Provider value={value}>
+      <ConnectionCtx.Provider value={value.connection}>{children}</ConnectionCtx.Provider>
+    </GameCtx.Provider>
+  );
 }

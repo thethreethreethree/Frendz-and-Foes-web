@@ -4,3 +4,4 @@ export * from "./engine.js";
 export * from "./qmake.js";
 export * from "./fixtures.js";
 export * from "./bank.js";
+export * from "./bingo.js";

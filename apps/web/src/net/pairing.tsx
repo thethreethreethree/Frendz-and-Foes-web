@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
-import { useGame } from "../store/gameStore";
+import { useConnection } from "./connection";
 import { controllerUrl, generateRoomCode, setUrlRoom } from "./room";
 
 export function QR({ text, size = 160 }: { text: string; size?: number }) {
@@ -17,7 +17,7 @@ export function QR({ text, size = 160 }: { text: string; size?: number }) {
 
 // Live connection status pill, reads role from the shared connection info.
 export function StatusPill() {
-  const { connection } = useGame();
+  const connection = useConnection();
   const { connected, presence, role, room } = connection;
 
   let label: string;
@@ -42,7 +42,7 @@ export function StatusPill() {
 
 // Full-screen pairing card shown on the DISPLAY until the host phone connects.
 export function DisplayPairing() {
-  const { connection } = useGame();
+  const connection = useConnection();
   const room = connection.room;
   const linked = connection.connected && (connection.presence?.host ?? 0) > 0;
 
@@ -73,7 +73,7 @@ export function DisplayPairing() {
 
 // Controller pairing button: when unlinked, lets the host enter/generate a code.
 export function ControlPairButton() {
-  const { connection } = useGame();
+  const connection = useConnection();
   if (connection.room) return <StatusPill />;
   return (
     <button

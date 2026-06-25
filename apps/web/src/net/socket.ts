@@ -2,17 +2,31 @@
 // controller or a display/spectator). Providers attach their own listeners.
 
 import { io, type Socket } from "socket.io-client";
-import type { GameState } from "@ff/engine";
+import type { GameState, BingoState } from "@ff/engine";
 import type { Announcement } from "../store/gameStore";
 import type { SfxName } from "../audio/sfx";
 
 export type Role = "host" | "display" | "spectator";
+export type GameType = "feud" | "bingo";
 
-/** The authoritative game snapshot the host broadcasts. */
+/** The authoritative Feud snapshot the host broadcasts. */
 export interface Snapshot {
   state: GameState;
   buzzersArmed: boolean;
   scoresVisible: boolean;
+}
+
+/** The authoritative Bingo snapshot. */
+export interface BingoSnapshot {
+  bingo: BingoState;
+}
+
+/** Live connection + presence info, shared by both games for the pairing UI. */
+export interface ConnectionInfo {
+  connected: boolean;
+  presence: Presence | null;
+  room: string | null;
+  role: Role | null;
 }
 
 /** One-shot cues that are not part of game state. */
@@ -54,7 +68,7 @@ export function joinRoom(room: string, role: Role): Socket {
   return s;
 }
 
-export function emitSync(room: string, snapshot: Snapshot): void {
+export function emitSync(room: string, snapshot: Snapshot | BingoSnapshot): void {
   getSocket().emit("sync", snapshot);
   // room is implied server-side by the socket's joined room, but kept in the API for clarity.
   void room;

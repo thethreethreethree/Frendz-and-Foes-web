@@ -10,15 +10,17 @@ const EDGE = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"
 const PORT = 9333;
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
+const stamp = Date.now(); // fresh profiles each run → no stale tabs, no cleanup needed
 const host = spawn(EDGE, [
-  "--headless=new", "--disable-gpu", `--user-data-dir=${process.env.TEMP}\\ff-cdp-host`,
+  "--headless=new", "--disable-gpu", "--no-first-run", "--disable-sync",
+  `--user-data-dir=${process.env.TEMP}\\ff-cdp-host-${stamp}`,
   hostUrl,
 ]);
 const disp = spawn(EDGE, [
   "--headless=new", "--disable-gpu", "--hide-scrollbars",
   "--no-first-run", "--disable-sync", "--no-default-browser-check",
   "--window-size=1280,720", `--remote-debugging-port=${PORT}`,
-  `--user-data-dir=${process.env.TEMP}\\ff-cdp-disp`,
+  `--user-data-dir=${process.env.TEMP}\\ff-cdp-disp-${stamp}`,
   displayUrl,
 ]);
 
