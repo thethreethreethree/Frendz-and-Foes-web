@@ -17,7 +17,7 @@ export function BingoDisplay() {
   const drawn = new Set(bingo.drawn);
 
   return (
-    <div className="ff-backdrop relative flex h-full w-full flex-col overflow-hidden p-6">
+    <div className="ff-backdrop-bingo relative flex h-full w-full flex-col overflow-hidden p-6">
       <header className="flex items-center justify-between">
         <BingoLogo className="text-3xl" />
         <div className="ff-sticker bg-white px-3 py-1 text-sm font-bold text-ink">

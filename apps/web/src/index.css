@@ -35,6 +35,17 @@ body {
     background-repeat: no-repeat;
   }
 
+  /* Bingo display uses its own "Frendz Bingo Night" artwork as the backdrop. */
+  .ff-backdrop-bingo {
+    background-color: theme("colors.cream");
+    background-image:
+      linear-gradient(rgba(244, 241, 234, 0.55), rgba(244, 241, 234, 0.55)),
+      url("/brand/bingo-bg.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
   .ff-title {
     font-family: theme("fontFamily.display");
     letter-spacing: 0.04em;
