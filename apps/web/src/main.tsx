@@ -14,6 +14,7 @@ const router = createHashRouter([
   { path: "/display", element: <DisplayRoute /> },
   { path: "/control", element: <ControlRoute /> },
   { path: "/play", element: <PlayerRoute /> },
+  { path: "/play", element: <PlayerRoute /> },
   { path: "*", element: <Navigate to="/" replace /> },
 ]);
 

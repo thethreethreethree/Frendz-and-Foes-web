@@ -39,10 +39,12 @@ try {
   const ws = new WebSocket(page.webSocketDebuggerUrl);
   await new Promise((r) => ws.on("open", r));
   await send(ws, "Runtime.enable");
-  await send(ws, "Runtime.evaluate", {
-    expression: `document.querySelector(${JSON.stringify(selector)})?.click()`,
-  });
-  await delay(1200);
+  // "js:<expr>" runs an arbitrary expression; otherwise it's a selector to click.
+  const expression = selector.startsWith("js:")
+    ? selector.slice(3)
+    : `document.querySelector(${JSON.stringify(selector)})?.click()`;
+  await send(ws, "Runtime.evaluate", { expression, awaitPromise: true });
+  await delay(3500);
   const shot = await send(ws, "Page.captureScreenshot", { format: "png" });
   writeFileSync(out, Buffer.from(shot.data, "base64"));
   console.log("wrote", out);

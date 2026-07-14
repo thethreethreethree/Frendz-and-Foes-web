@@ -16,12 +16,16 @@ import { existsSync, readdirSync } from "node:fs";
 import express from "express";
 import { Server } from "socket.io";
 import { registerMurderHandlers } from "./murder.js";
+import { VILLAGERS } from "./villagers.js";
 
 const PORT = process.env.PORT || 8787;
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
+
+// The villager roster (characters + their signature weapons) — the server owns this list.
+app.get("/murder/characters", (_req, res) => res.json(VILLAGERS));
 
 // --- Music: serve local mp3s + a dynamic manifest (host searches, display plays) ------------
 // Files live in apps/server/music (git-ignored) or wherever MUSIC_DIR points. Kept local on
