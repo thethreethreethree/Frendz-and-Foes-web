@@ -12,6 +12,9 @@ export function getRoomFromUrl(): string | null {
 
 export function getGameFromUrl(): GameType {
   const g = new URLSearchParams(window.location.search).get("game");
+  // "villagers" is a legacy alias: Murder Mystery: The Villagers is now the only murder game, so
+  // links minted while it briefly had its own game type still resolve.
+  if (g === "villagers") return "murder";
   return g === "bingo" || g === "murder" ? g : "feud";
 }
 

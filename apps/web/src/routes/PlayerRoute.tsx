@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { PlayerView } from "../murder/PlayerView";
-import { getRoomFromUrl, setUrlRoom } from "../net/room";
+import { Murder2Player } from "../murder2/Murder2Player";
+import { getGameFromUrl, getRoomFromUrl, setUrlRoom } from "../net/room";
 
 // Players reach this by scanning the Murder display's join QR (carries ?room=). If opened
 // without a room, offer a code entry.
@@ -35,5 +35,5 @@ export function PlayerRoute() {
     );
   }
 
-  return <PlayerView room={room} />;
+  return <Murder2Player room={room} />;
 }

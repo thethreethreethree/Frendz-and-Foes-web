@@ -11,7 +11,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "vitest run",
+    "test": "vitest run && node --test --test-force-exit --test-concurrency=1 test/sync.test.mjs test/villagers2.test.mjs test/murder2.test.mjs",
     "test:watch": "vitest",
     "test:sync": "node --test --test-force-exit test/sync.test.mjs",
     "typecheck": "tsc -b",

@@ -15,8 +15,10 @@ import { dirname, join } from "node:path";
 import { existsSync, readdirSync } from "node:fs";
 import express from "express";
 import { Server } from "socket.io";
-import { registerMurderHandlers } from "./murder.js";
-import { VILLAGERS } from "./villagers.js";
+// Murder Mystery: The Villagers — the 100-character roster with item-set card art. This replaced the
+// earlier 30-character mode (retired 2026-07-17; its last state is commit 1705229). The `murder2`
+// filenames are historical: there is only one murder game now, reached as ?game=murder.
+import { registerMurder2Handlers } from "./murder2.js";
 
 const PORT = process.env.PORT || 8787;
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -25,7 +27,8 @@ const app = express();
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
 
 // The villager roster (characters + their signature weapons) — the server owns this list.
-app.get("/murder/characters", (_req, res) => res.json(VILLAGERS));
+// (The retired 30-character mode served its roster from GET /murder/characters. The Villagers roster
+// travels over the socket in m2:state instead, so no HTTP endpoint is needed.)
 
 // --- Music: serve local mp3s + a dynamic manifest (host searches, display plays) ------------
 // Files live in apps/server/music (git-ignored) or wherever MUSIC_DIR points. Kept local on
@@ -83,7 +86,7 @@ function presence(room) {
 
 io.on("connection", (socket) => {
   let code = null;
-  registerMurderHandlers(io, socket, rooms);
+  registerMurder2Handlers(io, socket, rooms); // roomKey/now default to uppercase/Date.now here
 
   socket.on("join", ({ room, role }) => {
     if (typeof room !== "string" || !room) return;
