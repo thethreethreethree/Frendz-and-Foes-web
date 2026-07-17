@@ -7,6 +7,7 @@
 //   { phase, players:Map, murdererId, killTarget, cooldownSec, cooldownUntil, kills[], weaponUses{},
 //     vote, winner, cleared:Set }
 
+import { randomBytes } from "node:crypto";
 import { WEAPONS, VILLAGERS, getVillager, villagerForWeapon, methodAt } from "./villagers2.js";
 
 const DEFAULTS = { killTarget: 4, cooldownSec: 75, rewardCooldownSec: 30, maxPerWeapon: 2 };
@@ -122,10 +123,12 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
   const announce = (code, payload) => io.to(code).emit("m2:announce", payload);
   const err = (msg) => socket.emit("m2:error", msg);
 
-  // Private per-player view: role + (for the murderer) weapon intel.
+  // Private per-player view: role + (for the murderer) weapon intel. `rejoinToken` rides along here
+  // and ONLY here — m2:you goes to that player's own socket, whereas m2:state is broadcast to the
+  // room. It must never be added to publicState().
   const sendYou = (m, p) => {
     if (!p.socketId) return;
-    const base = { id: p.id, role: p.role, alive: p.alive, characterId: p.characterId };
+    const base = { id: p.id, role: p.role, alive: p.alive, characterId: p.characterId, rejoinToken: p.rejoinToken };
     if (p.role === "murderer") {
       const own = ownWeaponId(m);
       io.to(p.socketId).emit("m2:you", {
@@ -144,7 +147,7 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
   const sendYouAll = (m) => { for (const p of m.players.values()) sendYou(m, p); };
 
   // --- Lobby: join + pick a character ---------------------------------------------------------
-  socket.on("m2:join", ({ room, name, playerId }) => {
+  socket.on("m2:join", ({ room, name, playerId, rejoinToken }) => {
     if (!room || !name) return;
     const code = roomKey(room);
     socket.join(code);
@@ -152,11 +155,16 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
     const m = ensure(rooms, code);
     let p = playerId && m.players.get(playerId);
     if (p) {
+      // Reclaiming an existing player must be PROVEN, not asserted. Player ids are published to
+      // every client in m2:state, so accepting a bare id let any player adopt any other player —
+      // including the murderer — and receive their private role and kill intel over m2:you. The
+      // token is issued once, sent only over m2:you, and never appears in the broadcast state.
+      if (!p.rejoinToken || rejoinToken !== p.rejoinToken) return err("Could not restore that player.");
       p.socketId = socket.id;
       p.name = name;
     } else {
       const id = "p" + Math.random().toString(36).slice(2, 8);
-      p = { id, name, socketId: socket.id, characterId: null, role: null, alive: true };
+      p = { id, name, socketId: socket.id, characterId: null, role: null, alive: true, rejoinToken: randomBytes(24).toString("hex") };
       m.players.set(id, p);
     }
     socket.data.playerId2 = p.id;
@@ -177,12 +185,21 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
     broadcast(code);
   });
 
-  // The host controller connects via the generic "join" (index.js sets socket.data.code) rather
-  // than m2:join, so fall back to it — otherwise host actions (start/vote/reset) would no-op.
+  // The host controller connects via the generic "join" (index.js sets socket.data.code and
+  // socket.data.role) rather than m2:join, so fall back to it — otherwise host actions would no-op.
   // Both paths produce the same tenant-namespaced room key.
   const hostCode = () => socket.data.code2 || socket.data.code;
 
+  // Host actions are the controller's alone. Players reach the room via m2:join, which never sets
+  // socket.data.role, so this stops any player — using the app or a script driving their own player
+  // socket — from starting, resetting, or running votes. It is HARDENING, not authentication: a
+  // hand-crafted socket can still emit join{role:"host"} and claim the controller. Closing that
+  // needs a real host token minted with the room and carried in the host QR, which remains open
+  // (recorded [KNOWN · LOW] in docs/AUDIT-2026-07-11-multitenant-foundation.md).
+  const isHost = () => socket.data.role === "host";
+
   socket.on("m2:config", ({ killTarget, cooldownSec }) => {
+    if (!isHost()) return err("Only the host can configure the game.");
     const m = rooms.get(hostCode())?.murder2;
     if (!m || m.phase !== "lobby") return;
     if (Number.isFinite(killTarget)) m.killTarget = Math.max(2, Math.min(10, killTarget | 0));
@@ -192,6 +209,7 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
 
   // --- Start: assign the murderer -------------------------------------------------------------
   socket.on("m2:start", () => {
+    if (!isHost()) return err("Only the host can start the game.");
     const code = hostCode();
     const m = rooms.get(code)?.murder2;
     if (!m || m.phase !== "lobby") return;
@@ -264,6 +282,7 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
 
   // --- Voting: host opens a town meeting; alive players vote a suspect -------------------------
   socket.on("m2:openVote", () => {
+    if (!isHost()) return err("Only the host can call a town meeting.");
     const code = hostCode();
     const m = rooms.get(code)?.murder2;
     if (!m || m.phase !== "playing") return;
@@ -290,6 +309,7 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
   });
 
   socket.on("m2:closeVote", () => {
+    if (!isHost()) return err("Only the host can close the vote.");
     const code = hostCode();
     const m = rooms.get(code)?.murder2;
     if (m && m.phase === "voting") resolveVote(code, m);
@@ -324,6 +344,7 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
   }
 
   socket.on("m2:reset", ({ full } = {}) => {
+    if (!isHost()) return err("Only the host can reset the game.");
     const code = hostCode();
     const m = rooms.get(code)?.murder2;
     if (!m) return;

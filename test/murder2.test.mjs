@@ -14,10 +14,12 @@ function harness() {
   const sockets = {};
   const roomKey = (r) => `T:${String(r).toUpperCase()}`;
 
-  function connect(id) {
+  // `asHost` mirrors the real controller, which reaches the room through index.js's generic
+  // join (setting socket.data.role) rather than m2:join. Host actions now require it.
+  function connect(id, asHost = false) {
     const handlers = {};
     const socket = {
-      id, data: {},
+      id, data: asHost ? { role: "host", code: roomKey("R") } : {},
       join() {},
       on(ev, fn) { handlers[ev] = fn; },
       emit(ev, payload) { emitted.push({ target: id, ev, payload }); },
@@ -47,11 +49,12 @@ function startedGame(n = 5) {
     s.send("m2:pick", { characterId: c });
     return s;
   });
-  players[0].send("m2:start"); // player 0 acts as host
+  const host = h.connect("host", true);
+  host.send("m2:start");
   // Identify the murderer from the private role message.
   let murdererSock = null;
   for (const p of players) if (h.youFor(p.socket.id)?.role === "murderer") murdererSock = p;
-  return { h, players, murdererSock };
+  return { h, players, murdererSock, host };
 }
 
 test("lobby guards: a taken character is rejected; starting with <3 players is rejected", () => {
@@ -79,7 +82,7 @@ test("start assigns exactly one murderer; the rest are villagers", () => {
 });
 
 test("anti-cheat: a non-murderer cannot kill (server-authority)", () => {
-  const { h, players, murdererSock } = startedGame(5);
+  const { h, players, murdererSock, host } = startedGame(5);
   const villager = players.find((p) => p !== murdererSock);
   const victim = players.find((p) => p !== villager && p !== murdererSock);
   const before = h.emitted.length;
@@ -90,7 +93,7 @@ test("anti-cheat: a non-murderer cannot kill (server-authority)", () => {
 });
 
 test("scale: a realistically-large 15-player game works (one murderer, 15 framing options, a kill lands)", () => {
-  const { h, players, murdererSock } = startedGame(15);
+  const { h, players, murdererSock, host } = startedGame(15);
   const st = h.lastState();
   assert.equal(st.players.filter((p) => p.characterId).length, 15);
   assert.equal(players.map((p) => h.youFor(p.socket.id)?.role).filter((r) => r === "murderer").length, 1);
@@ -103,7 +106,7 @@ test("scale: a realistically-large 15-player game works (one murderer, 15 framin
 });
 
 test("a kill logs a framing clue (weapon → the framed player) and downs the victim", () => {
-  const { h, players, murdererSock } = startedGame(5);
+  const { h, players, murdererSock, host } = startedGame(5);
   const you = h.youFor(murdererSock.socket.id);
   const weapon = you.weapons.find((w) => w.id !== you.ownWeaponId); // frame someone else
   const victim = players.find((p) => p !== murdererSock);
@@ -115,10 +118,86 @@ test("a kill logs a framing clue (weapon → the framed player) and downs the vi
   assert.equal(st.players.find((p) => p.id === victim.pid()).alive, false);
 });
 
+// --- Identity + host authority -----------------------------------------------------------------
+// These encode a live-probed breach (2026-07-17): player ids are broadcast in m2:state, and m2:join
+// used to hand back any player named by id — so any player could adopt the MURDERER and read their
+// private role and kill intel. In a social deduction game the secret identity IS the game.
+
+test("anti-cheat: a player id alone cannot reclaim a player — the rejoin token is required", () => {
+  const h = harness();
+  const a = h.connect("a");
+  a.send("m2:join", { room: "R", name: "A" });
+  const victimId = h.youFor("a").id;
+  const token = h.youFor("a").rejoinToken;
+  assert.ok(token, "the server must issue a rejoin token on the private channel");
+
+  // The id is public — every client already has it from m2:state.
+  assert.ok(h.lastState().players.some((p) => p.id === victimId), "ids are public (that is the premise)");
+
+  const attacker = h.connect("atk");
+  const before = h.emitted.length;
+  attacker.send("m2:join", { room: "R", name: "Attacker", playerId: victimId }); // no token
+  assert.equal(h.errorsAfter(before).length, 1, "hijack with a bare public id is rejected");
+  assert.equal(h.youFor("atk"), undefined, "the attacker receives no private view");
+
+  const wrong = h.connect("wrong");
+  const before2 = h.emitted.length;
+  wrong.send("m2:join", { room: "R", name: "Wrong", playerId: victimId, rejoinToken: "not-the-token" });
+  assert.equal(h.errorsAfter(before2).length, 1, "hijack with a wrong token is rejected");
+});
+
+test("the rejoin token is NEVER exposed in the broadcast state", () => {
+  const h = harness();
+  const a = h.connect("a");
+  a.send("m2:join", { room: "R", name: "A" });
+  const token = h.youFor("a").rejoinToken;
+  const blob = JSON.stringify(h.lastState());
+  assert.ok(!blob.includes(token), "m2:state must not leak the token that protects identity");
+  assert.ok(h.lastState().players.every((p) => p.rejoinToken === undefined));
+});
+
+test("a legitimate reconnect with the right token still recovers the player and its secret role", () => {
+  const { h, murdererSock } = startedGame(5);
+  const you = h.youFor(murdererSock.socket.id);
+  assert.equal(you.role, "murderer");
+
+  const again = h.connect("rejoined");
+  again.send("m2:join", { room: "R", name: "P0", playerId: you.id, rejoinToken: you.rejoinToken });
+  const recovered = h.youFor("rejoined");
+  assert.equal(recovered?.id, you.id, "same player restored");
+  assert.equal(recovered?.role, "murderer", "secret role recovered — the reconnect path still works");
+});
+
+test("anti-cheat: a player socket cannot run host actions (start / reset / vote control)", () => {
+  const h = harness();
+  const a = h.connect("a"); a.send("m2:join", { room: "R", name: "A" }); a.send("m2:pick", { characterId: "sam" });
+  const b = h.connect("b"); b.send("m2:join", { room: "R", name: "B" }); b.send("m2:pick", { characterId: "allen" });
+  const c = h.connect("c"); c.send("m2:join", { room: "R", name: "C" }); c.send("m2:pick", { characterId: "eugene" });
+
+  let before = h.emitted.length;
+  a.send("m2:start"); // a player, not the controller
+  assert.equal(h.errorsAfter(before).length, 1, "a player cannot start the game");
+  assert.equal(h.lastState().phase, "lobby", "the game did not start");
+
+  const host = h.connect("host", true);
+  host.send("m2:start");
+  assert.equal(h.lastState().phase, "playing", "the real host can start");
+
+  before = h.emitted.length;
+  b.send("m2:reset", {}); // the probe's griefing vector
+  assert.equal(h.errorsAfter(before).length, 1, "a player cannot reset the game");
+  assert.equal(h.lastState().phase, "playing", "the game was not wiped");
+
+  before = h.emitted.length;
+  c.send("m2:openVote");
+  assert.equal(h.errorsAfter(before).length, 1, "a player cannot call a town meeting");
+  assert.equal(h.lastState().phase, "playing");
+});
+
 // --- Item-set model (founder's manifest): the set frames the suspect, the method is the story ----
 
 test("the murderer's chosen method is recorded on the clue, and the set still frames its owner", () => {
-  const { h, players, murdererSock } = startedGame(5);
+  const { h, players, murdererSock, host } = startedGame(5);
   const victim = players.find((p) => p !== murdererSock);
   const you = h.youFor(murdererSock.socket.id);
   const w = you.weapons.find((x) => x.id !== you.ownWeaponId);
@@ -137,7 +216,7 @@ test("the murderer's chosen method is recorded on the clue, and the set still fr
 // that never sends the field still lands a valid kill on the set's first method.
 test("methodIndex defaults to the first method when the client omits it or sends null", () => {
   for (const omitted of [undefined, null]) {
-    const { h, players, murdererSock } = startedGame(5);
+    const { h, players, murdererSock, host } = startedGame(5);
     const victim = players.find((p) => p !== murdererSock);
     const you = h.youFor(murdererSock.socket.id);
     const w = you.weapons.find((x) => x.id !== you.ownWeaponId);
@@ -152,7 +231,7 @@ test("methodIndex defaults to the first method when the client omits it or sends
 // unconsumed once already (audit F-2) — if a field the banner reads goes missing, this fails rather
 // than the banner silently rendering "undefined" to a room full of players.
 test("the 'killed' announce carries everything the display banner renders", () => {
-  const { h, players, murdererSock } = startedGame(5);
+  const { h, players, murdererSock, host } = startedGame(5);
   const victim = players.find((p) => p !== murdererSock);
   const you = h.youFor(murdererSock.socket.id);
   const w = you.weapons.find((x) => x.id !== you.ownWeaponId);
@@ -170,7 +249,7 @@ test("the 'killed' announce carries everything the display banner renders", () =
 // Rejected, not clamped: a silently-clamped index would print a plausible but wrong story into the
 // permanent clue record, which is the failure mode the engine exists to prevent.
 test("anti-cheat: an out-of-range methodIndex is rejected and logs no clue", () => {
-  const { h, players, murdererSock } = startedGame(5);
+  const { h, players, murdererSock, host } = startedGame(5);
   const victim = players.find((p) => p !== murdererSock);
   const w = h.youFor(murdererSock.socket.id).weapons.find((x) => x.id !== h.youFor(murdererSock.socket.id).ownWeaponId);
   for (const methodIndex of [3, -1, 99, "1", 1.5, NaN, {}]) {
@@ -182,7 +261,7 @@ test("anti-cheat: an out-of-range methodIndex is rejected and logs no clue", () 
 });
 
 test("anti-cheat: malformed kill commands are rejected (bad victim / unknown weapon / self / absent-char weapon)", () => {
-  const { h, players, murdererSock } = startedGame(5);
+  const { h, players, murdererSock, host } = startedGame(5);
   const other = players.find((p) => p !== murdererSock);
   const bad = [
     { victimId: "nope", weaponId: "trowel" }, // victim doesn't exist
@@ -199,7 +278,7 @@ test("anti-cheat: malformed kill commands are rejected (bad victim / unknown wea
 });
 
 test("cooldown blocks a second kill until it elapses", () => {
-  const { h, players, murdererSock } = startedGame(5);
+  const { h, players, murdererSock, host } = startedGame(5);
   const you = h.youFor(murdererSock.socket.id);
   const w = you.weapons.find((x) => x.id !== you.ownWeaponId);
   const victims = players.filter((p) => p !== murdererSock);
@@ -214,7 +293,7 @@ test("cooldown blocks a second kill until it elapses", () => {
 });
 
 test("a weapon cannot be used more than twice", () => {
-  const { h, players, murdererSock } = startedGame(5);
+  const { h, players, murdererSock, host } = startedGame(5);
   const you = h.youFor(murdererSock.socket.id);
   const w = you.weapons.find((x) => x.id !== you.ownWeaponId);
   const victims = players.filter((p) => p !== murdererSock);
@@ -229,7 +308,7 @@ test("a weapon cannot be used more than twice", () => {
 });
 
 test("final kill must use the murderer's own weapon; reaching the target wins for murderers", () => {
-  const { h, players, murdererSock } = startedGame(5);
+  const { h, players, murdererSock, host } = startedGame(5);
   const you = h.youFor(murdererSock.socket.id);
   const own = you.ownWeaponId;
   const others = you.weapons.filter((w) => w.id !== own).map((w) => w.id);
@@ -250,7 +329,7 @@ test("final kill must use the murderer's own weapon; reaching the target wins fo
 });
 
 test("murderers win when all villagers are dead even if the kill target isn't reached (no deadlock)", () => {
-  const { h, players, murdererSock } = startedGame(3); // 1 murderer + 2 villagers, target defaults to 4
+  const { h, players, murdererSock, host } = startedGame(3); // 1 murderer + 2 villagers, target defaults to 4
   const villagers = players.filter((p) => p !== murdererSock);
   const w1 = h.youFor(murdererSock.socket.id).weapons.find((x) => x.remaining > 0);
   murdererSock.send("m2:kill", { victimId: villagers[0].pid(), weaponId: w1.id });
@@ -271,10 +350,10 @@ test("voting: a wrong majority clears the suspect + shortens the current cooldow
   // Kill 1 → sets a full 75s cooldown.
   g.murdererSock.send("m2:kill", { victimId: vills[0].pid(), weaponId: w.id });
   // Host opens a town meeting; three living players wrongly vote an innocent villager.
-  g.players[0].send("m2:openVote");
+  g.host.send("m2:openVote");
   const innocent = vills[1];
   [g.murdererSock, vills[2], vills[3]].forEach((p) => p.send("m2:vote", { suspectId: innocent.pid() }));
-  g.players[0].send("m2:closeVote"); // host closes → resolve
+  g.host.send("m2:closeVote"); // host closes → resolve
   const st = g.h.lastState();
   assert.equal(st.phase, "playing"); // wrong guess → back to playing
   assert.equal(st.players.find((p) => p.id === innocent.pid()).cleared, true);
@@ -285,15 +364,15 @@ test("voting: a wrong majority clears the suspect + shortens the current cooldow
 });
 
 test("voting: a split with no majority resolves with no effect (back to playing)", () => {
-  const { h, players, murdererSock } = startedGame(5);
+  const { h, players, murdererSock, host } = startedGame(5);
   void murdererSock;
-  players[0].send("m2:openVote"); // player 0 acts as host
+  host.send("m2:openVote");
   const A = players[2].pid(), B = players[3].pid();
   players[0].send("m2:vote", { suspectId: A });
   players[1].send("m2:vote", { suspectId: A }); // 2 for A
   players[2].send("m2:vote", { suspectId: B });
   players[4].send("m2:vote", { suspectId: B }); // 2 for B; player 3 abstains → not all voted
-  players[0].send("m2:closeVote");
+  host.send("m2:closeVote");
   const st = h.lastState();
   assert.equal(st.phase, "playing"); // 2 vs 2 of 5 → no majority
   assert.equal(st.winner, null);
@@ -301,13 +380,13 @@ test("voting: a split with no majority resolves with no effect (back to playing)
 });
 
 test("anti-cheat: the dead cannot vote and no one votes twice", () => {
-  const { h, players, murdererSock } = startedGame(5);
+  const { h, players, murdererSock, host } = startedGame(5);
   const you = h.youFor(murdererSock.socket.id);
   const w = you.weapons.find((x) => x.id !== you.ownWeaponId);
   const dead = players.find((p) => p !== murdererSock);
   murdererSock.send("m2:kill", { victimId: dead.pid(), weaponId: w.id });
   const alive1 = players.find((p) => p !== murdererSock && p !== dead);
-  murdererSock.send("m2:openVote"); // any joined socket can open (host); murderer is alive
+  host.send("m2:openVote"); // the host opens the meeting; the murderer is alive and may vote
 
   let before = h.emitted.length;
   dead.send("m2:vote", { suspectId: murdererSock.pid() }); // dead → rejected
@@ -320,19 +399,19 @@ test("anti-cheat: the dead cannot vote and no one votes twice", () => {
 });
 
 test("rule interaction: a cleared suspect is immune from RE-voting but the murderer can still kill them", () => {
-  const { h, players, murdererSock } = startedGame(5);
+  const { h, players, murdererSock, host } = startedGame(5);
   const innocent = players.find((p) => p !== murdererSock);
   // Wrong majority clears the innocent.
-  players[0].send("m2:openVote");
+  host.send("m2:openVote");
   players.slice(0, 3).forEach((p) => p.send("m2:vote", { suspectId: innocent.pid() }));
-  players[0].send("m2:closeVote");
+  host.send("m2:closeVote");
   assert.equal(h.lastState().players.find((p) => p.id === innocent.pid()).cleared, true);
   // Re-open: the cleared player cannot be voted again.
-  players[0].send("m2:openVote");
+  host.send("m2:openVote");
   const before = h.emitted.length;
   players[1].send("m2:vote", { suspectId: innocent.pid() });
   assert.equal(h.errorsAfter(before).length, 1, "cleared suspect is rejected from voting");
-  players[0].send("m2:closeVote");
+  host.send("m2:closeVote");
   // But clearing is vote-immunity only — the murderer can still kill them.
   const you = h.youFor(murdererSock.socket.id);
   const w = you.weapons.find((x) => x.id !== you.ownWeaponId);
@@ -341,7 +420,7 @@ test("rule interaction: a cleared suspect is immune from RE-voting but the murde
 });
 
 test("full game arc: kill → clue → wrong vote (clear+reward) → reward-cooldown kill → correct vote → town wins", () => {
-  const { h, players, murdererSock } = startedGame(5);
+  const { h, players, murdererSock, host } = startedGame(5);
   const own = h.youFor(murdererSock.socket.id).ownWeaponId;
   const vills = players.filter((p) => p !== murdererSock);
   const otherWeapon = () => h.youFor(murdererSock.socket.id).weapons.find((x) => x.id !== own && x.remaining > 0);
@@ -349,18 +428,18 @@ test("full game arc: kill → clue → wrong vote (clear+reward) → reward-cool
   murdererSock.send("m2:kill", { victimId: vills[0].pid(), weaponId: otherWeapon().id }); // kill 1
   assert.equal(h.lastState().clues.length, 1);
 
-  players[0].send("m2:openVote"); // town meeting → wrongly clears vills[1]
+  host.send("m2:openVote"); // town meeting → wrongly clears vills[1]
   [murdererSock, vills[2], vills[3]].forEach((p) => p.send("m2:vote", { suspectId: vills[1].pid() }));
-  players[0].send("m2:closeVote");
+  host.send("m2:closeVote");
   assert.equal(h.lastState().players.find((p) => p.id === vills[1].pid()).cleared, true);
 
   h.advance(31_000); // reward shortened the cooldown → next kill lands before the full 75s
   murdererSock.send("m2:kill", { victimId: vills[2].pid(), weaponId: otherWeapon().id }); // kill 2
   assert.equal(h.lastState().clues.length, 2);
 
-  players[0].send("m2:openVote"); // alive: murderer + cleared-but-alive vills[1] + vills[3]
+  host.send("m2:openVote"); // alive: murderer + cleared-but-alive vills[1] + vills[3]
   [vills[1], vills[3]].forEach((p) => p.send("m2:vote", { suspectId: murdererSock.pid() })); // 2 of 3 → majority
-  players[0].send("m2:closeVote");
+  host.send("m2:closeVote");
   const st = h.lastState();
   assert.equal(st.phase, "ended");
   assert.equal(st.winner, "town");
@@ -369,9 +448,9 @@ test("full game arc: kill → clue → wrong vote (clear+reward) → reward-cool
 test("voting: a correct majority on the murderer wins for the town", () => {
   const g = startedGame(5);
   const vills = g.players.filter((p) => p !== g.murdererSock);
-  g.players[0].send("m2:openVote");
+  g.host.send("m2:openVote");
   vills.slice(0, 3).forEach((p) => p.send("m2:vote", { suspectId: g.murdererSock.pid() }));
-  g.players[0].send("m2:closeVote");
+  g.host.send("m2:closeVote");
   const st = g.h.lastState();
   assert.equal(st.phase, "ended");
   assert.equal(st.winner, "town");

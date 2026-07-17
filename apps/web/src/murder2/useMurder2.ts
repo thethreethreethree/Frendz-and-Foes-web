@@ -21,7 +21,7 @@ export function useMurder2(room: string, role: "host" | "display" | "player") {
       setConnected(true);
       if (role === "player") {
         const st = loadPlayer2(room);
-        if (st.name) m2Join(room, st.name, st.id);
+        if (st.name) m2Join(room, st.name, st.id, st.rejoinToken);
       } else {
         s.emit("join", { room, role });
       }
@@ -53,8 +53,15 @@ export function useMurder2(room: string, role: "host" | "display" | "player") {
     };
   }, [room, role]);
 
-  useEffect(() => { if (you?.id) savePlayer2(room, { id: you.id }); }, [you?.id, room]);
+  // Persist the id AND its proof: on reload the id alone is no longer enough to reclaim the player.
+  useEffect(() => {
+    if (you?.id) savePlayer2(room, { id: you.id, ...(you.rejoinToken ? { rejoinToken: you.rejoinToken } : {}) });
+  }, [you?.id, you?.rejoinToken, room]);
 
-  const join = (name: string) => { savePlayer2(room, { name }); m2Join(room, name, loadPlayer2(room).id); };
+  const join = (name: string) => {
+    savePlayer2(room, { name });
+    const st = loadPlayer2(room);
+    m2Join(room, name, st.id, st.rejoinToken);
+  };
   return { state, you, announce, error, connected, join };
 }
