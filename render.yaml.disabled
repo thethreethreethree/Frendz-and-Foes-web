@@ -1,3 +1,5 @@
+# DISABLED 2026-07-20: deploying via Hetzner (HETZNER-DEPLOY-RUNBOOK). Renamed so a push can't
+# trigger a competing Render blueprint deploy. To re-enable Render: rename back to render.yaml.
 # Render Blueprint — one web service that builds the frontend and runs the relay server.
 # The server serves the built app AND the Socket.IO relay on the same origin, so real-time
 # sync works with zero extra config. Deploys automatically on every push to the repo.
