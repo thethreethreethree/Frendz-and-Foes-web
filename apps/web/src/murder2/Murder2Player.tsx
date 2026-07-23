@@ -227,7 +227,7 @@ function DoctorView({ state, you }: { state: any; you: any }) {
   const targets: V2Player[] = state.players.filter((p: V2Player) => p.alive && p.characterId);
   return (
     <div className="h-full overflow-auto bg-[#0f2a24] p-4 text-white">
-      <RoleBanner src="/roles/role-survivor.webp" />
+      <RoleBanner src="/roles/role-doctor.webp" />
       <div className="ff-title text-3xl text-teal">YOU ARE THE DOCTOR</div>
       <MyCard state={state} you={you} />
       {!me?.alive ? (
