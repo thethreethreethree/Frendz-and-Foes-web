@@ -234,9 +234,8 @@ function VillagerView({ state, you }: { state: any; you: any }) {
   const me = state.players.find((p: V2Player) => p.id === you.id);
   return (
     <div className="h-full overflow-auto bg-cream p-4">
-      {/* No villager-specific role card was drawn (the art set covers murderer/dead/accused/survivor);
-          a killed villager gets the "dead" card, the living see their own character card. */}
-      {!me?.alive && <RoleBanner src="/roles/role-dead.webp" />}
+      {/* Living villagers get the villager reveal card; a killed one gets the "dead" card. */}
+      <RoleBanner src={me?.alive ? "/roles/role-villager.webp" : "/roles/role-dead.webp"} />
       <div className="ff-title text-2xl text-ink">YOU ARE A VILLAGER</div>
       <MyCard state={state} you={you} />
       <p className="text-sm text-ink/60">{me?.alive ? "Watch the clues. Catch the murderer when the town meets." : "You were killed — spectate."}</p>
