@@ -11,7 +11,7 @@ export function Murder2Host({ room }: { room: string }) {
   return (
     <Wrap>
       {error && <div className="mb-3 rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white">{error}</div>}
-      <div className="ff-title text-2xl text-ink">HOST — The Villagers</div>
+      <div className="ff-title text-2xl text-ink">HOST — The Villagers{state.round ? <span className="ml-2 text-base text-ink/50">Round {state.round}</span> : null}</div>
       <p className="text-sm text-ink/60">{picked} of {state.players.length} joined players have picked a character.</p>
 
       {state.phase === "lobby" && <Config state={state} canStart={picked >= 3} />}
@@ -34,8 +34,9 @@ export function Murder2Host({ room }: { room: string }) {
       {state.phase === "ended" && (
         <div className="mt-4 space-y-2">
           <p className="rounded-lg bg-pink/10 px-3 py-2 font-display text-lg">{state.winner === "town" ? "Town won!" : "Murderer won!"}</p>
-          <button onClick={() => m2Reset(false)} className="ff-sticker w-full bg-teal px-4 py-2 font-display text-lg text-white">PLAY AGAIN (keep players)</button>
-          <button onClick={() => m2Reset(true)} className="rounded-lg border border-ink/20 px-4 py-2 text-sm">Full reset (drop players)</button>
+          <Standings state={state} />
+          <button onClick={() => m2Reset(false)} className="ff-sticker w-full bg-teal px-4 py-2 font-display text-lg text-white">NEXT ROUND (keep players + scores)</button>
+          <button onClick={() => m2Reset(true)} className="rounded-lg border border-ink/20 px-4 py-2 text-sm">End tournament — full reset (drop players + scores)</button>
         </div>
       )}
 
@@ -44,12 +45,27 @@ export function Murder2Host({ room }: { room: string }) {
   );
 }
 
+// Mirrors the server's auto-scaling so the host knows the game's role make-up before starting.
+function roleComposition(picked: number) {
+  const murderers = picked >= 14 ? 3 : picked >= 8 ? 2 : 1;
+  const detective = picked >= 4 ? 1 : 0;
+  const doctor = picked >= 6 ? 1 : 0;
+  const villagers = Math.max(0, picked - murderers - detective - doctor);
+  const parts = [`${murderers} murderer${murderers > 1 ? "s" : ""}`];
+  if (detective) parts.push("a detective");
+  if (doctor) parts.push("a doctor");
+  parts.push(`${villagers} villager${villagers === 1 ? "" : "s"}`);
+  return parts.join(" · ");
+}
+
 function Config({ state, canStart }: { state: V2State; canStart: boolean }) {
   const [kills, setKills] = useState(state.killTarget);
   const [cooldown, setCooldown] = useState(state.cooldownSec);
+  const picked = state.players.filter((p) => p.characterId).length;
   const apply = () => m2Config({ killTarget: kills, cooldownSec: cooldown });
   return (
     <div className="mt-4 space-y-3">
+      {canStart && <p className="rounded-lg bg-cream px-3 py-2 text-sm text-ink/70">This game: <b>{roleComposition(picked)}</b>.</p>}
       <label className="block text-sm font-semibold text-ink/70">Kills to win: {kills}
         <input type="range" min={2} max={8} value={kills} onChange={(e) => setKills(+e.target.value)} onMouseUp={apply} onTouchEnd={apply} className="w-full" />
       </label>
@@ -59,6 +75,24 @@ function Config({ state, canStart }: { state: V2State; canStart: boolean }) {
       <button disabled={!canStart} onClick={m2Start} className="ff-sticker w-full bg-pink px-4 py-3 font-display text-xl text-white disabled:opacity-40">
         {canStart ? "START GAME" : "Need 3+ players with characters"}
       </button>
+    </div>
+  );
+}
+
+// Running tournament standings for the host, so they can see who's ahead before starting the next round.
+function Standings({ state }: { state: V2State }) {
+  const scores = state.scores || {};
+  const rows = state.players.filter((p) => p.characterId).map((p) => ({ name: p.name, pts: scores[p.id] || 0 })).sort((a, b) => b.pts - a.pts);
+  if (!rows.length) return null;
+  const top = rows[0]?.pts ?? 0;
+  return (
+    <div className="rounded-lg bg-cream px-3 py-2 text-sm">
+      <div className="font-semibold text-ink/70">Standings after {state.round} round{state.round === 1 ? "" : "s"}</div>
+      {rows.map((r, i) => (
+        <div key={i} className={`flex justify-between ${r.pts === top && top > 0 ? "font-bold" : ""}`}>
+          <span>{i + 1}. {r.name}{r.pts === top && top > 0 ? " 👑" : ""}</span><span>{r.pts}</span>
+        </div>
+      ))}
     </div>
   );
 }
