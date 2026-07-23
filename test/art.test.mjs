@@ -39,7 +39,7 @@ test("every art path the CODE REFERENCES exists on disk (the wired seam is gated
 
 // Locations are resolved dynamically (locationPlate(location)); assert all 97 have a plate except the
 // documented gaps. F-3 will fill these; until then they degrade cleanly (onError hides the plate).
-const KNOWN_MISSING = ["Bakery", "Chimney Sweep", "Precinct", "Chicken Coop", "The Heights", "The Wilds", "Study", "Music Master", "Judicial Accoutrement"];
+const KNOWN_MISSING = ["Bakery", "Chimney Sweep"];
 const slug = (s) => s.toLowerCase().replace(/['’]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").replace(/^the-/, "");
 
 test("every location has a plate except the documented known-gaps", () => {
