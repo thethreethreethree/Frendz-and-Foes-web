@@ -441,6 +441,18 @@ test("scoring: round increments each start; scores persist over a soft reset, cl
   assert.equal(h.lastState().round, 0);
 });
 
+test("F-2: the shield is cleared when its target is executed by vote (no stale protectedId)", () => {
+  const { h, players, murdererSock, host } = startedGame(6); // 1 murderer + detective + doctor + 3 villagers
+  const doctor = players.find((p) => h.youFor(p.socket.id)?.role === "doctor");
+  const m = h.rooms.get("T:R").murder2; // direct server-state check — protectedId is secret, not in publicState
+  doctor.send("m2:protect", { targetId: murdererSock.pid() }); // doctor blindly shields the murderer
+  assert.equal(m.protectedId, murdererSock.pid(), "shield set");
+  host.send("m2:openVote");
+  players.filter((p) => h.lastState().players.find((q) => q.id === p.pid())?.alive).forEach((p) => p.send("m2:vote", { suspectId: murdererSock.pid() }));
+  assert.equal(h.lastState().winner, "town", "murderer voted out");
+  assert.equal(m.protectedId, null, "shield cleared — no dead-player pointer left behind");
+});
+
 // --- Dying clue (last words) --------------------------------------------------------------------
 const killOne = (h, players, murdererSock) => {
   const you = h.youFor(murdererSock.socket.id);

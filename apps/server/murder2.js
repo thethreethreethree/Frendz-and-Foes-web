@@ -454,6 +454,7 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
       // otherwise the killing continues with one fewer.
       const caught = m.players.get(topId);
       if (caught) caught.alive = false;
+      if (m.protectedId === topId) m.protectedId = null; // F-2: don't leave the shield on a dead player
       if (murderersAlive(m) === 0) {
         m.phase = "ended";
         m.winner = "town";
