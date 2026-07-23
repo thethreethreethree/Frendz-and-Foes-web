@@ -60,6 +60,7 @@ function PhoneMoment({ announce }: { announce: { a: V2Announce; nonce: number } 
     else if (a.type === "vote-wrong") { text = `❌ ${a.cleared} was innocent`; sub = "the murderer is still among you"; art = "/events/event-accuse-wrong.webp"; playSfx("buzzer"); }
     else if (a.type === "vote-none") { text = "🤷 No majority"; playSfx("swoosh"); }
     else if (a.type === "saved") { text = `🛡️ ${a.victim} survived!`; sub = "a healing hand intervened"; art = "/events/event-accuse-right.webp"; playSfx("reveal"); }
+    else if (a.type === "vote-caught") { text = `⚖️ ${a.caught} caught!`; sub = `${a.remaining} still at large`; art = "/events/event-accuse-right.webp"; playSfx("gong"); }
     else if (a.type === "end") { text = a.winner === "town" ? "🎉 Town wins!" : "🔪 Murderer wins!"; sub = a.caught ? `${a.caught} did it` : undefined; art = a.winner === "town" ? "/events/event-accuse-right.webp" : "/events/event-kill.webp"; playSfx("gong"); }
     if (!text) return;
     setShow({ text, sub, art, nonce: announce.nonce });
@@ -121,6 +122,7 @@ function MurdererView({ state, you }: { state: any; you: any }) {
       <p className="mt-1 text-sm text-white/70">
         Your item set: <b>{you.ownWeapon?.emoji} {you.ownWeapon?.label}</b> · Kills left: <b>{you.killsRemaining}</b>
       </p>
+      {you.allies?.length ? <p className="mt-1 text-sm text-pink/90">🔪 Your accomplices: {you.allies.map((a: any) => a.name + (a.alive ? "" : " ☠")).join(", ")} — you share the kill count.</p> : null}
       {cd > 0 && <p className="mt-2 rounded-lg bg-white/10 px-3 py-2 text-sm">Cooling down… <b>{cd}s</b> until you can kill.</p>}
       {you.mustUseOwnNow && <p className="mt-2 rounded-lg bg-pink/30 px-3 py-2 text-sm">Final kill — you must use your OWN item set.</p>}
 
@@ -327,7 +329,7 @@ function Voting({ state, you }: { state: any; you: any }) {
 }
 
 function Ended({ state, you }: { state: any; you: any }) {
-  const murderer = state.players.find((p: V2Player) => p.id === state.murdererId);
+  const murderers = (state.murdererIds || []).map((id: string) => state.players.find((p: V2Player) => p.id === id)).filter(Boolean) as V2Player[];
   const me = state.players.find((p: V2Player) => p.id === you.id);
   const survived = you.role !== "murderer" && me?.alive;
   const won = (state.winner === "murderers") === (you.role === "murderer");
@@ -335,7 +337,7 @@ function Ended({ state, you }: { state: any; you: any }) {
     <Screen>
       {survived && <RoleBanner src="/roles/role-survivor.webp" />}
       <div className="ff-title text-4xl text-pink"><Icon name="icon-winner" className="inline h-8 w-8 align-[-6px]" /> {state.winner === "town" ? "TOWN WINS" : "MURDERER WINS"}</div>
-      <p className="mt-2 text-lg text-ink">The murderer was <b>{murderer?.name}</b> ({charName(state, murderer?.characterId)}).</p>
+      <p className="mt-2 text-lg text-ink">{murderers.length > 1 ? "The murderers were" : "The murderer was"} <b>{murderers.map((mp) => mp.name).join(", ")}</b>.</p>
       {state.detectiveId && <p className="text-sm text-ink/70">🔍 The detective was <b>{state.players.find((p: V2Player) => p.id === state.detectiveId)?.name}</b>.</p>}
       {state.doctorId && <p className="text-sm text-ink/70">🛡️ The doctor was <b>{state.players.find((p: V2Player) => p.id === state.doctorId)?.name}</b>.</p>}
       <p className={`mt-3 font-display text-2xl ${won ? "text-teal" : "text-ink/50"}`}>{won ? "You won!" : "You lost."}</p>

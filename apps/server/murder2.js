@@ -22,7 +22,7 @@ function ensure(rooms, code) {
     r.murder2 = {
       phase: "lobby",
       players: new Map(),
-      murdererId: null,
+      murdererIds: [],
       detectiveId: null,        // one player (games of 4+) can privately investigate suspects
       doctorId: null,           // one player (games of 6+) can shield a target from the next attack
       protectedId: null,        // who the doctor is currently shielding — SECRET, never in publicState
@@ -54,12 +54,9 @@ function shuffle(arr) {
 const alivePlayers = (m) => [...m.players.values()].filter((p) => p.alive);
 const takenCharacterIds = (m) => new Set([...m.players.values()].map((p) => p.characterId).filter(Boolean));
 const playerByCharacter = (m, characterId) => [...m.players.values()].find((p) => p.characterId === characterId) || null;
-const murderer = (m) => (m.murdererId ? m.players.get(m.murdererId) : null);
-const ownWeaponId = (m) => {
-  const mu = murderer(m);
-  const v = mu?.characterId ? getVillager(mu.characterId) : null;
-  return v ? v.weaponId : null;
-};
+const isMurderer = (m, id) => m.murdererIds.includes(id);
+const murderersAlive = (m) => m.murdererIds.filter((id) => m.players.get(id)?.alive).length;
+const ownWeaponIdOf = (p) => (p && p.characterId ? getVillager(p.characterId)?.weaponId : null);
 
 // The weapons the murderer may choose from = signature weapons of characters players actually picked.
 function availableWeapons(m) {
@@ -86,7 +83,7 @@ function publicState(m) {
     cooldownUntil: m.cooldownUntil,
     killCount: m.kills.length,
     winner: m.winner,
-    murdererId: reveal ? m.murdererId : undefined,
+    murdererIds: reveal ? [...m.murdererIds] : undefined,
     detectiveId: reveal ? m.detectiveId : undefined,
     hasDetective: !!m.detectiveId,
     doctorId: reveal ? m.doctorId : undefined,
@@ -141,7 +138,7 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
     if (!p.socketId) return;
     const base = { id: p.id, role: p.role, alive: p.alive, characterId: p.characterId, rejoinToken: p.rejoinToken };
     if (p.role === "murderer") {
-      const own = ownWeaponId(m);
+      const own = ownWeaponIdOf(p);
       io.to(p.socketId).emit("m2:you", {
         ...base,
         ownWeaponId: own,
@@ -149,7 +146,10 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
         killsRemaining: m.killTarget - m.kills.length,
         weapons: availableWeapons(m),
         cooldownUntil: m.cooldownUntil,
-        mustUseOwnNow: m.killTarget - m.kills.length <= 1 && !(m.weaponUses[own] > 0),
+        // Self-incrimination is a LONE-murderer rule; with a team, whose "own set" the shared final
+        // kill uses is ambiguous, so it's relaxed.
+        mustUseOwnNow: m.murdererIds.length === 1 && m.killTarget - m.kills.length <= 1 && !(m.weaponUses[own] > 0),
+        allies: m.murdererIds.filter((id) => id !== p.id).map((id) => ({ id, name: m.players.get(id)?.name || "?", alive: !!m.players.get(id)?.alive })),
       });
     } else if (p.role === "detective") {
       // Findings are delivered ONLY here, on the detective's own private channel — never in the
@@ -250,15 +250,16 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
     if (withChar.length < 3) return err("Need at least 3 players who picked a character.");
     for (const p of m.players.values()) { p.alive = true; p.role = "villager"; p.lastWords = null; }
     const order = shuffle(withChar);
-    order[0].role = "murderer";
-    m.murdererId = order[0].id;
-    // A detective joins the town once there are enough players that one hidden investigator still
-    // leaves ≥2 plain villagers (murderer + detective + 2). Below that, no detective.
+    let idx = 0;
+    // The murderer TEAM scales with the crowd: 1 alone, 2 at 8+, 3 at 14+.
+    const numMurderers = withChar.length >= 14 ? 3 : withChar.length >= 8 ? 2 : 1;
+    m.murdererIds = [];
+    for (let k = 0; k < numMurderers; k++) { order[idx].role = "murderer"; m.murdererIds.push(order[idx].id); idx++; }
+    // A detective joins at 4+ (leaves ≥2 plain villagers); a doctor at 6+.
     m.detectiveId = null;
-    if (withChar.length >= 4) { order[1].role = "detective"; m.detectiveId = order[1].id; }
-    // A doctor joins once the town is big enough to still leave ≥3 plain villagers (6+ players).
+    if (withChar.length >= 4) { order[idx].role = "detective"; m.detectiveId = order[idx].id; idx++; }
     m.doctorId = null;
-    if (withChar.length >= 6) { order[2].role = "doctor"; m.doctorId = order[2].id; }
+    if (withChar.length >= 6) { order[idx].role = "doctor"; m.doctorId = order[idx].id; idx++; }
     m.phase = "playing";
     m.kills = [];
     m.weaponUses = {};
@@ -285,7 +286,7 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
     const suspect = m.players.get(suspectId);
     if (!suspect || suspect.id === p.id) return err("Invalid suspect.");
     if (m.findings.some((f) => f.suspectId === suspectId)) return err("You already investigated them.");
-    m.findings.push({ suspectId, isMurderer: suspect.id === m.murdererId, at: now() });
+    m.findings.push({ suspectId, isMurderer: isMurderer(m, suspectId), at: now() });
     m.investigateUntil = now() + DEFAULTS.investigateCooldownSec * 1000;
     sendYou(m, p); // the result goes ONLY to the detective; no broadcast, no announce
   });
@@ -353,10 +354,10 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
     const mi = methodIndex ?? 0;
     if (!Number.isInteger(mi) || mi < 0 || mi >= set.methods.length) return err("Unknown method for that item set.");
 
-    // Must-use-own enforcement: on the final kill, if the own weapon was never used, force it.
-    const own = ownWeaponId(m);
+    // Must-use-own enforcement (LONE murderer only — self-incrimination). Relaxed for a team.
+    const own = ownWeaponIdOf(killer);
     const killsRemaining = m.killTarget - m.kills.length;
-    if (killsRemaining <= 1 && !(m.weaponUses[own] > 0) && weaponId !== own) {
+    if (m.murdererIds.length === 1 && killsRemaining <= 1 && !(m.weaponUses[own] > 0) && weaponId !== own) {
       return err("Final kill: you must use your own item set.");
     }
 
@@ -371,7 +372,7 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
 
     // Murderers win at the kill target OR when no villagers remain alive (prevents a deadlock when
     // killTarget exceeds the number of villagers — e.g. 4 target with only 2 villagers).
-    const villagersAlive = alivePlayers(m).filter((p) => p.id !== m.murdererId).length;
+    const villagersAlive = alivePlayers(m).filter((p) => !isMurderer(m, p.id)).length;
     if (m.kills.length >= m.killTarget || villagersAlive === 0) {
       m.phase = "ended";
       m.winner = "murderers";
@@ -424,10 +425,19 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
     const majority = topId && topN > livingCount / 2;
     m.vote = null;
 
-    if (majority && topId === m.murdererId) {
-      m.phase = "ended";
-      m.winner = "town";
-      announce(code, { type: "end", winner: "town", caught: m.players.get(topId)?.name });
+    if (majority && isMurderer(m, topId)) {
+      // A murderer is caught and executed. The town wins only once EVERY murderer is caught;
+      // otherwise the killing continues with one fewer.
+      const caught = m.players.get(topId);
+      if (caught) caught.alive = false;
+      if (murderersAlive(m) === 0) {
+        m.phase = "ended";
+        m.winner = "town";
+        announce(code, { type: "end", winner: "town", caught: caught?.name });
+      } else {
+        m.phase = "playing";
+        announce(code, { type: "vote-caught", caught: caught?.name, remaining: murderersAlive(m) });
+      }
     } else if (majority && topId) {
       // Wrong majority: clear the suspect (immune) + reward the murderer by shortening the CURRENT
       // cooldown so the next kill can come sooner.
@@ -439,7 +449,7 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
       m.phase = "playing"; // no majority → nothing happens
       announce(code, { type: "vote-none" });
     }
-    if (m.phase === "playing") { const mu = murderer(m); if (mu) sendYou(m, mu); }
+    if (m.phase === "playing") { for (const id of m.murdererIds) { const mu = m.players.get(id); if (mu && mu.alive) sendYou(m, mu); } }
     broadcast(code);
   }
 
@@ -450,7 +460,7 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
     if (!m) return;
     if (full) m.players.clear();
     m.phase = "lobby";
-    m.murdererId = null;
+    m.murdererIds = [];
     m.detectiveId = null;
     m.doctorId = null;
     m.protectedId = null;

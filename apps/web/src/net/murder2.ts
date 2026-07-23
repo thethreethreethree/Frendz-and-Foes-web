@@ -25,7 +25,7 @@ export interface V2Clue {
 export interface V2State {
   phase: "lobby" | "playing" | "voting" | "ended";
   killTarget: number; cooldownSec: number; cooldownUntil: number; killCount: number;
-  winner: null | "murderers" | "town"; murdererId?: string; detectiveId?: string; hasDetective?: boolean;
+  winner: null | "murderers" | "town"; murdererIds?: string[]; detectiveId?: string; hasDetective?: boolean;
   doctorId?: string; hasDoctor?: boolean;
   characters: V2Character[]; weapons: Record<string, V2Weapon>;
   players: V2Player[]; clues: V2Clue[];
@@ -42,6 +42,7 @@ export interface V2You {
   rejoinToken?: string;
   ownWeaponId?: string | null; ownWeapon?: V2Weapon | null; killsRemaining?: number;
   weapons?: V2AvailWeapon[]; cooldownUntil?: number; mustUseOwnNow?: boolean;
+  allies?: { id: string; name: string; alive: boolean }[]; // fellow murderers (team games)
   // Detective-only, private: investigation cooldown + the results learned so far.
   investigateUntil?: number; investigateCooldownSec?: number; findings?: V2Finding[];
   // Doctor-only, private: protect cooldown + who they're currently shielding.
@@ -54,6 +55,7 @@ export type V2Announce =
   | { type: "vote-open" }
   | { type: "vote-wrong"; cleared: string }
   | { type: "vote-none" }
+  | { type: "vote-caught"; caught: string; remaining: number }
   | { type: "saved"; victim: string }
   | { type: "end"; winner: "murderers" | "town"; caught?: string };
 

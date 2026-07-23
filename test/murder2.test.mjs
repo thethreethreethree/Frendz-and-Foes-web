@@ -173,17 +173,72 @@ test("anti-cheat: a non-murderer cannot kill (server-authority)", () => {
   assert.equal(h.lastState().players.find((p) => p.id === victim.pid()).alive, true, "victim still alive");
 });
 
-test("scale: a realistically-large 15-player game works (one murderer, 15 framing options, a kill lands)", () => {
-  const { h, players, murdererSock, host } = startedGame(15);
+test("scale: a 15-player game fields a 3-murderer TEAM, and a kill lands", () => {
+  const { h, players, murdererSock } = startedGame(15);
   const st = h.lastState();
   assert.equal(st.players.filter((p) => p.characterId).length, 15);
-  assert.equal(players.map((p) => h.youFor(p.socket.id)?.role).filter((r) => r === "murderer").length, 1);
+  assert.equal(players.map((p) => h.youFor(p.socket.id)?.role).filter((r) => r === "murderer").length, 3, "15 players → 3 murderers");
   const you = h.youFor(murdererSock.socket.id);
   assert.equal(you.weapons.length, 15, "framing pool covers all 15 present characters");
-  const victim = players.find((p) => p !== murdererSock);
+  assert.equal((you.allies || []).length, 2, "each murderer sees their 2 accomplices");
+  const victim = players.find((p) => h.youFor(p.socket.id)?.role !== "murderer");
   const w = you.weapons.find((x) => x.id !== you.ownWeaponId);
   murdererSock.send("m2:kill", { victimId: victim.pid(), weaponId: w.id });
   assert.equal(h.lastState().clues.length, 1, "a kill lands at scale");
+});
+
+// --- Multiple murderers (team) ------------------------------------------------------------------
+test("murderer counts scale: 1 (<8), 2 (8-13), 3 (14+); each sees their allies, villagers don't", () => {
+  for (const [n, expected] of [[7, 1], [8, 2], [14, 3]]) {
+    const { h, players } = startedGame(n);
+    const murderers = players.filter((p) => h.youFor(p.socket.id)?.role === "murderer");
+    assert.equal(murderers.length, expected, `${n} players → ${expected} murderers`);
+    if (expected > 1) {
+      const you = h.youFor(murderers[0].socket.id);
+      assert.equal((you.allies || []).length, expected - 1, "a murderer sees the rest of the team");
+    }
+    const vil = players.find((p) => h.youFor(p.socket.id)?.role === "villager");
+    assert.equal(h.youFor(vil.socket.id).allies, undefined, "villagers never see the murderer team");
+  }
+});
+
+test("team: any murderer can kill, they share the kill count, and all count as non-villagers for the win", () => {
+  const { h, players } = startedGame(8); // 2 murderers + detective + doctor + 4 villagers
+  const murderers = players.filter((p) => h.youFor(p.socket.id)?.role === "murderer");
+  assert.equal(murderers.length, 2);
+  const victims = players.filter((p) => h.youFor(p.socket.id)?.role === "villager");
+  const you0 = h.youFor(murderers[0].socket.id);
+  const w0 = you0.weapons.find((x) => x.id !== you0.ownWeaponId);
+  murderers[0].send("m2:kill", { victimId: victims[0].pid(), weaponId: w0.id, methodIndex: 0 });
+  assert.equal(h.lastState().killCount, 1, "murderer A's kill counts");
+  h.advance(76000);
+  const you1 = h.youFor(murderers[1].socket.id);
+  const w1 = you1.weapons.find((x) => x.id !== you1.ownWeaponId);
+  murderers[1].send("m2:kill", { victimId: victims[1].pid(), weaponId: w1.id, methodIndex: 0 });
+  assert.equal(h.lastState().killCount, 2, "murderer B shares the same kill count (team, not per-player)");
+});
+
+test("vote: catching ONE of two murderers does NOT end the game; catching the last does", () => {
+  const { h, players, host } = startedGame(8);
+  const murderers = players.filter((p) => h.youFor(p.socket.id)?.role === "murderer");
+  const townVote = (suspectPid) => {
+    host.send("m2:openVote");
+    players.filter((p) => h.lastState().players.find((q) => q.id === p.pid())?.alive).forEach((p) => p.send("m2:vote", { suspectId: suspectPid }));
+  };
+  townVote(murderers[0].pid());
+  assert.equal(h.lastState().phase, "playing", "one murderer caught — game continues");
+  assert.equal(h.lastState().players.find((p) => p.id === murderers[0].pid()).alive, false, "the caught murderer is executed");
+  townVote(murderers[1].pid());
+  assert.equal(h.lastState().phase, "ended", "the last murderer caught — game over");
+  assert.equal(h.lastState().winner, "town", "town wins only when ALL murderers are caught");
+  assert.deepEqual((h.lastState().murdererIds || []).sort(), murderers.map((m) => m.pid()).sort(), "reveal lists the whole team");
+});
+
+test("team: must-use-own is relaxed (a murderer may frame with any set on the final kill)", () => {
+  const { h, players } = startedGame(8);
+  const murderers = players.filter((p) => h.youFor(p.socket.id)?.role === "murderer");
+  const you = h.youFor(murderers[0].socket.id);
+  assert.equal(you.mustUseOwnNow, false, "no forced-own for a team");
 });
 
 test("a kill logs a framing clue (weapon → the framed player) and downs the victim", () => {

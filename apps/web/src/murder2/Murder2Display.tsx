@@ -154,13 +154,13 @@ function VoteTally({ state }: { state: V2State }) {
 }
 
 function EndBanner({ state }: { state: V2State }) {
-  const murderer = state.players.find((p) => p.id === state.murdererId);
+  const murderers = (state.murdererIds || []).map((id) => state.players.find((p) => p.id === id)).filter(Boolean) as V2Player[];
   const detective = state.players.find((p) => p.id === state.detectiveId);
   const doctor = state.players.find((p) => p.id === state.doctorId);
   return (
     <div className="ff-sticker mt-4 bg-pink p-5 text-center text-white">
       <div className="ff-title text-4xl"><Icon name="icon-winner" className="inline h-9 w-9 align-[-8px]" /> {state.winner === "town" ? "TOWN WINS!" : "THE MURDERER WINS!"}</div>
-      <div className="mt-1 text-lg"><Icon name="icon-murderer" className="inline h-6 w-6 align-[-5px]" /> It was <b>{murderer?.name}</b>, the {charName(state, murderer?.characterId)}.</div>
+      <div className="mt-1 text-lg"><Icon name="icon-murderer" className="inline h-6 w-6 align-[-5px]" /> {murderers.length > 1 ? "They were" : "It was"} {murderers.map((mp) => `${mp.name} (${charName(state, mp.characterId)})`).join(", ")}.</div>
       {detective && <div className="mt-1 text-sm opacity-90"><Icon name="icon-detective" className="inline h-5 w-5 align-[-4px]" /> The detective was <b>{detective.name}</b>, the {charName(state, detective.characterId)}.</div>}
       {doctor && <div className="mt-1 text-sm opacity-90">🛡️ The doctor was <b>{doctor.name}</b>, the {charName(state, doctor.characterId)}.</div>}
     </div>
@@ -223,6 +223,7 @@ function MomentBanner({ announce }: { announce: { a: V2Announce; nonce: number }
     else if (a.type === "vote-wrong") { text = `❌ ${a.cleared} is innocent`; sub = "the murderer is still among you"; art = "/events/event-accuse-wrong.webp"; playSfx("buzzer"); }
     else if (a.type === "vote-none") { text = "🤷 No majority — the town moves on"; art = "/events/event-vote-tie.webp"; playSfx("swoosh"); }
     else if (a.type === "saved") { text = `🛡️ ${a.victim} was attacked — but survived!`; sub = "a healing hand intervened"; art = "/events/event-accuse-right.webp"; playSfx("reveal"); }
+    else if (a.type === "vote-caught") { text = `⚖️ ${a.caught} was caught!`; sub = `${a.remaining} murderer${a.remaining > 1 ? "s" : ""} still at large…`; art = "/events/event-accuse-right.webp"; playSfx("gong"); }
     else if (a.type === "end") {
       text = a.winner === "town" ? "🎉 The town wins!" : "🔪 The murderer wins!";
       sub = a.caught ? `${a.caught} was the murderer` : undefined;
