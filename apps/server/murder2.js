@@ -10,7 +10,7 @@
 import { randomBytes } from "node:crypto";
 import { WEAPONS, VILLAGERS, getVillager, villagerForWeapon, methodAt } from "./villagers2.js";
 
-const DEFAULTS = { killTarget: 4, cooldownSec: 75, rewardCooldownSec: 30, maxPerWeapon: 2 };
+const DEFAULTS = { killTarget: 4, cooldownSec: 75, rewardCooldownSec: 30, maxPerWeapon: 2, investigateCooldownSec: 45 };
 
 function ensure(rooms, code) {
   let r = rooms.get(code);
@@ -23,9 +23,12 @@ function ensure(rooms, code) {
       phase: "lobby",
       players: new Map(),
       murdererId: null,
+      detectiveId: null,        // one player (games of 4+) can privately investigate suspects
       killTarget: DEFAULTS.killTarget,
       cooldownSec: DEFAULTS.cooldownSec,
       cooldownUntil: 0,
+      investigateUntil: 0,      // the detective's next-allowed investigation time
+      findings: [],             // [{ suspectId, isMurderer, at }] — PRIVATE to the detective
       kills: [],
       weaponUses: {},
       vote: null,
@@ -81,6 +84,8 @@ function publicState(m) {
     killCount: m.kills.length,
     winner: m.winner,
     murdererId: reveal ? m.murdererId : undefined,
+    detectiveId: reveal ? m.detectiveId : undefined,
+    hasDetective: !!m.detectiveId, // public: the town knows a detective walks among them, not who
     characters: VILLAGERS.map((v) => ({ ...v, weapon: WEAPONS[v.weaponId] })),
     weapons: WEAPONS,
     players: [...m.players.values()].map((p) => ({
@@ -139,6 +144,20 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
         weapons: availableWeapons(m),
         cooldownUntil: m.cooldownUntil,
         mustUseOwnNow: m.killTarget - m.kills.length <= 1 && !(m.weaponUses[own] > 0),
+      });
+    } else if (p.role === "detective") {
+      // Findings are delivered ONLY here, on the detective's own private channel — never in the
+      // broadcast state — so investigating a suspect can't be read by anyone else.
+      io.to(p.socketId).emit("m2:you", {
+        ...base,
+        investigateUntil: m.investigateUntil,
+        investigateCooldownSec: DEFAULTS.investigateCooldownSec,
+        findings: m.findings.map((f) => ({
+          suspectId: f.suspectId,
+          name: m.players.get(f.suspectId)?.name || "?",
+          profession: getVillager(m.players.get(f.suspectId)?.characterId)?.profession || "?",
+          isMurderer: f.isMurderer,
+        })),
       });
     } else {
       io.to(p.socketId).emit("m2:you", base);
@@ -216,18 +235,40 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
     const withChar = [...m.players.values()].filter((p) => p.characterId);
     if (withChar.length < 3) return err("Need at least 3 players who picked a character.");
     for (const p of m.players.values()) { p.alive = true; p.role = "villager"; }
-    const chosen = shuffle(withChar)[0];
-    chosen.role = "murderer";
-    m.murdererId = chosen.id;
+    const order = shuffle(withChar);
+    order[0].role = "murderer";
+    m.murdererId = order[0].id;
+    // A detective joins the town once there are enough players that one hidden investigator still
+    // leaves ≥2 plain villagers (murderer + detective + 2). Below that, no detective.
+    m.detectiveId = null;
+    if (withChar.length >= 4) { order[1].role = "detective"; m.detectiveId = order[1].id; }
     m.phase = "playing";
     m.kills = [];
     m.weaponUses = {};
     m.cleared = new Set();
     m.cooldownUntil = 0;
+    m.investigateUntil = 0;
+    m.findings = [];
     m.winner = null;
     sendYouAll(m);
     broadcast(code);
     announce(code, { type: "start" });
+  });
+
+  // --- Detective: privately investigate a suspect → learn whether they are the murderer ----------
+  socket.on("m2:investigate", ({ suspectId }) => {
+    const code = socket.data.code2;
+    const m = code && rooms.get(code)?.murder2;
+    if (!m || m.phase !== "playing") return;
+    const p = m.players.get(socket.data.playerId2);
+    if (!p || p.role !== "detective" || !p.alive) return err("Only the detective can investigate.");
+    if (now() < m.investigateUntil) return err("Still gathering evidence — wait before investigating again.");
+    const suspect = m.players.get(suspectId);
+    if (!suspect || suspect.id === p.id) return err("Invalid suspect.");
+    if (m.findings.some((f) => f.suspectId === suspectId)) return err("You already investigated them.");
+    m.findings.push({ suspectId, isMurderer: suspect.id === m.murdererId, at: now() });
+    m.investigateUntil = now() + DEFAULTS.investigateCooldownSec * 1000;
+    sendYou(m, p); // the result goes ONLY to the detective; no broadcast, no announce
   });
 
   // --- Kill: the murderer logs a victim, a framing item set, and how it was staged --------------
@@ -351,12 +392,15 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
     if (full) m.players.clear();
     m.phase = "lobby";
     m.murdererId = null;
+    m.detectiveId = null;
     m.kills = [];
     m.weaponUses = {};
     m.cleared = new Set();
     m.vote = null;
     m.winner = null;
     m.cooldownUntil = 0;
+    m.investigateUntil = 0;
+    m.findings = [];
     for (const p of m.players.values()) { p.role = null; p.alive = true; sendYou(m, p); }
     broadcast(code);
   });

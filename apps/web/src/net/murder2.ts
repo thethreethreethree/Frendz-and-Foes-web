@@ -24,7 +24,7 @@ export interface V2Clue {
 export interface V2State {
   phase: "lobby" | "playing" | "voting" | "ended";
   killTarget: number; cooldownSec: number; cooldownUntil: number; killCount: number;
-  winner: null | "murderers" | "town"; murdererId?: string;
+  winner: null | "murderers" | "town"; murdererId?: string; detectiveId?: string; hasDetective?: boolean;
   characters: V2Character[]; weapons: Record<string, V2Weapon>;
   players: V2Player[]; clues: V2Clue[];
   vote: null | { active: boolean; tally: Record<string, number>; votedBy: string[] };
@@ -32,13 +32,16 @@ export interface V2State {
 export interface V2AvailWeapon extends V2Weapon {
   uses: number; remaining: number; framesPlayerId: string | null; framesName: string | null;
 }
+export interface V2Finding { suspectId: string; name: string; profession: string; isMurderer: boolean }
 export interface V2You {
-  id: string; role: "murderer" | "villager" | null; alive: boolean; characterId: string | null;
+  id: string; role: "murderer" | "villager" | "detective" | null; alive: boolean; characterId: string | null;
   // Secret proof of identity, issued once and delivered only on this private channel. Stored
   // locally and replayed on rejoin; without it the server will not hand back this player.
   rejoinToken?: string;
   ownWeaponId?: string | null; ownWeapon?: V2Weapon | null; killsRemaining?: number;
   weapons?: V2AvailWeapon[]; cooldownUntil?: number; mustUseOwnNow?: boolean;
+  // Detective-only, private: investigation cooldown + the results learned so far.
+  investigateUntil?: number; investigateCooldownSec?: number; findings?: V2Finding[];
 }
 export type V2Announce =
   | { type: "start" }
@@ -57,6 +60,7 @@ export const m2Start = () => getSocket().emit("m2:start");
 // methodIndex picks which of the set's three methods staged the kill (narrative; not the deduction key).
 export const m2Kill = (victimId: string, weaponId: string, methodIndex = 0) =>
   getSocket().emit("m2:kill", { victimId, weaponId, methodIndex });
+export const m2Investigate = (suspectId: string) => getSocket().emit("m2:investigate", { suspectId });
 export const m2OpenVote = () => getSocket().emit("m2:openVote");
 export const m2Vote = (suspectId: string) => getSocket().emit("m2:vote", { suspectId });
 export const m2CloseVote = () => getSocket().emit("m2:closeVote");

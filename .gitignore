@@ -14,3 +14,4 @@ coverage/
 
 # Source art originals (optimized copies live in apps/web/public/brand)
 Media Assets/
+det-playthrough.mjs

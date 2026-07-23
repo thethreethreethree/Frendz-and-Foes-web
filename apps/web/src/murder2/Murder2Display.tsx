@@ -68,6 +68,7 @@ function Header({ state }: { state: V2State }) {
       <div className="ff-title text-3xl">THE VILLAGERS</div>
       <div className="flex items-center gap-4 font-display text-xl">
         <span className="text-pink">Kills {state.killCount}/{state.killTarget}</span>
+        {state.hasDetective && state.phase !== "ended" && <span className="text-teal">🔍 a detective walks among you</span>}
         {state.phase === "playing" && cd > 0 && <span className="text-cream/70">next kill in {cd}s</span>}
         {state.phase === "voting" && <span className="text-teal">TOWN MEETING</span>}
       </div>
@@ -139,10 +140,12 @@ function VoteTally({ state }: { state: V2State }) {
 
 function EndBanner({ state }: { state: V2State }) {
   const murderer = state.players.find((p) => p.id === state.murdererId);
+  const detective = state.players.find((p) => p.id === state.detectiveId);
   return (
     <div className="ff-sticker mt-4 bg-pink p-5 text-center text-white">
       <div className="ff-title text-4xl">{state.winner === "town" ? "TOWN WINS!" : "THE MURDERER WINS!"}</div>
       <div className="mt-1 text-lg">It was <b>{murderer?.name}</b>, the {charName(state, murderer?.characterId)}.</div>
+      {detective && <div className="mt-1 text-sm opacity-90">🔍 The detective was <b>{detective.name}</b>, the {charName(state, detective.characterId)}.</div>}
     </div>
   );
 }

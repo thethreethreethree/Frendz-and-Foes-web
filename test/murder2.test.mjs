@@ -72,13 +72,94 @@ test("lobby guards: a taken character is rejected; starting with <3 players is r
   assert.equal(h.lastState().phase, "lobby");
 });
 
-test("start assigns exactly one murderer; the rest are villagers", () => {
+test("start (5 players) assigns one murderer, one detective, the rest villagers", () => {
   const { h, players } = startedGame(5);
   const st = h.lastState();
   assert.equal(st.phase, "playing");
   const roles = players.map((p) => h.youFor(p.socket.id)?.role);
   assert.equal(roles.filter((r) => r === "murderer").length, 1);
-  assert.equal(roles.filter((r) => r === "villager").length, 4);
+  assert.equal(roles.filter((r) => r === "detective").length, 1, "a 4+ player game gets one detective");
+  assert.equal(roles.filter((r) => r === "villager").length, 3);
+  assert.equal(st.hasDetective, true, "the town publicly knows a detective exists (not who)");
+});
+
+test("a 3-player game has NO detective (too small)", () => {
+  const { h, players } = startedGame(3);
+  const roles = players.map((p) => h.youFor(p.socket.id)?.role);
+  assert.equal(roles.filter((r) => r === "murderer").length, 1);
+  assert.equal(roles.filter((r) => r === "detective").length, 0);
+  assert.equal(roles.filter((r) => r === "villager").length, 2);
+  assert.equal(h.lastState().hasDetective, false);
+});
+
+const detOf = (h, players) => players.find((p) => h.youFor(p.socket.id)?.role === "detective");
+
+test("detective learns the TRUTH privately: murderer → guilty, villager → innocent", () => {
+  const { h, players, murdererSock } = startedGame(5);
+  const det = detOf(h, players);
+  assert.ok(det, "a 5-player game has a detective");
+  det.send("m2:investigate", { suspectId: murdererSock.pid() });
+  let f = h.youFor(det.socket.id).findings;
+  assert.equal(f.length, 1);
+  assert.equal(f[0].isMurderer, true, "the detective correctly fingers the murderer");
+  h.advance(46000);
+  const vil = players.find((p) => h.youFor(p.socket.id)?.role === "villager");
+  det.send("m2:investigate", { suspectId: vil.pid() });
+  f = h.youFor(det.socket.id).findings;
+  assert.equal(f.length, 2);
+  assert.equal(f.find((x) => x.suspectId === vil.pid()).isMurderer, false, "a villager reads innocent");
+});
+
+test("findings are PRIVATE — never in the broadcast state, never in another player's view", () => {
+  const { h, players, murdererSock } = startedGame(5);
+  const det = detOf(h, players);
+  det.send("m2:investigate", { suspectId: murdererSock.pid() });
+  const st = h.lastState();
+  assert.ok(!JSON.stringify(st).includes("isMurderer"), "public state must not leak findings");
+  assert.equal(st.detectiveId, undefined, "the detective's identity is hidden during play");
+  const vil = players.find((p) => h.youFor(p.socket.id)?.role === "villager");
+  assert.equal(h.youFor(vil.socket.id).findings, undefined, "a villager's private view has no findings");
+});
+
+test("anti-cheat: only the detective can investigate", () => {
+  const { h, players, murdererSock } = startedGame(5);
+  const vil = players.find((p) => h.youFor(p.socket.id)?.role === "villager");
+  let before = h.emitted.length;
+  vil.send("m2:investigate", { suspectId: murdererSock.pid() });
+  assert.equal(h.errorsAfter(before).length, 1, "a villager cannot investigate");
+  before = h.emitted.length;
+  murdererSock.send("m2:investigate", { suspectId: vil.pid() });
+  assert.equal(h.errorsAfter(before).length, 1, "the murderer cannot investigate");
+});
+
+test("investigate respects cooldown, rejects duplicates and self", () => {
+  const { h, players } = startedGame(5);
+  const det = detOf(h, players);
+  const others = players.filter((p) => p !== det);
+  det.send("m2:investigate", { suspectId: others[0].pid() });
+  let before = h.emitted.length;
+  det.send("m2:investigate", { suspectId: others[1].pid() });
+  assert.equal(h.errorsAfter(before).length, 1, "cooldown blocks back-to-back investigations");
+  h.advance(46000);
+  before = h.emitted.length;
+  det.send("m2:investigate", { suspectId: others[0].pid() });
+  assert.equal(h.errorsAfter(before).length, 1, "cannot re-investigate the same person");
+  h.advance(46000);
+  before = h.emitted.length;
+  det.send("m2:investigate", { suspectId: det.pid() });
+  assert.equal(h.errorsAfter(before).length, 1, "cannot investigate yourself");
+});
+
+test("a dead detective cannot investigate; the detective counts as a victim the murderer must clear", () => {
+  const { h, players, murdererSock } = startedGame(4); // murderer + detective + 2 villagers
+  const det = detOf(h, players);
+  const you = h.youFor(murdererSock.socket.id);
+  const w = you.weapons.find((x) => x.id !== you.ownWeaponId) || you.weapons[0];
+  murdererSock.send("m2:kill", { victimId: det.pid(), weaponId: w.id, methodIndex: 0 });
+  assert.equal(h.lastState().players.find((p) => p.id === det.pid()).alive, false, "the detective is killable");
+  const before = h.emitted.length;
+  det.send("m2:investigate", { suspectId: murdererSock.pid() });
+  assert.equal(h.errorsAfter(before).length, 1, "a dead detective cannot investigate");
 });
 
 test("anti-cheat: a non-murderer cannot kill (server-authority)", () => {

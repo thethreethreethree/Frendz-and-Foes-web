@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMurder2 } from "./useMurder2";
 import { playSfx } from "../audio/sfx";
-import { loadPlayer2, m2Pick, m2Kill, m2Vote, type V2Announce, type V2Character, type V2Player } from "../net/murder2";
+import { loadPlayer2, m2Pick, m2Kill, m2Vote, m2Investigate, type V2Announce, type V2Character, type V2Player } from "../net/murder2";
 
 // location string → allocated scene-plate path (mirrors the allocation slug).
 function locationPlate(location: string) {
@@ -36,7 +36,9 @@ export function Murder2Player({ room }: { room: string }) {
     if (state.phase === "lobby") return <Lobby state={state} you={you} />;
     if (state.phase === "ended") return <Ended state={state} you={you} />;
     if (state.phase === "voting") return <Voting state={state} you={you} />;
-    return you.role === "murderer" ? <MurdererView state={state} you={you} /> : <VillagerView state={state} you={you} />;
+    if (you.role === "murderer") return <MurdererView state={state} you={you} />;
+    if (you.role === "detective") return <DetectiveView state={state} you={you} />;
+    return <VillagerView state={state} you={you} />;
   })();
 
   return <>{banner}<PhoneMoment announce={announce} />{inner}</>;
@@ -172,6 +174,48 @@ function MurdererView({ state, you }: { state: any; you: any }) {
   );
 }
 
+function DetectiveView({ state, you }: { state: any; you: any }) {
+  const me = state.players.find((p: V2Player) => p.id === you.id);
+  const cd = useCooldown(you.investigateUntil || 0);
+  const findings: any[] = you.findings || [];
+  const checkedIds = new Set(findings.map((f) => f.suspectId));
+  const suspects: V2Player[] = state.players.filter((p: V2Player) => p.id !== you.id && !checkedIds.has(p.id));
+  return (
+    <div className="h-full overflow-auto bg-[#12233a] p-4 text-white">
+      <RoleBanner src="/roles/role-detective.webp" />
+      <div className="ff-title text-3xl text-teal">YOU ARE THE DETECTIVE</div>
+      <MyCard state={state} you={you} />
+      {!me?.alive && <p className="mt-1 rounded-lg bg-white/10 px-3 py-2 text-sm">You were killed — your investigation ends here.</p>}
+
+      {me?.alive && (
+        <>
+          <div className="mt-4 font-display text-lg">Investigate a villager (privately)</div>
+          <p className="text-xs text-white/60">You learn if they're the murderer. Only you see the result — then convince the town.</p>
+          {cd > 0 && <p className="mt-2 rounded-lg bg-white/10 px-3 py-2 text-sm">Gathering evidence… <b>{cd}s</b> until you can investigate again.</p>}
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            {suspects.filter((p) => p.alive).map((p) => (
+              <button key={p.id} disabled={cd > 0} onClick={() => m2Investigate(p.id)}
+                className="rounded-lg border-2 border-white/20 bg-white/5 px-2 py-2 text-left text-sm disabled:opacity-30">
+                🔍 {p.name} <span className="text-white/50">· {charName(state, p.characterId)}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
+      <div className="mt-4 font-display text-lg">Your findings</div>
+      {findings.length === 0 && <p className="text-sm text-white/50">Nothing yet. Investigate someone.</p>}
+      {findings.map((f, i) => (
+        <div key={i} className={`mt-1 rounded-lg px-3 py-2 text-sm ${f.isMurderer ? "bg-pink/30 font-bold" : "bg-white/10"}`}>
+          {f.isMurderer ? "🔪" : "✓"} <b>{f.name}</b> ({f.profession}) — {f.isMurderer ? "IS THE MURDERER" : "is innocent"}
+        </div>
+      ))}
+      <ClueFeed state={state} />
+      <Roster state={state} />
+    </div>
+  );
+}
+
 // Full-width role reveal illustration at the top of a player's screen. Hides itself if the art 404s.
 function RoleBanner({ src }: { src: string }) {
   const [ok, setOk] = useState(true);
@@ -226,6 +270,7 @@ function Ended({ state, you }: { state: any; you: any }) {
     <Screen>
       <div className="ff-title text-4xl text-pink">{state.winner === "town" ? "TOWN WINS" : "MURDERER WINS"}</div>
       <p className="mt-2 text-lg text-ink">The murderer was <b>{murderer?.name}</b> ({charName(state, murderer?.characterId)}).</p>
+      {state.detectiveId && <p className="text-sm text-ink/70">🔍 The detective was <b>{state.players.find((p: V2Player) => p.id === state.detectiveId)?.name}</b>.</p>}
       <p className={`mt-3 font-display text-2xl ${won ? "text-teal" : "text-ink/50"}`}>{won ? "You won!" : "You lost."}</p>
     </Screen>
   );
