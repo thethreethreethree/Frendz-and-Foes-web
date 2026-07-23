@@ -216,6 +216,13 @@ function DetectiveView({ state, you }: { state: any; you: any }) {
   );
 }
 
+// Small status icon from /icons/<name>.png; hides itself if missing.
+function Icon({ name, className = "inline h-4 w-4 align-[-2px]" }: { name: string; className?: string }) {
+  const [ok, setOk] = useState(true);
+  if (!ok) return null;
+  return <img src={`/icons/${name}.png`} alt="" onError={() => setOk(false)} className={className} />;
+}
+
 // Full-width role reveal illustration at the top of a player's screen. Hides itself if the art 404s.
 function RoleBanner({ src }: { src: string }) {
   const [ok, setOk] = useState(true);
@@ -265,10 +272,13 @@ function Voting({ state, you }: { state: any; you: any }) {
 
 function Ended({ state, you }: { state: any; you: any }) {
   const murderer = state.players.find((p: V2Player) => p.id === state.murdererId);
+  const me = state.players.find((p: V2Player) => p.id === you.id);
+  const survived = you.role !== "murderer" && me?.alive;
   const won = (state.winner === "murderers") === (you.role === "murderer");
   return (
     <Screen>
-      <div className="ff-title text-4xl text-pink">{state.winner === "town" ? "TOWN WINS" : "MURDERER WINS"}</div>
+      {survived && <RoleBanner src="/roles/role-survivor.webp" />}
+      <div className="ff-title text-4xl text-pink"><Icon name="icon-winner" className="inline h-8 w-8 align-[-6px]" /> {state.winner === "town" ? "TOWN WINS" : "MURDERER WINS"}</div>
       <p className="mt-2 text-lg text-ink">The murderer was <b>{murderer?.name}</b> ({charName(state, murderer?.characterId)}).</p>
       {state.detectiveId && <p className="text-sm text-ink/70">🔍 The detective was <b>{state.players.find((p: V2Player) => p.id === state.detectiveId)?.name}</b>.</p>}
       <p className={`mt-3 font-display text-2xl ${won ? "text-teal" : "text-ink/50"}`}>{won ? "You won!" : "You lost."}</p>
@@ -337,7 +347,7 @@ function Roster({ state }: { state: any }) {
       <div className="mt-1 grid grid-cols-2 gap-1 text-sm">
         {state.players.filter((p: V2Player) => p.characterId).map((p: V2Player) => (
           <div key={p.id} className={`rounded px-2 py-1 ${p.alive ? "bg-white" : "bg-ink/10 line-through opacity-60"}`}>
-            {charEmoji(state, p.characterId)} {p.name} · <span className="text-ink/60">{charName(state, p.characterId)}</span>{p.cleared && " ✓"}
+            {!p.alive && <Icon name="icon-dead" />} {charEmoji(state, p.characterId)} {p.name} · <span className="text-ink/60">{charName(state, p.characterId)}</span>{p.cleared && " ✓"}
           </div>
         ))}
       </div>

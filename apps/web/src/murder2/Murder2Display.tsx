@@ -12,7 +12,7 @@ export function Murder2Display({ room }: { room: string }) {
   // players would have no QR to scan and no game state could ever start.
   if (!state || state.phase === "lobby") return <Lobby room={room} state={state} />;
   return (
-    <Backdrop phase={state.phase}>
+    <Backdrop phase={state.phase} winner={state.winner}>
       <div className="w-full max-w-5xl">
         <Header state={state} />
         <div className="grid gap-4 md:grid-cols-2">
@@ -35,7 +35,8 @@ function Lobby({ room, state }: { room: string; state: V2State | null }) {
   }, [room]);
   const picked = (state?.players ?? []).filter((p) => p.characterId);
   return (
-    <Backdrop>
+    <Backdrop phase="lobby">
+      <img src="/brand/logo-villagers.png" alt="" className="mb-2 max-h-28" onError={(e)=>{(e.currentTarget as HTMLImageElement).style.display="none";}} />
       <div className="ff-title text-5xl text-ink">MURDER MYSTERY: THE VILLAGERS</div>
       <div className="mt-6 flex flex-col items-center gap-4 md:flex-row md:items-start">
         <div className="ff-sticker bg-white p-5 text-center">
@@ -67,10 +68,10 @@ function Header({ state }: { state: V2State }) {
     <div className="mb-3 flex items-center justify-between rounded-xl bg-ink/55 px-4 py-2 text-cream backdrop-blur-sm">
       <div className="ff-title text-3xl">THE VILLAGERS</div>
       <div className="flex items-center gap-4 font-display text-xl">
-        <span className="text-pink">Kills {state.killCount}/{state.killTarget}</span>
+        <span className="text-pink"><Icon name="icon-kills" className="inline h-6 w-6 align-[-5px]" /> Kills {state.killCount}/{state.killTarget}</span>
         {state.hasDetective && state.phase !== "ended" && <span className="text-teal">🔍 a detective walks among you</span>}
-        {state.phase === "playing" && cd > 0 && <span className="text-cream/70">next kill in {cd}s</span>}
-        {state.phase === "voting" && <span className="text-teal">TOWN MEETING</span>}
+        {state.phase === "playing" && cd > 0 && <span className="text-cream/70"><Icon name="icon-timer" className="inline h-5 w-5 align-[-4px]" /> next kill in {cd}s</span>}
+        {state.phase === "voting" && <span className="text-teal"><Icon name="icon-vote" className="inline h-6 w-6 align-[-5px]" /> TOWN MEETING</span>}
       </div>
     </div>
   );
@@ -79,7 +80,7 @@ function Header({ state }: { state: V2State }) {
 function Clues({ state }: { state: V2State }) {
   return (
     <div className="ff-sticker bg-white p-4">
-      <div className="font-display text-2xl text-ink">Clues</div>
+      <div className="font-display text-2xl text-ink"><Icon name="icon-clue" className="inline h-7 w-7 align-[-6px]" /> Clues</div>
       {state.clues.length === 0 && <p className="text-ink/50">No one has died… yet.</p>}
       {state.clues.map((c: V2Clue, i) => (
         <div key={i} className="mt-2 flex items-center gap-3 rounded-lg bg-cream px-3 py-2">
@@ -114,7 +115,7 @@ function RosterGrid({ state }: { state: V2State }) {
       <div className="mt-2 grid grid-cols-2 gap-1 text-sm">
         {picked.map((p) => (
           <div key={p.id} className={`rounded px-2 py-1 ${p.alive ? "bg-cream" : "bg-ink/10 line-through opacity-60"}`}>
-            {charEmoji(state, p.characterId)} <b>{p.name}</b> · {charName(state, p.characterId)}
+            {!p.alive && <Icon name="icon-dead" className="inline h-4 w-4 align-[-2px]" />} {charEmoji(state, p.characterId)} <b>{p.name}</b> · {charName(state, p.characterId)}
             {p.cleared && <span className="text-teal"> ✓cleared</span>}
           </div>
         ))}
@@ -143,9 +144,9 @@ function EndBanner({ state }: { state: V2State }) {
   const detective = state.players.find((p) => p.id === state.detectiveId);
   return (
     <div className="ff-sticker mt-4 bg-pink p-5 text-center text-white">
-      <div className="ff-title text-4xl">{state.winner === "town" ? "TOWN WINS!" : "THE MURDERER WINS!"}</div>
-      <div className="mt-1 text-lg">It was <b>{murderer?.name}</b>, the {charName(state, murderer?.characterId)}.</div>
-      {detective && <div className="mt-1 text-sm opacity-90">🔍 The detective was <b>{detective.name}</b>, the {charName(state, detective.characterId)}.</div>}
+      <div className="ff-title text-4xl"><Icon name="icon-winner" className="inline h-9 w-9 align-[-8px]" /> {state.winner === "town" ? "TOWN WINS!" : "THE MURDERER WINS!"}</div>
+      <div className="mt-1 text-lg"><Icon name="icon-murderer" className="inline h-6 w-6 align-[-5px]" /> It was <b>{murderer?.name}</b>, the {charName(state, murderer?.characterId)}.</div>
+      {detective && <div className="mt-1 text-sm opacity-90"><Icon name="icon-detective" className="inline h-5 w-5 align-[-4px]" /> The detective was <b>{detective.name}</b>, the {charName(state, detective.characterId)}.</div>}
     </div>
   );
 }
@@ -159,10 +160,22 @@ function useCooldown(until: number) {
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
   return Math.max(0, Math.ceil((until - now) / 1000));
 }
+// Small status icon from /icons/<name>.png; hides itself if the file is missing.
+function Icon({ name, className = "inline h-6 w-6 align-[-5px]" }: { name: string; className?: string }) {
+  const [ok, setOk] = useState(true);
+  if (!ok) return null;
+  return <img src={`/icons/${name}.png`} alt="" onError={() => setOk(false)} className={className} />;
+}
+
 // The scene turns with the game: dusk in the lobby, night while the murderer works, a lit hall for
 // the town meeting, a shadowed reveal at the end. Each variant is a CSS background (index.css).
-function Backdrop({ children, phase }: { children: React.ReactNode; phase?: string }) {
-  const bg = phase === "playing" ? "ff-bg-night" : phase === "voting" ? "ff-bg-meeting" : phase === "ended" ? "ff-bg-reveal" : "";
+function Backdrop({ children, phase, winner }: { children: React.ReactNode; phase?: string; winner?: string | null }) {
+  const bg =
+    phase === "lobby" ? "ff-bg-lobby"
+    : phase === "playing" ? "ff-bg-night"
+    : phase === "voting" ? "ff-bg-meeting"
+    : phase === "ended" ? (winner === "town" ? "ff-bg-town-win" : winner === "murderers" ? "ff-bg-murderer-win" : "ff-bg-reveal")
+    : "";
   return <div className={`relative ff-backdrop-villagers ${bg} grid min-h-full place-items-center p-6`}>{children}</div>;
 }
 

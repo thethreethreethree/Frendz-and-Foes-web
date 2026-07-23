@@ -73,6 +73,22 @@ body {
       linear-gradient(rgba(20, 14, 18, 0.45), rgba(20, 14, 18, 0.55)),
       url("/brand/phase-reveal.webp");
   }
+  .ff-bg-lobby {
+    background-image:
+      linear-gradient(rgba(244, 241, 234, 0.55), rgba(244, 241, 234, 0.55)),
+      url("/brand/phase-lobby.webp");
+  }
+  /* End-screen backdrops chosen by who won. */
+  .ff-bg-town-win {
+    background-image:
+      linear-gradient(rgba(244, 241, 234, 0.45), rgba(244, 241, 234, 0.5)),
+      url("/brand/victory-village.webp");
+  }
+  .ff-bg-murderer-win {
+    background-image:
+      linear-gradient(rgba(20, 14, 18, 0.5), rgba(20, 14, 18, 0.6)),
+      url("/brand/victory-murderer.webp");
+  }
 
   .ff-title {
     font-family: theme("fontFamily.display");
