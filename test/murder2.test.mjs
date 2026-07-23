@@ -234,6 +234,19 @@ test("vote: catching ONE of two murderers does NOT end the game; catching the la
   assert.deepEqual((h.lastState().murdererIds || []).sort(), murderers.map((m) => m.pid()).sort(), "reveal lists the whole team");
 });
 
+test("team: a murderer CANNOT kill a fellow murderer (no friendly fire)", () => {
+  const { h, players } = startedGame(8); // 2 murderers
+  const murderers = players.filter((p) => h.youFor(p.socket.id)?.role === "murderer");
+  const attacker = murderers[0], ally = murderers[1];
+  const you = h.youFor(attacker.socket.id);
+  const w = you.weapons.find((x) => x.id !== you.ownWeaponId) || you.weapons[0];
+  const before = h.emitted.length;
+  attacker.send("m2:kill", { victimId: ally.pid(), weaponId: w.id, methodIndex: 0 });
+  assert.equal(h.errorsAfter(before).length, 1, "killing a teammate is rejected");
+  assert.equal(h.lastState().players.find((p) => p.id === ally.pid()).alive, true, "the ally survives");
+  assert.equal(h.lastState().clues.length, 0, "no clue logged");
+});
+
 test("team: must-use-own is relaxed (a murderer may frame with any set on the final kill)", () => {
   const { h, players } = startedGame(8);
   const murderers = players.filter((p) => h.youFor(p.socket.id)?.role === "murderer");

@@ -110,7 +110,9 @@ function MurdererView({ state, you }: { state: any; you: any }) {
   const [victim, setVictim] = useState<string | null>(null);
   const [pickedSet, setPickedSet] = useState<string | null>(null);
   const cd = useCooldown(state.cooldownUntil);
-  const targets: V2Player[] = state.players.filter((p: V2Player) => p.alive && p.id !== you.id);
+  // Fellow murderers are hidden from the kill list (and rejected server-side) — no friendly fire.
+  const allyIds = new Set((you.allies || []).map((a: any) => a.id));
+  const targets: V2Player[] = state.players.filter((p: V2Player) => p.alive && p.id !== you.id && !allyIds.has(p.id));
   const weapons = you.weapons || [];
   return (
     <div className="h-full overflow-auto bg-[#2a0e12] p-4 text-white">

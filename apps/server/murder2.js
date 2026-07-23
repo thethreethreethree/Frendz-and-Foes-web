@@ -352,6 +352,7 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
 
     const victim = m.players.get(victimId);
     if (!victim || !victim.alive || victim.id === killer.id) return err("Invalid victim.");
+    if (isMurderer(m, victim.id)) return err("You can't kill a fellow murderer."); // team games: no friendly fire
     // The doctor may have shielded this target. A saved attack downs no one and logs no clue, but it
     // still spends the murderer's turn (cooldown) and consumes the shield. The murderer isn't told
     // whether a miss was a save or a bad guess until the "saved" moment announces it to everyone.
