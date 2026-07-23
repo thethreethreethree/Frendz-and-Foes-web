@@ -1,10 +1,17 @@
 import { useEffect, useState } from "react";
 import { useMurder2 } from "./useMurder2";
-import { loadPlayer2, m2Pick, m2Kill, m2Vote, type V2Character, type V2Player } from "../net/murder2";
+import { playSfx } from "../audio/sfx";
+import { loadPlayer2, m2Pick, m2Kill, m2Vote, type V2Announce, type V2Character, type V2Player } from "../net/murder2";
+
+// location string → allocated scene-plate path (mirrors the allocation slug).
+function locationPlate(location: string) {
+  const s = location.toLowerCase().replace(/['’]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").replace(/^the-/, "");
+  return `/locations/loc-${s}.webp`;
+}
 
 // Player phone for Murder v2. Name → pick a character → play by role → vote.
 export function Murder2Player({ room }: { room: string }) {
-  const { state, you, error, join, connected } = useMurder2(room, "player");
+  const { state, you, announce, error, join, connected } = useMurder2(room, "player");
   const [name, setName] = useState("");
   const stored = loadPlayer2(room);
 
@@ -32,7 +39,41 @@ export function Murder2Player({ room }: { room: string }) {
     return you.role === "murderer" ? <MurdererView state={state} you={you} /> : <VillagerView state={state} you={you} />;
   })();
 
-  return <>{banner}{inner}</>;
+  return <>{banner}<PhoneMoment announce={announce} />{inner}</>;
+}
+
+// The dramatic per-moment overlay on the player's phone — the same beats the display shows, so a
+// player heads-down on their phone still feels (and hears) each kill, meeting, and the verdict.
+// Sound plays here too: the phone's AudioContext is already unlocked by the join/pick taps.
+function PhoneMoment({ announce }: { announce: { a: V2Announce; nonce: number } | null }) {
+  const [show, setShow] = useState<{ text: string; sub?: string; art?: string; nonce: number } | null>(null);
+  useEffect(() => {
+    if (!announce) return;
+    const a = announce.a;
+    let text = "", sub: string | undefined, art: string | undefined;
+    if (a.type === "killed") { text = `💀 ${a.victim} was murdered!`; sub = a.method ? `${a.method} — in the ${a.weapon}` : `in the ${a.weapon}`; art = "/events/event-kill.webp"; playSfx("kill"); }
+    else if (a.type === "start") { text = "🔪 The village sleeps…"; playSfx("heartbeat"); }
+    else if (a.type === "vote-open") { text = "🔔 Town meeting!"; sub = "Cast your vote"; art = "/events/event-vote-open.webp"; playSfx("toll"); }
+    else if (a.type === "vote-wrong") { text = `❌ ${a.cleared} was innocent`; sub = "the murderer is still among you"; art = "/events/event-accuse-wrong.webp"; playSfx("buzzer"); }
+    else if (a.type === "vote-none") { text = "🤷 No majority"; playSfx("swoosh"); }
+    else if (a.type === "end") { text = a.winner === "town" ? "🎉 Town wins!" : "🔪 Murderer wins!"; sub = a.caught ? `${a.caught} did it` : undefined; art = a.winner === "town" ? "/events/event-accuse-right.webp" : "/events/event-kill.webp"; playSfx("gong"); }
+    if (!text) return;
+    setShow({ text, sub, art, nonce: announce.nonce });
+    const id = setTimeout(() => setShow(null), 2600);
+    return () => clearTimeout(id);
+  }, [announce]);
+  if (!show) return null;
+  return (
+    <div key={show.nonce} className="fixed inset-0 z-40 grid animate-pop place-items-center bg-ink/80 p-6 backdrop-blur-sm">
+      <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border-4 border-white bg-ink text-center">
+        {show.art && <img src={show.art} alt="" className="absolute inset-0 h-full w-full object-cover opacity-40" />}
+        <div className="relative px-6 py-10">
+          <div className="ff-title text-4xl text-pink">{show.text}</div>
+          {show.sub && <div className="mt-2 text-lg text-white/85">{show.sub}</div>}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function Lobby({ state, you }: { state: ReturnType<typeof useMurder2>["state"] & object; you: any }) {
@@ -218,16 +259,27 @@ function MyCard({ state, you }: { state: any; you: any }) {
   );
 }
 
+// Small crime-scene thumbnail for a clue on the phone. Hides itself if the plate 404s.
+function CluePlate({ location }: { location: string }) {
+  const [ok, setOk] = useState(true);
+  if (!ok) return null;
+  return <img src={locationPlate(location)} alt={location} onError={() => setOk(false)} className="h-14 w-12 shrink-0 rounded object-cover" />;
+}
+
 function ClueFeed({ state }: { state: any }) {
   if (!state.clues.length) return <p className="mt-3 text-sm text-ink/50">No clues yet.</p>;
   return (
     <div className="mt-3">
       <div className="font-display text-lg text-ink">Clues</div>
       {state.clues.map((c: any, i: number) => (
-        <div key={i} className="mt-1 rounded-lg bg-white px-3 py-2 text-sm">
-          {c.weapon.emoji} <b>Item Set {c.weapon.setNumber} · {c.weapon.location}</b>
-          {c.method && <span className="text-ink/60"> — {c.method}</span>}
-          {" → "}points to <b>{charName(state, c.framedCharacterId)}</b>
+        <div key={i} className="mt-1 flex items-center gap-2 rounded-lg bg-white px-2 py-2 text-sm">
+          {/* The crime-scene plate — so players see the place, not just read it. Hides if art is missing. */}
+          <CluePlate location={c.weapon.location} />
+          <div>
+            <b>Item Set {c.weapon.setNumber} · {c.weapon.location}</b>
+            {c.method && <span className="text-ink/60"> — {c.method}</span>}
+            <div>{c.weapon.emoji} → points to <b>{charName(state, c.framedCharacterId)}</b></div>
+          </div>
         </div>
       ))}
     </div>

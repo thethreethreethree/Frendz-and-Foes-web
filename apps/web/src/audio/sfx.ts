@@ -4,9 +4,10 @@
 // density. playSfx(name, variant) plays a specific one; the host picks a variant per category
 // and it's synced to the display so everyone hears the same sound.
 
-export type SfxName = "ding" | "buzzer" | "reveal" | "drumroll" | "applause" | "swoosh";
+export type SfxName = "ding" | "buzzer" | "reveal" | "drumroll" | "applause" | "swoosh"
+  | "kill" | "toll" | "heartbeat" | "gong";
 
-export const SFX_NAMES: SfxName[] = ["ding", "buzzer", "reveal", "drumroll", "applause", "swoosh"];
+export const SFX_NAMES: SfxName[] = ["ding", "buzzer", "reveal", "drumroll", "applause", "swoosh", "kill", "toll", "heartbeat", "gong"];
 export const SFX_VARIANTS = 10;
 
 export const SFX_LABELS: Record<SfxName, string> = {
@@ -16,6 +17,10 @@ export const SFX_LABELS: Record<SfxName, string> = {
   drumroll: "Drumroll",
   applause: "Applause",
   swoosh: "Swoosh",
+  kill: "Kill sting 🔪",
+  toll: "Meeting bell 🔔",
+  heartbeat: "Heartbeat",
+  gong: "Verdict gong",
 };
 
 let ctx: AudioContext | null = null;
@@ -136,6 +141,35 @@ const FAMILIES: Record<SfxName, (v: number) => void> = {
     if (v % 2 === 0) sweep(hi, 300, 0, 0.18, "sine", 0.14);
     else sweep(300, hi, 0, 0.18, "sine", 0.14);
     noise(0, 0.16, 0.05);
+  },
+  // A body drops — a sharp downward stab-sting into a dark thud. Variant shifts pitch/harshness.
+  kill: (v) => {
+    const top = 620 + v * 20;
+    sweep(top, 90, 0, 0.22, "sawtooth", 0.3);
+    tone(70 + (v % 3) * 8, 0.12, 0.4, "sine", 0.32); // low thud
+    noise(0, 0.1, 0.12);
+  },
+  // Town-meeting bell — a struck brass toll (fundamental + inharmonic partials), variant retunes it.
+  toll: (v) => {
+    const f = 380 + v * 18;
+    tone(f, 0, 1.1, "sine", 0.28);
+    tone(f * 2.76, 0, 0.8, "sine", 0.1);
+    tone(f * 5.4, 0, 0.5, "sine", 0.05);
+  },
+  // Slow two-thump heartbeat for tension. Variant changes pace and depth.
+  heartbeat: (v) => {
+    const lo = 55 + (v % 4) * 4;
+    const gap = 0.22 + (v % 3) * 0.04;
+    tone(lo, 0, 0.14, "sine", 0.34);
+    tone(lo, gap, 0.16, "sine", 0.3);
+  },
+  // Final-verdict gong — a deep struck swell that rings out. Variant retunes the strike.
+  gong: (v) => {
+    const f = 120 + v * 10;
+    tone(f, 0, 1.6, "sine", 0.3);
+    tone(f * 1.48, 0, 1.2, "triangle", 0.12);
+    tone(f * 2.9, 0, 0.8, "sine", 0.06);
+    noise(0, 0.08, 0.1);
   },
 };
 

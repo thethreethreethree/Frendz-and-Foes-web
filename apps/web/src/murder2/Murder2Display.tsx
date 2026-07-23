@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import QRCode from "qrcode";
 import { useMurder2 } from "./useMurder2";
+import { playSfx } from "../audio/sfx";
 import type { V2Announce, V2Character, V2Clue, V2Player, V2State } from "../net/murder2";
 
 // Big-screen display for Murder v2.
@@ -184,14 +185,17 @@ function MomentBanner({ announce }: { announce: { a: V2Announce; nonce: number }
       text = `💀 ${a.victim} was murdered!`;
       sub = a.method ? `${a.method} — left in the ${a.weapon}` : `left in the ${a.weapon}`;
       art = "/events/event-kill.webp";
-    } else if (a.type === "start") { text = "🔪 The village sleeps…"; }
-    else if (a.type === "vote-open") { text = "🔔 Town meeting — everybody vote"; art = "/events/event-vote-open.webp"; }
-    else if (a.type === "vote-wrong") { text = `❌ ${a.cleared} is innocent`; sub = "the murderer is still among you"; art = "/events/event-accuse-wrong.webp"; }
-    else if (a.type === "vote-none") { text = "🤷 No majority — the town moves on"; art = "/events/event-vote-tie.webp"; }
+      playSfx("kill");
+    } else if (a.type === "start") { text = "🔪 The village sleeps…"; playSfx("heartbeat"); }
+    else if (a.type === "vote-open") { text = "🔔 Town meeting — everybody vote"; art = "/events/event-vote-open.webp"; playSfx("toll"); }
+    else if (a.type === "vote-wrong") { text = `❌ ${a.cleared} is innocent`; sub = "the murderer is still among you"; art = "/events/event-accuse-wrong.webp"; playSfx("buzzer"); }
+    else if (a.type === "vote-none") { text = "🤷 No majority — the town moves on"; art = "/events/event-vote-tie.webp"; playSfx("swoosh"); }
     else if (a.type === "end") {
       text = a.winner === "town" ? "🎉 The town wins!" : "🔪 The murderer wins!";
       sub = a.caught ? `${a.caught} was the murderer` : undefined;
       art = a.winner === "town" ? "/events/event-accuse-right.webp" : "/events/event-kill.webp";
+      playSfx("gong");
+      if (a.winner === "town") setTimeout(() => playSfx("applause"), 700);
     }
     if (!text) return;
     setShow({ text, sub, art, nonce: announce.nonce });
