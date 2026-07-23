@@ -107,18 +107,31 @@ function Clues({ state }: { state: V2State }) {
   );
 }
 
+// Deduction board: each suspect with how many revealed clues frame them (the town's reasoning aid),
+// their alive/dead/cleared status, and — for the dead — their parting last words.
 function RosterGrid({ state }: { state: V2State }) {
   const picked = state.players.filter((p) => p.characterId);
+  const framedCount = (charId: string | null) => state.clues.filter((c) => c.framedCharacterId === charId).length;
+  const max = Math.max(0, ...picked.map((p) => framedCount(p.characterId)));
   return (
     <div className="ff-sticker bg-white p-4">
-      <div className="font-display text-2xl text-ink">Suspects</div>
-      <div className="mt-2 grid grid-cols-2 gap-1 text-sm">
-        {picked.map((p) => (
-          <div key={p.id} className={`rounded px-2 py-1 ${p.alive ? "bg-cream" : "bg-ink/10 line-through opacity-60"}`}>
-            {!p.alive && <Icon name="icon-dead" className="inline h-4 w-4 align-[-2px]" />} {charEmoji(state, p.characterId)} <b>{p.name}</b> · {charName(state, p.characterId)}
-            {p.cleared && <span className="text-teal"> ✓cleared</span>}
-          </div>
-        ))}
+      <div className="font-display text-2xl text-ink">Suspects <span className="text-base text-ink/50">— who's being framed</span></div>
+      <div className="mt-2 space-y-1 text-sm">
+        {picked.map((p) => {
+          const n = framedCount(p.characterId);
+          const hot = n > 0 && n === max; // most-framed suspect(s) — the crowd's prime lead
+          return (
+            <div key={p.id} className={`rounded px-2 py-1 ${!p.alive ? "bg-ink/10 opacity-70" : hot ? "bg-pink/15" : "bg-cream"}`}>
+              <div>
+                {!p.alive && <Icon name="icon-dead" className="inline h-4 w-4 align-[-2px]" />}{" "}
+                <span className={!p.alive ? "line-through" : ""}>{charEmoji(state, p.characterId)} <b>{p.name}</b> · {charName(state, p.characterId)}</span>
+                {p.cleared && <span className="text-teal"> ✓cleared</span>}
+                {n > 0 && <span className={`ml-1 ${hot ? "font-bold text-pink" : "text-ink/60"}`}>🔎 framed ×{n}</span>}
+              </div>
+              {p.lastWords && <div className="pl-1 text-xs italic text-ink/70">💬 “{p.lastWords}”</div>}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

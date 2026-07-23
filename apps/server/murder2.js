@@ -95,6 +95,7 @@ function publicState(m) {
       alive: p.alive,
       connected: !!p.socketId,
       cleared: m.cleared.has(p.id),
+      lastWords: p.lastWords || null, // a killed player's public parting message (a true hint OR a bluff)
       role: reveal ? p.role : undefined,
     })),
     // The clue feed: the item set used (location + card) and which of its three methods staged the
@@ -234,7 +235,7 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
     if (!m || m.phase !== "lobby") return;
     const withChar = [...m.players.values()].filter((p) => p.characterId);
     if (withChar.length < 3) return err("Need at least 3 players who picked a character.");
-    for (const p of m.players.values()) { p.alive = true; p.role = "villager"; }
+    for (const p of m.players.values()) { p.alive = true; p.role = "villager"; p.lastWords = null; }
     const order = shuffle(withChar);
     order[0].role = "murderer";
     m.murdererId = order[0].id;
@@ -269,6 +270,20 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
     m.findings.push({ suspectId, isMurderer: suspect.id === m.murdererId, at: now() });
     m.investigateUntil = now() + DEFAULTS.investigateCooldownSec * 1000;
     sendYou(m, p); // the result goes ONLY to the detective; no broadcast, no announce
+  });
+
+  // --- Dying clue: a killed player leaves ONE public parting message (a true hint or a bluff) ------
+  socket.on("m2:lastWords", ({ text }) => {
+    const code = socket.data.code2;
+    const m = code && rooms.get(code)?.murder2;
+    if (!m || (m.phase !== "playing" && m.phase !== "voting")) return;
+    const p = m.players.get(socket.data.playerId2);
+    if (!p || p.alive) return err("Only the dead leave last words.");
+    if (p.lastWords) return err("You have already spoken.");
+    const t = String(text || "").trim().slice(0, 120);
+    if (!t) return;
+    p.lastWords = t;
+    broadcast(code); // public: it's their parting message to the whole town
   });
 
   // --- Kill: the murderer logs a victim, a framing item set, and how it was staged --------------
@@ -401,7 +416,7 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
     m.cooldownUntil = 0;
     m.investigateUntil = 0;
     m.findings = [];
-    for (const p of m.players.values()) { p.role = null; p.alive = true; sendYou(m, p); }
+    for (const p of m.players.values()) { p.role = null; p.alive = true; p.lastWords = null; sendYou(m, p); }
     broadcast(code);
   });
 

@@ -14,7 +14,8 @@ export interface V2Character {
 }
 export interface V2Player {
   id: string; name: string; characterId: string | null;
-  alive: boolean; connected: boolean; cleared: boolean; role?: "murderer" | "villager";
+  alive: boolean; connected: boolean; cleared: boolean; role?: "murderer" | "villager" | "detective";
+  lastWords?: string | null; // a killed player's public parting message
 }
 export interface V2Clue {
   weaponId: string; weapon: V2Weapon; methodIndex: number; method: string | null;
@@ -63,6 +64,7 @@ export const m2Kill = (victimId: string, weaponId: string, methodIndex = 0) =>
 export const m2Investigate = (suspectId: string) => getSocket().emit("m2:investigate", { suspectId });
 export const m2OpenVote = () => getSocket().emit("m2:openVote");
 export const m2Vote = (suspectId: string) => getSocket().emit("m2:vote", { suspectId });
+export const m2LastWords = (text: string) => getSocket().emit("m2:lastWords", { text });
 export const m2CloseVote = () => getSocket().emit("m2:closeVote");
 export const m2Reset = (full = false) => getSocket().emit("m2:reset", { full });
 

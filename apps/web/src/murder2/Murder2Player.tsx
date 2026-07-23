@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMurder2 } from "./useMurder2";
 import { playSfx } from "../audio/sfx";
-import { loadPlayer2, m2Pick, m2Kill, m2Vote, m2Investigate, type V2Announce, type V2Character, type V2Player } from "../net/murder2";
+import { loadPlayer2, m2Pick, m2Kill, m2Vote, m2Investigate, m2LastWords, type V2Announce, type V2Character, type V2Player } from "../net/murder2";
 
 // location string → allocated scene-plate path (mirrors the allocation slug).
 function locationPlate(location: string) {
@@ -186,6 +186,7 @@ function DetectiveView({ state, you }: { state: any; you: any }) {
       <div className="ff-title text-3xl text-teal">YOU ARE THE DETECTIVE</div>
       <MyCard state={state} you={you} />
       {!me?.alive && <p className="mt-1 rounded-lg bg-white/10 px-3 py-2 text-sm">You were killed — your investigation ends here.</p>}
+      <LastWords me={me} dark />
 
       {me?.alive && (
         <>
@@ -216,6 +217,24 @@ function DetectiveView({ state, you }: { state: any; you: any }) {
   );
 }
 
+// A killed player's one parting message — a true hint or a bluff. Shown once dead; locks after sending.
+function LastWords({ me, dark }: { me: any; dark: boolean }) {
+  const [text, setText] = useState("");
+  if (!me || me.alive) return null;
+  if (me.lastWords) {
+    return <div className={`mt-3 rounded-lg px-3 py-2 text-sm ${dark ? "bg-white/10" : "bg-ink/5"}`}>💬 Your last words: <i>{me.lastWords}</i></div>;
+  }
+  return (
+    <div className={`mt-3 rounded-lg p-3 ${dark ? "bg-white/10" : "bg-ink/5"}`}>
+      <div className="text-sm font-semibold">Leave your last words — a true hint, or a lie…</div>
+      <input value={text} maxLength={120} onChange={(e) => setText(e.target.value)} placeholder="e.g. I saw them near the Clinic…"
+        className="mt-2 w-full rounded border-2 border-ink/20 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-teal" />
+      <button disabled={!text.trim()} onClick={() => m2LastWords(text.trim())}
+        className="ff-sticker mt-2 bg-pink px-4 py-2 text-sm text-white disabled:opacity-40">Speak</button>
+    </div>
+  );
+}
+
 // Small status icon from /icons/<name>.png; hides itself if missing.
 function Icon({ name, className = "inline h-4 w-4 align-[-2px]" }: { name: string; className?: string }) {
   const [ok, setOk] = useState(true);
@@ -239,6 +258,7 @@ function VillagerView({ state, you }: { state: any; you: any }) {
       <div className="ff-title text-2xl text-ink">YOU ARE A VILLAGER</div>
       <MyCard state={state} you={you} />
       <p className="text-sm text-ink/60">{me?.alive ? "Watch the clues. Catch the murderer when the town meets." : "You were killed — spectate."}</p>
+      <LastWords me={me} dark={false} />
       <ClueFeed state={state} />
       <Roster state={state} />
     </div>

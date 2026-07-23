@@ -275,6 +275,45 @@ test("anti-cheat: a player socket cannot run host actions (start / reset / vote 
   assert.equal(h.lastState().phase, "playing");
 });
 
+// --- Dying clue (last words) --------------------------------------------------------------------
+const killOne = (h, players, murdererSock) => {
+  const you = h.youFor(murdererSock.socket.id);
+  const victim = players.find((p) => p !== murdererSock && h.youFor(p.socket.id)?.role !== "murderer");
+  const w = you.weapons.find((x) => x.id !== you.ownWeaponId) || you.weapons[0];
+  murdererSock.send("m2:kill", { victimId: victim.pid(), weaponId: w.id, methodIndex: 0 });
+  return victim;
+};
+
+test("a killed player may leave last words once — public, trimmed, and locked after", () => {
+  const { h, players, murdererSock } = startedGame(5);
+  const victim = killOne(h, players, murdererSock);
+  assert.equal(h.lastState().players.find((p) => p.id === victim.pid()).alive, false);
+  victim.send("m2:lastWords", { text: "   It was the Doctor!   " });
+  assert.equal(h.lastState().players.find((p) => p.id === victim.pid()).lastWords, "It was the Doctor!", "trimmed + public in broadcast state");
+  const before = h.emitted.length;
+  victim.send("m2:lastWords", { text: "actually the Baker" });
+  assert.equal(h.errorsAfter(before).length, 1, "speaking twice is rejected");
+  assert.equal(h.lastState().players.find((p) => p.id === victim.pid()).lastWords, "It was the Doctor!", "first message stands");
+});
+
+test("anti-cheat: a LIVING player cannot leave last words", () => {
+  const { h, players, murdererSock } = startedGame(5);
+  const alive = players.find((p) => p !== murdererSock);
+  const before = h.emitted.length;
+  alive.send("m2:lastWords", { text: "I'm not even dead" });
+  assert.equal(h.errorsAfter(before).length, 1);
+  assert.equal(h.lastState().players.find((p) => p.id === alive.pid()).lastWords, null);
+});
+
+test("last words: empty is ignored (not locked), long is capped to 120 chars", () => {
+  const { h, players, murdererSock } = startedGame(5);
+  const victim = killOne(h, players, murdererSock);
+  victim.send("m2:lastWords", { text: "   " });
+  assert.equal(h.lastState().players.find((p) => p.id === victim.pid()).lastWords, null, "empty ignored, still able to speak");
+  victim.send("m2:lastWords", { text: "x".repeat(200) });
+  assert.equal(h.lastState().players.find((p) => p.id === victim.pid()).lastWords.length, 120, "capped");
+});
+
 // --- Item-set model (founder's manifest): the set frames the suspect, the method is the story ----
 
 test("the murderer's chosen method is recorded on the clue, and the set still frames its owner", () => {
