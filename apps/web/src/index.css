@@ -46,6 +46,34 @@ body {
     background-repeat: no-repeat;
   }
 
+  /* Murder Mystery: The Villagers. The base backdrop is the village square at dusk; the phase
+     variants swap the scene as the game turns. Each keeps a cream scrim so overlaid text stays
+     readable — darker phases (night/reveal) use a lighter scrim so the mood art shows through. */
+  .ff-backdrop-villagers {
+    background-color: theme("colors.cream");
+    background-image:
+      linear-gradient(rgba(244, 241, 234, 0.6), rgba(244, 241, 234, 0.6)),
+      url("/brand/villagers-bg.webp");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  .ff-bg-night {
+    background-image:
+      linear-gradient(rgba(20, 24, 40, 0.35), rgba(20, 24, 40, 0.45)),
+      url("/brand/phase-night.webp");
+  }
+  .ff-bg-meeting {
+    background-image:
+      linear-gradient(rgba(244, 241, 234, 0.5), rgba(244, 241, 234, 0.5)),
+      url("/brand/phase-meeting.webp");
+  }
+  .ff-bg-reveal {
+    background-image:
+      linear-gradient(rgba(20, 14, 18, 0.45), rgba(20, 14, 18, 0.55)),
+      url("/brand/phase-reveal.webp");
+  }
+
   .ff-title {
     font-family: theme("fontFamily.display");
     letter-spacing: 0.04em;

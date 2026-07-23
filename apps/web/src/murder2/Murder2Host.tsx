@@ -94,5 +94,5 @@ const name = (s: V2State, id: string) => s.players.find((p) => p.id === id)?.nam
 const prof = (s: V2State, id: string | null) => s.characters.find((c) => c.id === id)?.profession || "?";
 
 function Wrap({ children }: { children: React.ReactNode }) {
-  return <div className="min-h-full overflow-auto bg-cream p-4">{children}</div>;
+  return <div className="h-full overflow-auto bg-cream p-4">{children}</div>;
 }

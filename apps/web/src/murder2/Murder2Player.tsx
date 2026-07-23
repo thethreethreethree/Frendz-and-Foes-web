@@ -39,7 +39,7 @@ function Lobby({ state, you }: { state: ReturnType<typeof useMurder2>["state"] &
   const taken = new Set(state!.players.map((p: V2Player) => p.characterId).filter(Boolean));
   const mine = you.characterId;
   return (
-    <div className="min-h-full overflow-auto bg-cream p-4">
+    <div className="h-full overflow-auto bg-cream p-4">
       <div className="ff-title mb-1 text-center text-2xl text-ink">PICK YOUR CHARACTER</div>
       <p className="mb-3 text-center text-sm text-ink/60">{mine ? "Tap another to change." : "Tap to choose who you are."}</p>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -67,7 +67,8 @@ function MurdererView({ state, you }: { state: any; you: any }) {
   const targets: V2Player[] = state.players.filter((p: V2Player) => p.alive && p.id !== you.id);
   const weapons = you.weapons || [];
   return (
-    <div className="min-h-full overflow-auto bg-[#2a0e12] p-4 text-white">
+    <div className="h-full overflow-auto bg-[#2a0e12] p-4 text-white">
+      <RoleBanner src="/roles/role-murderer.webp" />
       <div className="ff-title text-3xl text-pink">YOU ARE THE MURDERER</div>
       {/* F-1: the player's own character card, full-resolution. This is the one-at-a-time surface, so
           it uses `art` (52KB) rather than `thumb` — grids stay on thumb for payload. */}
@@ -130,10 +131,20 @@ function MurdererView({ state, you }: { state: any; you: any }) {
   );
 }
 
+// Full-width role reveal illustration at the top of a player's screen. Hides itself if the art 404s.
+function RoleBanner({ src }: { src: string }) {
+  const [ok, setOk] = useState(true);
+  if (!ok) return null;
+  return <img src={src} alt="" onError={() => setOk(false)} className="mb-3 max-h-52 w-full rounded-xl object-cover" />;
+}
+
 function VillagerView({ state, you }: { state: any; you: any }) {
   const me = state.players.find((p: V2Player) => p.id === you.id);
   return (
-    <div className="min-h-full overflow-auto bg-cream p-4">
+    <div className="h-full overflow-auto bg-cream p-4">
+      {/* No villager-specific role card was drawn (the art set covers murderer/dead/accused/survivor);
+          a killed villager gets the "dead" card, the living see their own character card. */}
+      {!me?.alive && <RoleBanner src="/roles/role-dead.webp" />}
       <div className="ff-title text-2xl text-ink">YOU ARE A VILLAGER</div>
       <MyCard state={state} you={you} />
       <p className="text-sm text-ink/60">{me?.alive ? "Watch the clues. Catch the murderer when the town meets." : "You were killed — spectate."}</p>
@@ -148,7 +159,7 @@ function Voting({ state, you }: { state: any; you: any }) {
   const voted = state.vote?.votedBy?.includes(you.id);
   const suspects: V2Player[] = state.players.filter((p: V2Player) => p.alive && !p.cleared);
   return (
-    <div className="min-h-full overflow-auto bg-cream p-4">
+    <div className="h-full overflow-auto bg-cream p-4">
       <div className="ff-title text-2xl text-pink">TOWN MEETING — VOTE</div>
       {!me?.alive ? <p className="text-sm text-ink/60">The dead don't vote.</p>
         : voted ? <p className="mt-2 rounded-lg bg-teal/10 px-3 py-2 text-sm">Vote cast. Waiting for the town…</p>

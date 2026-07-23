@@ -11,7 +11,7 @@ export function Murder2Display({ room }: { room: string }) {
   // players would have no QR to scan and no game state could ever start.
   if (!state || state.phase === "lobby") return <Lobby room={room} state={state} />;
   return (
-    <Backdrop>
+    <Backdrop phase={state.phase}>
       <div className="w-full max-w-5xl">
         <Header state={state} />
         <div className="grid gap-4 md:grid-cols-2">
@@ -60,12 +60,14 @@ function Lobby({ room, state }: { room: string; state: V2State | null }) {
 
 function Header({ state }: { state: V2State }) {
   const cd = useCooldown(state.cooldownUntil);
+  // Dark backing pill so the header stays legible on every phase backdrop — dark text vanished on the
+  // night/reveal scenes (verified by screenshot, 2026-07-23).
   return (
-    <div className="mb-3 flex items-center justify-between">
-      <div className="ff-title text-3xl text-ink">THE VILLAGERS</div>
+    <div className="mb-3 flex items-center justify-between rounded-xl bg-ink/55 px-4 py-2 text-cream backdrop-blur-sm">
+      <div className="ff-title text-3xl">THE VILLAGERS</div>
       <div className="flex items-center gap-4 font-display text-xl">
         <span className="text-pink">Kills {state.killCount}/{state.killTarget}</span>
-        {state.phase === "playing" && cd > 0 && <span className="text-ink/60">next kill in {cd}s</span>}
+        {state.phase === "playing" && cd > 0 && <span className="text-cream/70">next kill in {cd}s</span>}
         {state.phase === "voting" && <span className="text-teal">TOWN MEETING</span>}
       </div>
     </div>
@@ -79,7 +81,8 @@ function Clues({ state }: { state: V2State }) {
       {state.clues.length === 0 && <p className="text-ink/50">No one has died… yet.</p>}
       {state.clues.map((c: V2Clue, i) => (
         <div key={i} className="mt-2 flex items-center gap-3 rounded-lg bg-cream px-3 py-2">
-          {/* The item-set card IS the clue — show it whole and large enough to read across a room. */}
+          {/* The crime-scene plate for this clue's location, then the item-set card (the deduction key). */}
+          <ScenePlate location={c.weapon.location} />
           <ClueArt art={c.weapon.art} emoji={c.weapon.emoji} />
           <div>
             <b>Item Set {c.weapon.setNumber} · {c.weapon.location}</b>
@@ -152,8 +155,17 @@ function useCooldown(until: number) {
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
   return Math.max(0, Math.ceil((until - now) / 1000));
 }
-function Backdrop({ children }: { children: React.ReactNode }) {
-  return <div className="relative ff-backdrop-villagers grid min-h-full place-items-center p-6">{children}</div>;
+// The scene turns with the game: dusk in the lobby, night while the murderer works, a lit hall for
+// the town meeting, a shadowed reveal at the end. Each variant is a CSS background (index.css).
+function Backdrop({ children, phase }: { children: React.ReactNode; phase?: string }) {
+  const bg = phase === "playing" ? "ff-bg-night" : phase === "voting" ? "ff-bg-meeting" : phase === "ended" ? "ff-bg-reveal" : "";
+  return <div className={`relative ff-backdrop-villagers ${bg} grid min-h-full place-items-center p-6`}>{children}</div>;
+}
+
+// location string → allocated plate path (matches the allocation slug in villagers2.js locations).
+export function locationPlate(location: string) {
+  const s = location.toLowerCase().replace(/['’]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").replace(/^the-/, "");
+  return `/locations/loc-${s}.webp`;
 }
 
 // The dramatic per-moment overlay. v2 emitted seven announce types and rendered none of them — the
@@ -161,25 +173,28 @@ function Backdrop({ children }: { children: React.ReactNode }) {
 // behave the same across modules). Keyed on `nonce`, not payload: two identical kills in a row must
 // still fire twice, and a reconnect that replays the last announce must not.
 function MomentBanner({ announce }: { announce: { a: V2Announce; nonce: number } | null }) {
-  const [show, setShow] = useState<{ text: string; sub?: string; nonce: number } | null>(null);
+  const [show, setShow] = useState<{ text: string; sub?: string; art?: string; nonce: number } | null>(null);
   useEffect(() => {
     if (!announce) return;
     const a = announce.a;
     let text = "";
     let sub: string | undefined;
+    let art: string | undefined; // the event illustration behind the text
     if (a.type === "killed") {
       text = `💀 ${a.victim} was murdered!`;
       sub = a.method ? `${a.method} — left in the ${a.weapon}` : `left in the ${a.weapon}`;
-    } else if (a.type === "start") text = "🔪 The village sleeps…";
-    else if (a.type === "vote-open") text = "🔔 Town meeting — everybody vote";
-    else if (a.type === "vote-wrong") { text = `❌ ${a.cleared} is innocent`; sub = "the murderer is still among you"; }
-    else if (a.type === "vote-none") text = "🤷 No majority — the town moves on";
+      art = "/events/event-kill.webp";
+    } else if (a.type === "start") { text = "🔪 The village sleeps…"; }
+    else if (a.type === "vote-open") { text = "🔔 Town meeting — everybody vote"; art = "/events/event-vote-open.webp"; }
+    else if (a.type === "vote-wrong") { text = `❌ ${a.cleared} is innocent`; sub = "the murderer is still among you"; art = "/events/event-accuse-wrong.webp"; }
+    else if (a.type === "vote-none") { text = "🤷 No majority — the town moves on"; art = "/events/event-vote-tie.webp"; }
     else if (a.type === "end") {
       text = a.winner === "town" ? "🎉 The town wins!" : "🔪 The murderer wins!";
       sub = a.caught ? `${a.caught} was the murderer` : undefined;
+      art = a.winner === "town" ? "/events/event-accuse-right.webp" : "/events/event-kill.webp";
     }
     if (!text) return;
-    setShow({ text, sub, nonce: announce.nonce });
+    setShow({ text, sub, art, nonce: announce.nonce });
     const id = setTimeout(() => setShow(null), 2800);
     return () => clearTimeout(id);
   }, [announce]);
@@ -194,9 +209,12 @@ function MomentBanner({ announce }: { announce: { a: V2Announce; nonce: number }
           exit={{ opacity: 0 }}
           className="absolute inset-0 z-30 grid place-items-center bg-ink/70 backdrop-blur-sm"
         >
-          <div className="ff-sticker animate-pop bg-white px-12 py-8 text-center">
-            <div className="ff-title text-5xl text-pink">{show.text}</div>
-            {show.sub && <div className="mt-2 text-xl text-ink/70">{show.sub}</div>}
+          <div className="ff-sticker animate-pop relative overflow-hidden bg-white text-center">
+            {show.art && <img src={show.art} alt="" className="absolute inset-0 h-full w-full object-cover opacity-30" />}
+            <div className="relative px-12 py-8">
+              <div className="ff-title text-5xl text-pink">{show.text}</div>
+              {show.sub && <div className="mt-2 text-xl text-ink/80">{show.sub}</div>}
+            </div>
           </div>
         </motion.div>
       )}
@@ -211,4 +229,11 @@ function ClueArt({ art, emoji }: { art: string; emoji: string }) {
   const [ok, setOk] = useState(true);
   if (ok) return <img src={art} alt="" onError={() => setOk(false)} className="h-48 w-auto shrink-0 rounded-lg object-contain" />;
   return <span className="grid h-48 w-[170px] shrink-0 place-items-center text-6xl">{emoji}</span>;
+}
+// The crime-scene location plate. ~9 locations have no art yet; those simply render nothing (the
+// item-set card and text still carry the clue), so a missing plate degrades cleanly.
+function ScenePlate({ location }: { location: string }) {
+  const [ok, setOk] = useState(true);
+  if (!ok) return null;
+  return <img src={locationPlate(location)} alt={location} onError={() => setOk(false)} className="h-48 w-36 shrink-0 rounded-lg object-cover" />;
 }
