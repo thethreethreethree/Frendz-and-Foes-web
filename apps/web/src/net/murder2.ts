@@ -27,6 +27,7 @@ export interface V2State {
   killTarget: number; cooldownSec: number; cooldownUntil: number; killCount: number;
   winner: null | "murderers" | "town"; murdererIds?: string[]; detectiveId?: string; hasDetective?: boolean;
   doctorId?: string; hasDoctor?: boolean;
+  scores?: Record<string, number>; round?: number;
   characters: V2Character[]; weapons: Record<string, V2Weapon>;
   players: V2Player[]; clues: V2Clue[];
   vote: null | { active: boolean; tally: Record<string, number>; votedBy: string[] };

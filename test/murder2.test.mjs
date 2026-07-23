@@ -397,6 +397,37 @@ test("anti-cheat: only the doctor protects; cooldown enforced; a dead doctor can
   assert.equal(h.errorsAfter(before).length, 1, "a dead doctor cannot protect");
 });
 
+// --- Scoring across rounds ----------------------------------------------------------------------
+test("scoring: a town win gives the winning side +3, survivors +1, detective +2 for a correct finding", () => {
+  const { h, players, murdererSock, host } = startedGame(5); // murderer + detective + 3 villagers
+  const detective = players.find((p) => h.youFor(p.socket.id)?.role === "detective");
+  const villager = players.find((p) => h.youFor(p.socket.id)?.role === "villager");
+  detective.send("m2:investigate", { suspectId: murdererSock.pid() }); // correct finding
+  host.send("m2:openVote");
+  players.filter((p) => h.lastState().players.find((q) => q.id === p.pid())?.alive).forEach((p) => p.send("m2:vote", { suspectId: murdererSock.pid() }));
+  const st = h.lastState();
+  assert.equal(st.winner, "town");
+  assert.equal(st.scores[murdererSock.pid()] || 0, 0, "the caught (dead, losing) murderer scores 0");
+  assert.equal(st.scores[villager.pid()], 4, "villager: +3 win, +1 survived");
+  assert.equal(st.scores[detective.pid()], 6, "detective: +3 +1 +2 for correctly fingering the murderer");
+});
+
+test("scoring: round increments each start; scores persist over a soft reset, clear on a full reset", () => {
+  const { h, players, murdererSock, host } = startedGame(5);
+  assert.equal(h.lastState().round, 1);
+  host.send("m2:openVote");
+  players.filter((p) => h.lastState().players.find((q) => q.id === p.pid())?.alive).forEach((p) => p.send("m2:vote", { suspectId: murdererSock.pid() }));
+  const afterR1 = { ...h.lastState().scores };
+  assert.ok(Object.values(afterR1).some((v) => v > 0), "round 1 scored");
+  host.send("m2:reset", {}); // soft reset → next round
+  assert.deepEqual(h.lastState().scores, afterR1, "scores persist through a soft reset (running tournament)");
+  host.send("m2:start");
+  assert.equal(h.lastState().round, 2, "round bumps on the next start");
+  host.send("m2:reset", { full: true });
+  assert.deepEqual(h.lastState().scores, {}, "a full reset clears the board");
+  assert.equal(h.lastState().round, 0);
+});
+
 // --- Dying clue (last words) --------------------------------------------------------------------
 const killOne = (h, players, murdererSock) => {
   const you = h.youFor(murdererSock.socket.id);

@@ -37,6 +37,9 @@ function ensure(rooms, code) {
       vote: null,
       cleared: new Set(),
       winner: null,
+      scores: {},   // playerId -> cumulative points across rounds (persists over a soft reset)
+      round: 0,
+      saves: 0,     // doctor saves THIS round (for the end-of-round bonus)
     };
   }
   return r.murder2;
@@ -57,6 +60,20 @@ const playerByCharacter = (m, characterId) => [...m.players.values()].find((p) =
 const isMurderer = (m, id) => m.murdererIds.includes(id);
 const murderersAlive = (m) => m.murdererIds.filter((id) => m.players.get(id)?.alive).length;
 const ownWeaponIdOf = (p) => (p && p.characterId ? getVillager(p.characterId)?.weaponId : null);
+
+// Tally end-of-round points into the running scoreboard. Winning side +3, survivors +1, and the
+// detective (+2 for a correct finding) / doctor (+2 for making a save) are rewarded for doing their job.
+function awardScores(m) {
+  const add = (id, n) => { if (id) m.scores[id] = (m.scores[id] || 0) + n; };
+  const townWon = m.winner === "town";
+  for (const p of m.players.values()) {
+    const mur = isMurderer(m, p.id);
+    if (townWon ? !mur : mur) add(p.id, 3); // on the winning side
+    if (p.alive) add(p.id, 1);              // survived to the end
+  }
+  if (m.detectiveId && m.findings.some((f) => f.isMurderer)) add(m.detectiveId, 2);
+  if (m.doctorId && m.saves > 0) add(m.doctorId, 2);
+}
 
 // The weapons the murderer may choose from = signature weapons of characters players actually picked.
 function availableWeapons(m) {
@@ -83,6 +100,8 @@ function publicState(m) {
     cooldownUntil: m.cooldownUntil,
     killCount: m.kills.length,
     winner: m.winner,
+    scores: m.scores,
+    round: m.round,
     murdererIds: reveal ? [...m.murdererIds] : undefined,
     detectiveId: reveal ? m.detectiveId : undefined,
     hasDetective: !!m.detectiveId,
@@ -269,6 +288,8 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
     m.findings = [];
     m.protectedId = null;
     m.protectUntil = 0;
+    m.saves = 0;
+    m.round = (m.round || 0) + 1;
     m.winner = null;
     sendYouAll(m);
     broadcast(code);
@@ -336,6 +357,7 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
     // whether a miss was a save or a bad guess until the "saved" moment announces it to everyone.
     if (m.protectedId && victim.id === m.protectedId) {
       m.protectedId = null;
+      m.saves += 1;
       m.cooldownUntil = now() + m.cooldownSec * 1000;
       sendYou(m, killer);
       announce(code, { type: "saved", victim: victim.name });
@@ -376,6 +398,7 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
     if (m.kills.length >= m.killTarget || villagersAlive === 0) {
       m.phase = "ended";
       m.winner = "murderers";
+      awardScores(m);
       announce(code, { type: "end", winner: "murderers" });
     }
     broadcast(code);
@@ -433,6 +456,7 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
       if (murderersAlive(m) === 0) {
         m.phase = "ended";
         m.winner = "town";
+        awardScores(m);
         announce(code, { type: "end", winner: "town", caught: caught?.name });
       } else {
         m.phase = "playing";
@@ -458,7 +482,7 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
     const code = hostCode();
     const m = rooms.get(code)?.murder2;
     if (!m) return;
-    if (full) m.players.clear();
+    if (full) { m.players.clear(); m.scores = {}; m.round = 0; }
     m.phase = "lobby";
     m.murdererIds = [];
     m.detectiveId = null;

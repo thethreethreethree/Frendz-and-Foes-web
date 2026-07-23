@@ -66,7 +66,7 @@ function Header({ state }: { state: V2State }) {
   // night/reveal scenes (verified by screenshot, 2026-07-23).
   return (
     <div className="mb-3 flex items-center justify-between rounded-xl bg-ink/55 px-4 py-2 text-cream backdrop-blur-sm">
-      <div className="ff-title text-3xl">THE VILLAGERS</div>
+      <div className="ff-title text-3xl">THE VILLAGERS{state.round ? <span className="ml-2 text-lg text-cream/70">Round {state.round}</span> : null}</div>
       <div className="flex items-center gap-4 font-display text-xl">
         <span className="text-pink"><Icon name="icon-kills" className="inline h-6 w-6 align-[-5px]" /> Kills {state.killCount}/{state.killTarget}</span>
         {state.hasDetective && state.phase !== "ended" && <span className="text-teal">🔍 a detective walks among you</span>}
@@ -163,6 +163,30 @@ function EndBanner({ state }: { state: V2State }) {
       <div className="mt-1 text-lg"><Icon name="icon-murderer" className="inline h-6 w-6 align-[-5px]" /> {murderers.length > 1 ? "They were" : "It was"} {murderers.map((mp) => `${mp.name} (${charName(state, mp.characterId)})`).join(", ")}.</div>
       {detective && <div className="mt-1 text-sm opacity-90"><Icon name="icon-detective" className="inline h-5 w-5 align-[-4px]" /> The detective was <b>{detective.name}</b>, the {charName(state, detective.characterId)}.</div>}
       {doctor && <div className="mt-1 text-sm opacity-90">🛡️ The doctor was <b>{doctor.name}</b>, the {charName(state, doctor.characterId)}.</div>}
+      <Standings state={state} />
+    </div>
+  );
+}
+
+// Running tournament scoreboard — cumulative points across rounds, shown at each round's end.
+function Standings({ state }: { state: V2State }) {
+  const scores = state.scores || {};
+  const rows = state.players
+    .filter((p) => p.characterId)
+    .map((p) => ({ name: p.name, pts: scores[p.id] || 0 }))
+    .sort((a, b) => b.pts - a.pts);
+  if (!rows.length) return null;
+  const top = rows[0]?.pts ?? 0;
+  return (
+    <div className="mt-4 rounded-lg bg-white/15 p-3 text-left">
+      <div className="ff-title text-xl"><Icon name="icon-winner" className="inline h-6 w-6 align-[-5px]" /> Standings after {state.round} round{state.round === 1 ? "" : "s"}</div>
+      <div className="mt-1 space-y-0.5 text-sm">
+        {rows.map((r, i) => (
+          <div key={i} className={`flex justify-between ${r.pts === top && top > 0 ? "font-bold" : "opacity-90"}`}>
+            <span>{i + 1}. {r.name}{r.pts === top && top > 0 ? " 👑" : ""}</span><span>{r.pts} pt{r.pts === 1 ? "" : "s"}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
