@@ -10,7 +10,7 @@
 import { randomBytes } from "node:crypto";
 import { WEAPONS, VILLAGERS, getVillager, villagerForWeapon, methodAt } from "./villagers2.js";
 
-const DEFAULTS = { killTarget: 4, cooldownSec: 75, rewardCooldownSec: 30, maxPerWeapon: 2, investigateCooldownSec: 45 };
+const DEFAULTS = { killTarget: 4, cooldownSec: 75, rewardCooldownSec: 30, maxPerWeapon: 2, investigateCooldownSec: 45, protectCooldownSec: 45 };
 
 function ensure(rooms, code) {
   let r = rooms.get(code);
@@ -24,6 +24,9 @@ function ensure(rooms, code) {
       players: new Map(),
       murdererId: null,
       detectiveId: null,        // one player (games of 4+) can privately investigate suspects
+      doctorId: null,           // one player (games of 6+) can shield a target from the next attack
+      protectedId: null,        // who the doctor is currently shielding — SECRET, never in publicState
+      protectUntil: 0,
       killTarget: DEFAULTS.killTarget,
       cooldownSec: DEFAULTS.cooldownSec,
       cooldownUntil: 0,
@@ -85,7 +88,9 @@ function publicState(m) {
     winner: m.winner,
     murdererId: reveal ? m.murdererId : undefined,
     detectiveId: reveal ? m.detectiveId : undefined,
-    hasDetective: !!m.detectiveId, // public: the town knows a detective walks among them, not who
+    hasDetective: !!m.detectiveId,
+    doctorId: reveal ? m.doctorId : undefined,
+    hasDoctor: !!m.doctorId, // public: the town knows a doctor tends them, not who (protectedId is secret)
     characters: VILLAGERS.map((v) => ({ ...v, weapon: WEAPONS[v.weaponId] })),
     weapons: WEAPONS,
     players: [...m.players.values()].map((p) => ({
@@ -159,6 +164,14 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
           profession: getVillager(m.players.get(f.suspectId)?.characterId)?.profession || "?",
           isMurderer: f.isMurderer,
         })),
+      });
+    } else if (p.role === "doctor") {
+      io.to(p.socketId).emit("m2:you", {
+        ...base,
+        protectUntil: m.protectUntil,
+        protectCooldownSec: DEFAULTS.protectCooldownSec,
+        protectingId: m.protectedId,
+        protectingName: m.protectedId ? (m.players.get(m.protectedId)?.name || null) : null,
       });
     } else {
       io.to(p.socketId).emit("m2:you", base);
@@ -243,6 +256,9 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
     // leaves ≥2 plain villagers (murderer + detective + 2). Below that, no detective.
     m.detectiveId = null;
     if (withChar.length >= 4) { order[1].role = "detective"; m.detectiveId = order[1].id; }
+    // A doctor joins once the town is big enough to still leave ≥3 plain villagers (6+ players).
+    m.doctorId = null;
+    if (withChar.length >= 6) { order[2].role = "doctor"; m.doctorId = order[2].id; }
     m.phase = "playing";
     m.kills = [];
     m.weaponUses = {};
@@ -250,6 +266,8 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
     m.cooldownUntil = 0;
     m.investigateUntil = 0;
     m.findings = [];
+    m.protectedId = null;
+    m.protectUntil = 0;
     m.winner = null;
     sendYouAll(m);
     broadcast(code);
@@ -270,6 +288,21 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
     m.findings.push({ suspectId, isMurderer: suspect.id === m.murdererId, at: now() });
     m.investigateUntil = now() + DEFAULTS.investigateCooldownSec * 1000;
     sendYou(m, p); // the result goes ONLY to the detective; no broadcast, no announce
+  });
+
+  // --- Doctor: shield one person from the next attack (cooldown-gated) ---------------------------
+  socket.on("m2:protect", ({ targetId }) => {
+    const code = socket.data.code2;
+    const m = code && rooms.get(code)?.murder2;
+    if (!m || m.phase !== "playing") return;
+    const p = m.players.get(socket.data.playerId2);
+    if (!p || p.role !== "doctor" || !p.alive) return err("Only the doctor can protect.");
+    if (now() < m.protectUntil) return err("Still preparing — wait before protecting again.");
+    const target = m.players.get(targetId);
+    if (!target || !target.alive) return err("Invalid person to protect.");
+    m.protectedId = targetId;
+    m.protectUntil = now() + DEFAULTS.protectCooldownSec * 1000;
+    sendYou(m, p); // only the doctor learns who is currently shielded
   });
 
   // --- Dying clue: a killed player leaves ONE public parting message (a true hint or a bluff) ------
@@ -297,6 +330,17 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
 
     const victim = m.players.get(victimId);
     if (!victim || !victim.alive || victim.id === killer.id) return err("Invalid victim.");
+    // The doctor may have shielded this target. A saved attack downs no one and logs no clue, but it
+    // still spends the murderer's turn (cooldown) and consumes the shield. The murderer isn't told
+    // whether a miss was a save or a bad guess until the "saved" moment announces it to everyone.
+    if (m.protectedId && victim.id === m.protectedId) {
+      m.protectedId = null;
+      m.cooldownUntil = now() + m.cooldownSec * 1000;
+      sendYou(m, killer);
+      announce(code, { type: "saved", victim: victim.name });
+      broadcast(code);
+      return;
+    }
     const set = WEAPONS[weaponId];
     if (!set) return err("Unknown item set.");
     // The set must belong to a character present (frames a real player).
@@ -408,6 +452,9 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
     m.phase = "lobby";
     m.murdererId = null;
     m.detectiveId = null;
+    m.doctorId = null;
+    m.protectedId = null;
+    m.protectUntil = 0;
     m.kills = [];
     m.weaponUses = {};
     m.cleared = new Set();

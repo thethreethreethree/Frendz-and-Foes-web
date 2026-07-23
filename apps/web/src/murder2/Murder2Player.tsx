@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMurder2 } from "./useMurder2";
 import { playSfx } from "../audio/sfx";
-import { loadPlayer2, m2Pick, m2Kill, m2Vote, m2Investigate, m2LastWords, type V2Announce, type V2Character, type V2Player } from "../net/murder2";
+import { loadPlayer2, m2Pick, m2Kill, m2Vote, m2Investigate, m2Protect, m2LastWords, type V2Announce, type V2Character, type V2Player } from "../net/murder2";
 
 // location string → allocated scene-plate path (mirrors the allocation slug).
 function locationPlate(location: string) {
@@ -38,6 +38,7 @@ export function Murder2Player({ room }: { room: string }) {
     if (state.phase === "voting") return <Voting state={state} you={you} />;
     if (you.role === "murderer") return <MurdererView state={state} you={you} />;
     if (you.role === "detective") return <DetectiveView state={state} you={you} />;
+    if (you.role === "doctor") return <DoctorView state={state} you={you} />;
     return <VillagerView state={state} you={you} />;
   })();
 
@@ -58,6 +59,7 @@ function PhoneMoment({ announce }: { announce: { a: V2Announce; nonce: number } 
     else if (a.type === "vote-open") { text = "🔔 Town meeting!"; sub = "Cast your vote"; art = "/events/event-vote-open.webp"; playSfx("toll"); }
     else if (a.type === "vote-wrong") { text = `❌ ${a.cleared} was innocent`; sub = "the murderer is still among you"; art = "/events/event-accuse-wrong.webp"; playSfx("buzzer"); }
     else if (a.type === "vote-none") { text = "🤷 No majority"; playSfx("swoosh"); }
+    else if (a.type === "saved") { text = `🛡️ ${a.victim} survived!`; sub = "a healing hand intervened"; art = "/events/event-accuse-right.webp"; playSfx("reveal"); }
     else if (a.type === "end") { text = a.winner === "town" ? "🎉 Town wins!" : "🔪 Murderer wins!"; sub = a.caught ? `${a.caught} did it` : undefined; art = a.winner === "town" ? "/events/event-accuse-right.webp" : "/events/event-kill.webp"; playSfx("gong"); }
     if (!text) return;
     setShow({ text, sub, art, nonce: announce.nonce });
@@ -217,6 +219,41 @@ function DetectiveView({ state, you }: { state: any; you: any }) {
   );
 }
 
+function DoctorView({ state, you }: { state: any; you: any }) {
+  const me = state.players.find((p: V2Player) => p.id === you.id);
+  const cd = useCooldown(you.protectUntil || 0);
+  const targets: V2Player[] = state.players.filter((p: V2Player) => p.alive && p.characterId);
+  return (
+    <div className="h-full overflow-auto bg-[#0f2a24] p-4 text-white">
+      <RoleBanner src="/roles/role-survivor.webp" />
+      <div className="ff-title text-3xl text-teal">YOU ARE THE DOCTOR</div>
+      <MyCard state={state} you={you} />
+      {!me?.alive ? (
+        <>
+          <p className="mt-1 rounded-lg bg-white/10 px-3 py-2 text-sm">You were killed — no one left to save.</p>
+          <LastWords me={me} dark />
+        </>
+      ) : (
+        <>
+          <p className="mt-1 text-sm text-white/70">Each round, shield one villager. If the murderer strikes them, they survive — and no one learns it was you.</p>
+          {you.protectingName && <p className="mt-2 rounded-lg bg-teal/20 px-3 py-2 text-sm">🛡️ Currently protecting <b>{you.protectingName}</b>.</p>}
+          {cd > 0 && <p className="mt-2 rounded-lg bg-white/10 px-3 py-2 text-sm">Preparing… <b>{cd}s</b> until you can protect again.</p>}
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {targets.map((p) => (
+              <button key={p.id} disabled={cd > 0} onClick={() => m2Protect(p.id)}
+                className={`rounded-lg border-2 px-2 py-2 text-left text-sm disabled:opacity-30 ${you.protectingId === p.id ? "border-teal bg-teal/10" : "border-white/20 bg-white/5"}`}>
+                🛡️ {p.name} <span className="text-white/50">· {charName(state, p.characterId)}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+      <ClueFeed state={state} />
+      <Roster state={state} />
+    </div>
+  );
+}
+
 // A killed player's one parting message — a true hint or a bluff. Shown once dead; locks after sending.
 function LastWords({ me, dark }: { me: any; dark: boolean }) {
   const [text, setText] = useState("");
@@ -300,6 +337,7 @@ function Ended({ state, you }: { state: any; you: any }) {
       <div className="ff-title text-4xl text-pink"><Icon name="icon-winner" className="inline h-8 w-8 align-[-6px]" /> {state.winner === "town" ? "TOWN WINS" : "MURDERER WINS"}</div>
       <p className="mt-2 text-lg text-ink">The murderer was <b>{murderer?.name}</b> ({charName(state, murderer?.characterId)}).</p>
       {state.detectiveId && <p className="text-sm text-ink/70">🔍 The detective was <b>{state.players.find((p: V2Player) => p.id === state.detectiveId)?.name}</b>.</p>}
+      {state.doctorId && <p className="text-sm text-ink/70">🛡️ The doctor was <b>{state.players.find((p: V2Player) => p.id === state.doctorId)?.name}</b>.</p>}
       <p className={`mt-3 font-display text-2xl ${won ? "text-teal" : "text-ink/50"}`}>{won ? "You won!" : "You lost."}</p>
     </Screen>
   );

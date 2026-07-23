@@ -14,7 +14,7 @@ export interface V2Character {
 }
 export interface V2Player {
   id: string; name: string; characterId: string | null;
-  alive: boolean; connected: boolean; cleared: boolean; role?: "murderer" | "villager" | "detective";
+  alive: boolean; connected: boolean; cleared: boolean; role?: "murderer" | "villager" | "detective" | "doctor";
   lastWords?: string | null; // a killed player's public parting message
 }
 export interface V2Clue {
@@ -26,6 +26,7 @@ export interface V2State {
   phase: "lobby" | "playing" | "voting" | "ended";
   killTarget: number; cooldownSec: number; cooldownUntil: number; killCount: number;
   winner: null | "murderers" | "town"; murdererId?: string; detectiveId?: string; hasDetective?: boolean;
+  doctorId?: string; hasDoctor?: boolean;
   characters: V2Character[]; weapons: Record<string, V2Weapon>;
   players: V2Player[]; clues: V2Clue[];
   vote: null | { active: boolean; tally: Record<string, number>; votedBy: string[] };
@@ -35,7 +36,7 @@ export interface V2AvailWeapon extends V2Weapon {
 }
 export interface V2Finding { suspectId: string; name: string; profession: string; isMurderer: boolean }
 export interface V2You {
-  id: string; role: "murderer" | "villager" | "detective" | null; alive: boolean; characterId: string | null;
+  id: string; role: "murderer" | "villager" | "detective" | "doctor" | null; alive: boolean; characterId: string | null;
   // Secret proof of identity, issued once and delivered only on this private channel. Stored
   // locally and replayed on rejoin; without it the server will not hand back this player.
   rejoinToken?: string;
@@ -43,6 +44,8 @@ export interface V2You {
   weapons?: V2AvailWeapon[]; cooldownUntil?: number; mustUseOwnNow?: boolean;
   // Detective-only, private: investigation cooldown + the results learned so far.
   investigateUntil?: number; investigateCooldownSec?: number; findings?: V2Finding[];
+  // Doctor-only, private: protect cooldown + who they're currently shielding.
+  protectUntil?: number; protectCooldownSec?: number; protectingId?: string | null; protectingName?: string | null;
 }
 export type V2Announce =
   | { type: "start" }
@@ -51,6 +54,7 @@ export type V2Announce =
   | { type: "vote-open" }
   | { type: "vote-wrong"; cleared: string }
   | { type: "vote-none" }
+  | { type: "saved"; victim: string }
   | { type: "end"; winner: "murderers" | "town"; caught?: string };
 
 export const m2Join = (room: string, name: string, playerId?: string, rejoinToken?: string) =>
@@ -62,6 +66,7 @@ export const m2Start = () => getSocket().emit("m2:start");
 export const m2Kill = (victimId: string, weaponId: string, methodIndex = 0) =>
   getSocket().emit("m2:kill", { victimId, weaponId, methodIndex });
 export const m2Investigate = (suspectId: string) => getSocket().emit("m2:investigate", { suspectId });
+export const m2Protect = (targetId: string) => getSocket().emit("m2:protect", { targetId });
 export const m2OpenVote = () => getSocket().emit("m2:openVote");
 export const m2Vote = (suspectId: string) => getSocket().emit("m2:vote", { suspectId });
 export const m2LastWords = (text: string) => getSocket().emit("m2:lastWords", { text });

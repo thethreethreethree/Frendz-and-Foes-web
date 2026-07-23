@@ -275,6 +275,73 @@ test("anti-cheat: a player socket cannot run host actions (start / reset / vote 
   assert.equal(h.lastState().phase, "playing");
 });
 
+// --- Doctor role --------------------------------------------------------------------------------
+const docOf = (h, players) => players.find((p) => h.youFor(p.socket.id)?.role === "doctor");
+
+test("a 6-player game assigns murderer + detective + doctor + 3 villagers; a 5-player game has no doctor", () => {
+  const g = startedGame(6);
+  const roles = g.players.map((p) => g.h.youFor(p.socket.id)?.role);
+  assert.equal(roles.filter((r) => r === "murderer").length, 1);
+  assert.equal(roles.filter((r) => r === "detective").length, 1);
+  assert.equal(roles.filter((r) => r === "doctor").length, 1);
+  assert.equal(roles.filter((r) => r === "villager").length, 3);
+  assert.equal(g.h.lastState().hasDoctor, true);
+  const g5 = startedGame(5);
+  assert.equal(g5.players.map((p) => g5.h.youFor(p.socket.id)?.role).filter((r) => r === "doctor").length, 0);
+  assert.equal(g5.h.lastState().hasDoctor, false);
+});
+
+test("the doctor's shield BLOCKS the attack on that target — no death, no clue, but the turn is spent", () => {
+  const { h, players, murdererSock } = startedGame(6);
+  const doctor = docOf(h, players);
+  const you = h.youFor(murdererSock.socket.id);
+  const target = players.find((p) => p !== murdererSock && p !== doctor && h.youFor(p.socket.id)?.role === "villager");
+  doctor.send("m2:protect", { targetId: target.pid() });
+  const w = you.weapons.find((x) => x.id !== you.ownWeaponId) || you.weapons[0];
+  const before = h.emitted.length;
+  murdererSock.send("m2:kill", { victimId: target.pid(), weaponId: w.id, methodIndex: 0 });
+  assert.equal(h.lastState().players.find((p) => p.id === target.pid()).alive, true, "protected target survives");
+  assert.equal(h.lastState().clues.length, 0, "a saved attack logs no clue");
+  assert.ok(h.emitted.slice(before).some((e) => e.ev === "m2:announce" && e.payload?.type === "saved"), "a 'saved' moment announces");
+  // shield is consumed: after cooldown, the same target can be killed
+  h.advance(76000);
+  murdererSock.send("m2:kill", { victimId: target.pid(), weaponId: w.id, methodIndex: 0 });
+  assert.equal(h.lastState().players.find((p) => p.id === target.pid()).alive, false, "shield was one-use — the next attack lands");
+});
+
+test("the protected target is SECRET — not in the broadcast state; only the doctor sees it", () => {
+  const { h, players } = startedGame(6);
+  const doctor = docOf(h, players);
+  const target = players.find((p) => p !== doctor);
+  doctor.send("m2:protect", { targetId: target.pid() });
+  assert.ok(!JSON.stringify(h.lastState()).includes("protectedId"), "public state must not carry the shield");
+  assert.equal(h.youFor(doctor.socket.id).protectingId, target.pid(), "the doctor sees their own shield");
+  const vil = players.find((p) => h.youFor(p.socket.id)?.role === "villager");
+  assert.equal(h.youFor(vil.socket.id).protectingId, undefined, "others cannot see the shield");
+});
+
+test("anti-cheat: only the doctor protects; cooldown enforced; a dead doctor cannot", () => {
+  const { h, players, murdererSock } = startedGame(6);
+  const doctor = docOf(h, players);
+  const vil = players.find((p) => h.youFor(p.socket.id)?.role === "villager");
+  let before = h.emitted.length;
+  vil.send("m2:protect", { targetId: doctor.pid() });
+  assert.equal(h.errorsAfter(before).length, 1, "a villager cannot protect");
+  doctor.send("m2:protect", { targetId: vil.pid() });
+  before = h.emitted.length;
+  doctor.send("m2:protect", { targetId: vil.pid() });
+  assert.equal(h.errorsAfter(before).length, 1, "cooldown blocks back-to-back protection");
+  // kill the doctor, then a dead doctor's protect is rejected
+  h.advance(76000);
+  const you = h.youFor(murdererSock.socket.id);
+  const w = you.weapons.find((x) => x.id !== you.ownWeaponId) || you.weapons[0];
+  murdererSock.send("m2:kill", { victimId: doctor.pid(), weaponId: w.id, methodIndex: 0 });
+  assert.equal(h.lastState().players.find((p) => p.id === doctor.pid()).alive, false, "the doctor is killable");
+  before = h.emitted.length;
+  doctor.send("m2:protect", { targetId: murdererSock.pid() });
+  assert.equal(h.errorsAfter(before).length, 1, "a dead doctor cannot protect");
+});
+
 // --- Dying clue (last words) --------------------------------------------------------------------
 const killOne = (h, players, murdererSock) => {
   const you = h.youFor(murdererSock.socket.id);
