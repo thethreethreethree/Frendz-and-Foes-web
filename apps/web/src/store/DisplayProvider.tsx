@@ -16,10 +16,13 @@ export function DisplayProvider({
   children,
   room,
   role = "display",
+  teamId,
 }: {
   children: ReactNode;
   room: string;
   role?: Role;
+  /** For team phones (answerer/viewer): binds this follower to a Foes team on join. */
+  teamId?: string;
 }) {
   const [state, setState] = useState<GameState>(PLACEHOLDER);
   const [buzzersArmed, setBuzzersArmed] = useState(false);
@@ -32,7 +35,7 @@ export function DisplayProvider({
   const announceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    const s = joinRoom(room, role);
+    const s = joinRoom(room, role, teamId);
     const onSync = (snap: Snapshot) => {
       setState(snap.state);
       setBuzzersArmed(snap.buzzersArmed);
@@ -68,7 +71,7 @@ export function DisplayProvider({
       s.off("pulse", onPulse);
       s.off("presence", setPresence);
     };
-  }, [room, role]);
+  }, [room, role, teamId]);
 
   // Local countdown, decoupled from the host's clock (starts from the timer-start pulse).
   useEffect(() => {

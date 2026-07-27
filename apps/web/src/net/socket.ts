@@ -6,7 +6,9 @@ import type { GameState, BingoState } from "@ff/engine";
 import type { Announcement } from "../store/gameStore";
 import type { SfxName } from "../audio/sfx";
 
-export type Role = "host" | "display" | "spectator";
+// "answerer"/"viewer" are per-team phone roles for Frendz and Foes: one answerer submits the
+// team's guess (upstream, host-judged), the rest are view-only. Both carry a teamId on join.
+export type Role = "host" | "display" | "spectator" | "answerer" | "viewer";
 export type GameType = "feud" | "bingo" | "murder";
 
 /** The authoritative Feud snapshot the host broadcasts. */
@@ -41,7 +43,18 @@ export interface Presence {
   host: number;
   display: number;
   spectator: number;
+  answerer: number;
+  viewer: number;
+  /** Per-team connection counts, so the host hub can show which teams have a phone linked. */
+  teams: Record<string, { answerers: number; viewers: number }>;
 }
+
+/**
+ * An upstream cue from a team answer-phone to the host (the ONLY thing a non-host may emit).
+ * The relay forwards it to the host peer(s) only; the host judges + scores it. Answerers never
+ * emit game state — that trust boundary is enforced server-side.
+ */
+export type Intent = { teamId: string; kind: "guess"; text: string };
 
 export interface Song {
   id: string;
@@ -91,12 +104,17 @@ export function getSocket(): Socket {
   return _socket;
 }
 
-export function joinRoom(room: string, role: Role): Socket {
+export function joinRoom(room: string, role: Role, teamId?: string): Socket {
   const s = getSocket();
-  const doJoin = () => s.emit("join", { room, role });
+  const doJoin = () => s.emit("join", { room, role, teamId });
   if (s.connected) doJoin();
   s.on("connect", doJoin); // rejoin automatically after any reconnect
   return s;
+}
+
+/** Answerer → host: submit the team's guess for the host to judge. No-op unless joined as answerer. */
+export function emitIntent(intent: Intent): void {
+  getSocket().emit("intent", intent);
 }
 
 export function emitSync(room: string, snapshot: Snapshot | BingoSnapshot): void {

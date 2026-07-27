@@ -5,6 +5,8 @@ import { CtrlButton } from "./ui";
 import { ControlPairButton } from "../net/pairing";
 import { MusicControl } from "../music/MusicControl";
 import { TeamSetup } from "./TeamSetup";
+import { TeamJoinCodes } from "./TeamJoinCodes";
+import { IncomingGuesses } from "./IncomingGuesses";
 import { BuzzInPicker } from "./BuzzInPicker";
 import { AnswerKey } from "./AnswerKey";
 import {
@@ -63,6 +65,9 @@ export function ControlView() {
       {/* Body */}
       <div className="flex flex-col gap-3 p-3">
         <TeamSetup />
+        <TeamJoinCodes />
+        {/* Team-phone guesses land here, above the manual answer key, so the host sees them first. */}
+        <IncomingGuesses />
         <BuzzInPicker />
         <AnswerKey />
         <ScoreOverride />

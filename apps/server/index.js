@@ -62,7 +62,7 @@ if (existsSync(webDist)) {
 const httpServer = createServer(app);
 const io = new Server(httpServer, { cors: { origin: "*" } });
 
-/** room code -> { snapshot, peers: Map<socketId, role> } */
+/** room code -> { snapshot, peers: Map<socketId, { role, teamId }> } */
 const rooms = new Map();
 
 function getRoom(code) {
@@ -75,12 +75,24 @@ function getRoom(code) {
 }
 
 function presence(room) {
-  const roles = [...room.peers.values()];
+  const peers = [...room.peers.values()];
+  const count = (role) => peers.filter((p) => p.role === role).length;
+  // Per-team connection counts power the host's join hub ("Team 3 has an answerer linked").
+  const teams = {};
+  for (const p of peers) {
+    if (!p.teamId) continue;
+    const t = (teams[p.teamId] ??= { answerers: 0, viewers: 0 });
+    if (p.role === "answerer") t.answerers++;
+    else if (p.role === "viewer") t.viewers++;
+  }
   return {
-    total: roles.length,
-    host: roles.filter((r) => r === "host").length,
-    display: roles.filter((r) => r === "display").length,
-    spectator: roles.filter((r) => r === "spectator").length,
+    total: peers.length,
+    host: count("host"),
+    display: count("display"),
+    spectator: count("spectator"),
+    answerer: count("answerer"),
+    viewer: count("viewer"),
+    teams,
   };
 }
 
@@ -88,14 +100,15 @@ io.on("connection", (socket) => {
   let code = null;
   registerMurder2Handlers(io, socket, rooms); // roomKey/now default to uppercase/Date.now here
 
-  socket.on("join", ({ room, role }) => {
+  socket.on("join", ({ room, role, teamId }) => {
     if (typeof room !== "string" || !room) return;
     code = room.toUpperCase();
     socket.data.role = role || "display";
+    socket.data.teamId = typeof teamId === "string" ? teamId : null;
     socket.data.code = code;
     socket.join(code);
     const r = getRoom(code);
-    r.peers.set(socket.id, socket.data.role);
+    r.peers.set(socket.id, { role: socket.data.role, teamId: socket.data.teamId });
     console.log(`[ff-server] ${socket.data.role} joined ${code} (peers: ${r.peers.size})`);
 
     // Catch a late joiner up with the latest snapshot.
@@ -103,22 +116,43 @@ io.on("connection", (socket) => {
     io.to(code).emit("presence", presence(r));
   });
 
+  // Only the host is the authority: it is the sole peer allowed to broadcast game state and cues.
+  // This is a real trust boundary now that untrusted team phones (answerer/viewer) share the room —
+  // without it, any peer emitting "sync" could overwrite the whole room's game state.
   socket.on("sync", (snapshot) => {
-    if (!code) return;
+    if (!code || socket.data.role !== "host") return;
     const r = getRoom(code);
     r.snapshot = snapshot;
     socket.to(code).emit("sync", snapshot);
   });
 
   socket.on("pulse", (pulse) => {
-    if (!code) return;
+    if (!code || socket.data.role !== "host") return;
     socket.to(code).emit("pulse", pulse);
   });
 
   // Music playback commands from the host → relayed to the display.
   socket.on("music", (cmd) => {
-    if (!code) return;
+    if (!code || socket.data.role !== "host") return;
     socket.to(code).emit("music", cmd);
+  });
+
+  // Upstream cue from a team answer-phone → forwarded to the HOST peer(s) only (not to other teams'
+  // viewers). Answerers may emit this and nothing else; the host judges and scores it.
+  socket.on("intent", (intent) => {
+    if (!code || socket.data.role !== "answerer") return;
+    const r = rooms.get(code);
+    if (!r) return;
+    const payload = {
+      teamId: (intent && typeof intent.teamId === "string" && intent.teamId) || socket.data.teamId,
+      kind: intent?.kind === "guess" ? "guess" : "guess",
+      text: typeof intent?.text === "string" ? intent.text.slice(0, 120) : "",
+      at: Date.now(),
+    };
+    if (!payload.teamId || !payload.text) return;
+    for (const [sid, meta] of r.peers) {
+      if (meta.role === "host") io.to(sid).emit("intent", payload);
+    }
   });
 
   // Playback progress from the display → relayed back to the host's scrubber.

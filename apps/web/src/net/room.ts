@@ -46,3 +46,21 @@ export function controllerUrl(room: string): string {
 export function playerJoinUrl(room: string): string {
   return `${window.location.origin}/?room=${room}&game=murder#/play`;
 }
+
+/** Team + role carried in the URL for a Frendz and Foes phone (?team=…&role=answerer|viewer). */
+export function getTeamFromUrl(): string | null {
+  return new URLSearchParams(window.location.search).get("team");
+}
+
+export function getRoleFromUrl(): "answerer" | "viewer" | null {
+  const r = new URLSearchParams(window.location.search).get("role");
+  return r === "answerer" || r === "viewer" ? r : null;
+}
+
+/**
+ * URL a team member scans to join a Foes team on their own phone. The host shows the `answerer`
+ * link (one per team); the answerer re-shares the `viewer` link to teammates for a watch-only board.
+ */
+export function teamJoinUrl(room: string, teamId: string, role: "answerer" | "viewer"): string {
+  return `${window.location.origin}/?room=${room}&game=feud&team=${encodeURIComponent(teamId)}&role=${role}#/play`;
+}

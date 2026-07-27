@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Murder2Player } from "../murder2/Murder2Player";
-import { getGameFromUrl, getRoomFromUrl, setUrlRoom } from "../net/room";
+import { FeudTeamView } from "../feud/FeudTeamView";
+import { getGameFromUrl, getRoleFromUrl, getRoomFromUrl, getTeamFromUrl, setUrlRoom } from "../net/room";
 
-// Players reach this by scanning the Murder display's join QR (carries ?room=). If opened
-// without a room, offer a code entry.
+// Players reach this by scanning a join QR (carries ?room=). Murder → each player's own screen;
+// Frendz and Foes (?game=feud&team=…&role=…) → that team's answer/viewer phone. Opened without a
+// room, we offer a code entry (which lands on Murder, the code-only join path).
 export function PlayerRoute() {
   const [room] = useState(() => getRoomFromUrl());
   const [code, setCode] = useState("");
@@ -33,6 +35,13 @@ export function PlayerRoute() {
         </div>
       </div>
     );
+  }
+
+  // Frendz and Foes team phone — needs a team in the URL. Without one, fall through to Murder so
+  // existing Murder join links (game=murder, or a bare code) are unaffected.
+  const team = getTeamFromUrl();
+  if (getGameFromUrl() === "feud" && team) {
+    return <FeudTeamView room={room} teamId={team} role={getRoleFromUrl() ?? "answerer"} />;
   }
 
   return <Murder2Player room={room} />;
