@@ -32,6 +32,9 @@ export interface BingoStore {
   undraw: () => void;
   reset: () => void;
   sfx: (name: SfxName, variant?: number) => void;
+  /** Whether the join QR is shown on the display/main screen (host-controlled, broadcast). */
+  joinQrVisible: boolean;
+  setJoinQrVisible: (v: boolean) => void;
   connection: ConnectionInfo;
 }
 
@@ -61,6 +64,7 @@ export function BingoProvider({ children, room }: { children: ReactNode; room?: 
   const [bingo, setBingo] = useState<BingoState>(() =>
     isDemoBingo() ? seededBingo() : (loadBingo() ?? createBingo()),
   );
+  const [joinQrVisible, setJoinQrVisible] = useState(false);
   const [connected, setConnected] = useState(false);
   const [presence, setPresence] = useState<Presence | null>(null);
 
@@ -73,8 +77,8 @@ export function BingoProvider({ children, room }: { children: ReactNode; room?: 
     }
   }, [bingo]);
 
-  const snapRef = useRef<BingoSnapshot>({ bingo });
-  snapRef.current = { bingo };
+  const snapRef = useRef<BingoSnapshot>({ bingo, joinQrVisible });
+  snapRef.current = { bingo, joinQrVisible };
 
   useEffect(() => {
     if (!room) return;
@@ -97,8 +101,8 @@ export function BingoProvider({ children, room }: { children: ReactNode; room?: 
   }, [room]);
 
   useEffect(() => {
-    if (room) emitSync(room, { bingo });
-  }, [room, bingo]);
+    if (room) emitSync(room, { bingo, joinQrVisible });
+  }, [room, bingo, joinQrVisible]);
 
   const sfx = useCallback(
     (name: SfxName, variant?: number) => {
@@ -124,9 +128,11 @@ export function BingoProvider({ children, room }: { children: ReactNode; room?: 
       undraw: () => dispatch({ type: "UNDRAW" }),
       reset: () => dispatch({ type: "RESET" }),
       sfx,
+      joinQrVisible,
+      setJoinQrVisible,
       connection: { connected, presence, room: room ?? null, role: room ? "host" : null },
     }),
-    [bingo, dispatch, sfx, connected, presence, room],
+    [bingo, dispatch, sfx, joinQrVisible, connected, presence, room],
   );
 
   return (
@@ -148,12 +154,16 @@ export function BingoDisplayProvider({
   role?: Role;
 }) {
   const [bingo, setBingo] = useState<BingoState>(createBingo());
+  const [joinQrVisible, setJoinQrVisible] = useState(false);
   const [connected, setConnected] = useState(false);
   const [presence, setPresence] = useState<Presence | null>(null);
 
   useEffect(() => {
     const s = joinRoom(room, role);
-    const onSync = (snap: BingoSnapshot) => snap?.bingo && setBingo(snap.bingo);
+    const onSync = (snap: BingoSnapshot) => {
+      if (snap?.bingo) setBingo(snap.bingo);
+      setJoinQrVisible(!!snap?.joinQrVisible);
+    };
     const onPulse = (p: Pulse) => {
       if (p.kind === "sfx") playSfx(p.name, p.variant);
     };
@@ -178,9 +188,11 @@ export function BingoDisplayProvider({
       undraw: noop,
       reset: noop,
       sfx: playSfx,
+      joinQrVisible,
+      setJoinQrVisible: noop,
       connection: { connected, presence, room, role },
     }),
-    [bingo, connected, presence, room, role],
+    [bingo, joinQrVisible, connected, presence, room, role],
   );
 
   return (

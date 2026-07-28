@@ -18,9 +18,11 @@ export interface Snapshot {
   scoresVisible: boolean;
 }
 
-/** The authoritative Bingo snapshot. */
+/** The authoritative Bingo snapshot. `joinQrVisible` rides outside game state (like Feud's
+ * buzzersArmed): when the host activates it, the display shows the join QR for everyone to scan. */
 export interface BingoSnapshot {
   bingo: BingoState;
+  joinQrVisible?: boolean;
 }
 
 /** Live connection + presence info, shared by both games for the pairing UI. */

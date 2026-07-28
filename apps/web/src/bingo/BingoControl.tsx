@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { ballById, dareForBall, isBingoComplete, remainingCount } from "@ff/engine";
 import { useBingo } from "../store/bingoStore";
 import { BingoLogo } from "../display/Logo";
@@ -103,38 +102,36 @@ export function BingoControl() {
   );
 }
 
-// One QR the whole room scans to watch calls + dares on their own phones (they hold physical
-// cards). Every player is a pure spectator, so a live count is all the host needs to see.
+// Host control for the player-join QR. Tapping "Show QR on screen" broadcasts it to the main
+// display (large, for the whole room to scan); a small copy also shows here so a host with no
+// display can still let players scan the phone directly. Every player is a pure spectator.
 function PlayerJoinCode() {
-  const { connection } = useBingo();
+  const { connection, joinQrVisible, setJoinQrVisible } = useBingo();
   const room = connection.room;
   const players = connection.presence?.spectator ?? 0;
-  const [open, setOpen] = useState(false);
+  const hasDisplay = (connection.presence?.display ?? 0) > 0;
   if (!room) return null;
 
   return (
     <Section title="Player join code">
-      {!open ? (
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-sm font-bold text-ink/60">
-            {players > 0 ? `${players} player${players === 1 ? "" : "s"} watching` : "No players yet"}
-          </span>
-          <CtrlButton tone="grape" onClick={() => setOpen(true)}>
-            Show QR
-          </CtrlButton>
-        </div>
-      ) : (
-        <div className="flex flex-col items-center gap-2 text-center">
-          <QR text={bingoJoinUrl(room)} size={200} />
-          <p className="text-xs font-bold text-ink/60">
-            Everyone scans this to follow the calls and dares on their phone. Room <b>{room}</b>.
-          </p>
-          <div className="text-xs font-black text-buzz-green">
-            {players > 0 ? `✓ ${players} watching` : "Waiting for players to scan…"}
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-bold text-ink/60">
+          {players > 0 ? `${players} player${players === 1 ? "" : "s"} watching` : "No players yet"}
+        </span>
+        <CtrlButton tone={joinQrVisible ? "ink" : "grape"} onClick={() => setJoinQrVisible(!joinQrVisible)}>
+          {joinQrVisible ? "✓ Hide QR" : "Show QR on screen"}
+        </CtrlButton>
+      </div>
+
+      {joinQrVisible && (
+        <div className="mt-3 flex flex-col items-center gap-2 text-center">
+          <div className="text-xs font-black uppercase text-buzz-green">
+            {hasDisplay ? "▲ Large QR is on the main screen" : "No display — players scan here"}
           </div>
-          <button onClick={() => setOpen(false)} className="text-xs font-bold text-ink/40 underline">
-            Hide
-          </button>
+          <QR text={bingoJoinUrl(room)} size={180} />
+          <p className="text-xs font-bold text-ink/60">
+            Everyone scans to follow the calls + dares on their phone. Room <b>{room}</b>.
+          </p>
         </div>
       )}
     </Section>

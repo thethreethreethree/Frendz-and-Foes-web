@@ -3,6 +3,8 @@ import { BINGO_COLUMNS, BINGO_LETTERS, ballById, dareForBall } from "@ff/engine"
 import { useBingo } from "../store/bingoStore";
 import { BingoLogo } from "../display/Logo";
 import { MusicPlayer } from "../music/MusicPlayer";
+import { QR } from "../net/pairing";
+import { bingoJoinUrl } from "../net/room";
 
 const COL: Record<string, { bg: string; text: string }> = {
   B: { bg: "#ff2e9a", text: "#fff" },
@@ -13,13 +15,34 @@ const COL: Record<string, { bg: string; text: string }> = {
 };
 
 export function BingoDisplay() {
-  const { bingo } = useBingo();
+  const { bingo, joinQrVisible, connection } = useBingo();
   const cur = ballById(bingo.currentId);
   const drawn = new Set(bingo.drawn);
 
   return (
     <div className="ff-backdrop-bingo relative flex h-full w-full flex-col overflow-hidden p-6">
       <MusicPlayer />
+
+      {/* Host-activated player-join QR: large, for the whole room to scan. */}
+      {joinQrVisible && connection.room && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="absolute inset-0 z-50 grid place-items-center bg-ink/90 backdrop-blur"
+        >
+          <div className="ff-sticker flex flex-col items-center gap-4 bg-white px-12 py-10 text-center text-ink">
+            <BingoLogo className="text-3xl" />
+            <div className="font-display text-4xl text-grape">SCAN TO JOIN</div>
+            <QR text={bingoJoinUrl(connection.room)} size={360} />
+            <div className="font-display text-2xl tracking-widest text-ink/70">
+              Room {connection.room}
+            </div>
+            <p className="max-w-md text-lg font-bold text-ink/60">
+              Follow every call and dare on your own phone.
+            </p>
+          </div>
+        </motion.div>
+      )}
       <header className="flex items-center justify-between">
         <BingoLogo className="text-3xl" />
         <div className="ff-sticker bg-white px-3 py-1 text-sm font-bold text-ink">
