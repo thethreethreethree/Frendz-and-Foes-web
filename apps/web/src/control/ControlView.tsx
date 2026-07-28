@@ -1,7 +1,7 @@
 import { currentQuestion } from "@ff/engine";
 import { useGame } from "../store/gameStore";
 import { turnInfo } from "./turn";
-import { CtrlButton } from "./ui";
+import { CtrlButton, HomeButton } from "./ui";
 import { ControlPairButton } from "../net/pairing";
 import { MusicControl } from "../music/MusicControl";
 import { TeamSetup } from "./TeamSetup";
@@ -36,6 +36,7 @@ export function ControlView() {
               : g.state.phase.toUpperCase()}
           </span>
           <div className="flex items-center gap-1">
+            <HomeButton />
             <ControlPairButton />
             <CtrlButton tone="ink" onClick={g.undo} disabled={!g.canUndo}>↶ Undo</CtrlButton>
             <CtrlButton tone="ink" onClick={g.redo} disabled={!g.canRedo}>↷</CtrlButton>

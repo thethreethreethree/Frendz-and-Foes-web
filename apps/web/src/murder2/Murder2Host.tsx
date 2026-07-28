@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMurder2 } from "./useMurder2";
+import { HomeButton } from "../control/ui";
 import { m2Config, m2Start, m2OpenVote, m2CloseVote, m2Reset, type V2Player, type V2State } from "../net/murder2";
 
 // Host controller (phone) for Murder v2 — configure + start, run town meetings, reset.
@@ -11,6 +12,7 @@ export function Murder2Host({ room }: { room: string }) {
   return (
     <Wrap>
       {error && <div className="mb-3 rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white">{error}</div>}
+      <div className="mb-1 flex justify-end"><HomeButton /></div>
       <div className="ff-title text-2xl text-ink">HOST — The Villagers{state.round ? <span className="ml-2 text-base text-ink/50">Round {state.round}</span> : null}</div>
       <p className="text-sm text-ink/60">{picked} of {state.players.length} joined players have picked a character.</p>
 

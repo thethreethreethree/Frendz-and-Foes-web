@@ -47,6 +47,11 @@ export function playerJoinUrl(room: string): string {
   return `${window.location.origin}/?room=${room}&game=murder#/play`;
 }
 
+/** URL every Bingo player scans (one QR for the whole room) to watch calls + dares on their phone. */
+export function bingoJoinUrl(room: string): string {
+  return `${window.location.origin}/?room=${room}&game=bingo#/play`;
+}
+
 /** Team + role carried in the URL for a Frendz and Foes phone (?team=…&role=answerer|viewer). */
 export function getTeamFromUrl(): string | null {
   return new URLSearchParams(window.location.search).get("team");

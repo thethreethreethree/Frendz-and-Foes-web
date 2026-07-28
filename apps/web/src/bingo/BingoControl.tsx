@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { ballById, dareForBall, isBingoComplete, remainingCount } from "@ff/engine";
 import { useBingo } from "../store/bingoStore";
 import { BingoLogo } from "../display/Logo";
-import { ControlPairButton } from "../net/pairing";
+import { ControlPairButton, QR } from "../net/pairing";
+import { bingoJoinUrl } from "../net/room";
 import { MusicControl } from "../music/MusicControl";
-import { Section, CtrlButton } from "../control/ui";
+import { Section, CtrlButton, HomeButton } from "../control/ui";
 
 // Host controller for Frendz Bingo: draw a ball, read its dare (host-only), then reveal it on
 // the display. Plus undo / reset and a log of what's been drawn.
@@ -19,11 +21,14 @@ export function BingoControl() {
         <BingoLogo className="text-base" />
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold text-ink/50">{bingo.drawn.length}/75</span>
+          <HomeButton />
           <ControlPairButton />
         </div>
       </div>
 
       <div className="flex flex-col gap-3 p-3">
+        <PlayerJoinCode />
+
         <CtrlButton tone="pink" className="py-4 text-xl" onClick={draw} disabled={done}>
           {done ? "All 75 drawn!" : "🎲 Draw next ball"}
         </CtrlButton>
@@ -95,5 +100,43 @@ export function BingoControl() {
         </Section>
       </div>
     </div>
+  );
+}
+
+// One QR the whole room scans to watch calls + dares on their own phones (they hold physical
+// cards). Every player is a pure spectator, so a live count is all the host needs to see.
+function PlayerJoinCode() {
+  const { connection } = useBingo();
+  const room = connection.room;
+  const players = connection.presence?.spectator ?? 0;
+  const [open, setOpen] = useState(false);
+  if (!room) return null;
+
+  return (
+    <Section title="Player join code">
+      {!open ? (
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm font-bold text-ink/60">
+            {players > 0 ? `${players} player${players === 1 ? "" : "s"} watching` : "No players yet"}
+          </span>
+          <CtrlButton tone="grape" onClick={() => setOpen(true)}>
+            Show QR
+          </CtrlButton>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center gap-2 text-center">
+          <QR text={bingoJoinUrl(room)} size={200} />
+          <p className="text-xs font-bold text-ink/60">
+            Everyone scans this to follow the calls and dares on their phone. Room <b>{room}</b>.
+          </p>
+          <div className="text-xs font-black text-buzz-green">
+            {players > 0 ? `✓ ${players} watching` : "Waiting for players to scan…"}
+          </div>
+          <button onClick={() => setOpen(false)} className="text-xs font-bold text-ink/40 underline">
+            Hide
+          </button>
+        </div>
+      )}
+    </Section>
   );
 }
