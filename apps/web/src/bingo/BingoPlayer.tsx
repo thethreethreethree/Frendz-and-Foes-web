@@ -37,7 +37,7 @@ function BingoPlayerView() {
         backgroundColor: "#f6efdf", // cream fallback (matches the art) before the image loads / if it 404s
         backgroundImage: "url(/ui/bingo-player-bg.jpg)",
         backgroundSize: "cover",
-        backgroundPosition: "center",
+        backgroundPosition: "center top", // anchor to the top so the title stays at top-center
         backgroundRepeat: "no-repeat",
       }}
     >
