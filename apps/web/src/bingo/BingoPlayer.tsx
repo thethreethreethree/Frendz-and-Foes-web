@@ -2,7 +2,6 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { BINGO_COLUMNS, BINGO_LETTERS, ballById, dareForBall } from "@ff/engine";
 import { BingoDisplayProvider, useBingo } from "../store/bingoStore";
-import { BingoLogo } from "../display/Logo";
 
 // A Bingo PLAYER's phone. Players hold a physical card; this screen is a pure follower of the
 // host — it shows the current call and (once the host reveals it) its dare, and nothing updates
@@ -32,10 +31,18 @@ function BingoPlayerView() {
   const [showAll, setShowAll] = useState(false);
 
   return (
-    <div className="ff-backdrop-bingo relative flex h-full w-full flex-col overflow-hidden text-ink">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3">
-        <BingoLogo className="text-xl" />
+    <div
+      className="relative flex h-full w-full flex-col overflow-hidden text-ink"
+      style={{
+        backgroundColor: "#f6efdf", // cream fallback (matches the art) before the image loads / if it 404s
+        backgroundImage: "url(/ui/bingo-player-bg.jpg)",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
+      {/* Header — the background art already carries the title, so only the functional bits here. */}
+      <div className="flex items-center justify-end px-4 py-3">
         <div className="flex items-center gap-2">
           <span className="ff-sticker bg-white px-2.5 py-1 text-xs font-bold text-ink">
             {bingo.drawn.length}/75
