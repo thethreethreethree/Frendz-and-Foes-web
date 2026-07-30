@@ -6,6 +6,7 @@ import { DisplayRoute } from "./routes/DisplayRoute";
 import { HomeRoute } from "./routes/HomeRoute";
 import { ControlRoute } from "./routes/ControlRoute";
 import { PlayerRoute } from "./routes/PlayerRoute";
+import { PosterRoute } from "./routes/PosterRoute";
 
 // Each route mounts its own provider: the display follows, the controller is authoritative.
 // Hash routing keeps deep links working when served as static files (no server rewrites needed).
@@ -14,7 +15,7 @@ const router = createHashRouter([
   { path: "/display", element: <DisplayRoute /> },
   { path: "/control", element: <ControlRoute /> },
   { path: "/play", element: <PlayerRoute /> },
-  { path: "/play", element: <PlayerRoute /> },
+  { path: "/poster", element: <PosterRoute /> },
   { path: "*", element: <Navigate to="/" replace /> },
 ]);
 
