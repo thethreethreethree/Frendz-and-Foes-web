@@ -35,7 +35,7 @@ function BingoPlayerView() {
       className="relative flex h-full w-full flex-col overflow-hidden text-ink"
       style={{
         backgroundColor: "#f6efdf", // cream fallback (matches the art) before the image loads / if it 404s
-        backgroundImage: "url(/ui/bingo-player-bg.jpg)",
+        backgroundImage: "url(/ui/bingo-player-bg-2.jpg)", // v2: corrected "BINGO" spelling
         backgroundSize: "cover",
         backgroundPosition: "center top", // anchor to the top so the title stays at top-center
         backgroundRepeat: "no-repeat",
