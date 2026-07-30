@@ -37,6 +37,11 @@ export function DisplayProvider({
   useEffect(() => {
     const s = joinRoom(room, role, teamId);
     const onSync = (snap: Snapshot) => {
+      // Ignore foreign/partial snapshots. The relay is keyed by room code, not game, so a Feud
+      // follower can receive a Bingo snapshot ({bingo,…}, no .state) if it lands in a shared room.
+      // Guarding here (mirroring the Bingo follower's `snap?.bingo` check) keeps `state` defined —
+      // otherwise setState(undefined) crashes currentQuestion() with "reading 'questions'".
+      if (!snap?.state) return;
       setState(snap.state);
       setBuzzersArmed(snap.buzzersArmed);
       setScoresVisible(snap.scoresVisible ?? true);
