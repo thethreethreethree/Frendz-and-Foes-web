@@ -132,6 +132,9 @@ function PlayerJoinCode() {
           <p className="text-xs font-bold text-ink/60">
             Everyone scans to follow the calls + dares on their phone. Room <b>{room}</b>.
           </p>
+          <p className="text-[10px] font-black uppercase text-buzz-green">
+            Permanent code — safe to print on a poster
+          </p>
         </div>
       )}
     </Section>

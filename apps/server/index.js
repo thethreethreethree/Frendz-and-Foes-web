@@ -116,9 +116,10 @@ io.on("connection", (socket) => {
     io.to(code).emit("presence", presence(r));
   });
 
-  // Only the host is the authority: it is the sole peer allowed to broadcast game state and cues.
-  // This is a real trust boundary now that untrusted team phones (answerer/viewer) share the room —
-  // without it, any peer emitting "sync" could overwrite the whole room's game state.
+  // Restrict state broadcasts to the peer that joined as "host". NOTE: this is a footgun-guard, NOT
+  // a security boundary — `role` is self-declared on join (this is a no-auth LAN party game, matching
+  // the rest of the app), so a client could still claim role:"host". What it DOES prevent is a
+  // legitimate non-host phone (answerer/viewer/player) accidentally clobbering room state via "sync".
   socket.on("sync", (snapshot) => {
     if (!code || socket.data.role !== "host") return;
     const r = getRoom(code);
@@ -141,15 +142,13 @@ io.on("connection", (socket) => {
   // viewers). Answerers may emit this and nothing else; the host judges and scores it.
   socket.on("intent", (intent) => {
     if (!code || socket.data.role !== "answerer") return;
+    if (!intent || intent.kind !== "guess") return; // "guess" is the only defined intent; reject anything else
     const r = rooms.get(code);
     if (!r) return;
-    const payload = {
-      teamId: (intent && typeof intent.teamId === "string" && intent.teamId) || socket.data.teamId,
-      kind: intent?.kind === "guess" ? "guess" : "guess",
-      text: typeof intent?.text === "string" ? intent.text.slice(0, 120) : "",
-      at: Date.now(),
-    };
-    if (!payload.teamId || !payload.text) return;
+    const teamId = (typeof intent.teamId === "string" && intent.teamId) || socket.data.teamId;
+    const text = typeof intent.text === "string" ? intent.text.slice(0, 120) : "";
+    if (!teamId || !text) return;
+    const payload = { teamId, kind: "guess", text, at: Date.now() };
     for (const [sid, meta] of r.peers) {
       if (meta.role === "host") io.to(sid).emit("intent", payload);
     }

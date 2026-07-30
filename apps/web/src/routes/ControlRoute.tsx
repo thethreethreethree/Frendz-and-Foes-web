@@ -5,7 +5,7 @@ import { ControlView } from "../control/ControlView";
 import { BingoControl } from "../bingo/BingoControl";
 import { Murder2Host } from "../murder2/Murder2Host";
 import { GamePicker } from "./GamePicker";
-import { generateRoomCode, getGameFromUrl, getRoomFromUrl, setUrlGame, setUrlRoom } from "../net/room";
+import { BINGO_ROOM, generateRoomCode, getGameFromUrl, getRoomFromUrl, setUrlGame, setUrlRoom } from "../net/room";
 import type { GameType } from "../net/socket";
 
 // The host controller. Phone-first: if no game is chosen yet, the host picks one here (no display
@@ -18,8 +18,9 @@ export function ControlRoute() {
   const [room] = useState<string | undefined>(() => {
     const existing = getRoomFromUrl();
     if (existing) return existing;
-    // Mint a room for the phone-first games so their join QR is available without a display.
-    if (game === "feud" || game === "bingo") {
+    // Feud mints a fresh room each session; Bingo uses the FIXED room (see the bingo branch below)
+    // so its poster QR is permanent, so it needs no mint here.
+    if (game === "feud") {
       const code = generateRoomCode();
       setUrlRoom(code);
       return code;
@@ -30,6 +31,9 @@ export function ControlRoute() {
   if (!game) {
     return (
       <GamePicker
+        // Feud + Bingo only: they mint their own room here (phone-first). Murder is
+        // server-authoritative and pairs through the display, so offering it here would dead-end.
+        games={["feud", "bingo"]}
         onPick={(g) => {
           setUrlGame(g);
           // Reload so the room initializer above mints a fresh room for the chosen game.
@@ -50,8 +54,9 @@ export function ControlRoute() {
   }
 
   if (game === "bingo") {
+    // Fixed room so the player-join QR is permanent (posterable).
     return (
-      <BingoProvider room={room}>
+      <BingoProvider room={BINGO_ROOM}>
         <BingoControl />
       </BingoProvider>
     );

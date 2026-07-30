@@ -128,6 +128,24 @@ test("a non-host peer cannot broadcast game state (sync is host-only)", async ()
   disp.close();
 });
 
+test("a malformed intent (kind is not 'guess') is dropped, not coerced", async () => {
+  const host = client();
+  const answerer = client();
+  await Promise.all([connected(host), connected(answerer)]);
+  host.emit("join", { room: "ROOM6C", role: "host" });
+  answerer.emit("join", { room: "ROOM6C", role: "answerer", teamId: "t1" });
+  await delay(40);
+
+  let hostGot = false;
+  host.on("intent", () => { hostGot = true; });
+  answerer.emit("intent", { teamId: "t1", kind: "bogus", text: "should be dropped" });
+  await delay(40);
+
+  assert.equal(hostGot, false, "only kind:'guess' intents may be relayed");
+  host.close();
+  answerer.close();
+});
+
 test("an answerer's intent is ignored if it comes from a non-answerer role", async () => {
   const host = client();
   const spectator = client();

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Murder2Player } from "../murder2/Murder2Player";
 import { FeudTeamView } from "../feud/FeudTeamView";
 import { BingoPlayer } from "../bingo/BingoPlayer";
-import { getGameFromUrl, getRoleFromUrl, getRoomFromUrl, getTeamFromUrl, setUrlRoom } from "../net/room";
+import { BINGO_ROOM, getGameFromUrl, getRoleFromUrl, getRoomFromUrl, getTeamFromUrl, setUrlRoom } from "../net/room";
 
 // Players reach this by scanning a join QR (carries ?room=). Murder → each player's own screen;
 // Frendz and Foes (?game=feud&team=…&role=…) → that team's answer/viewer phone; Bingo
@@ -41,8 +41,9 @@ export function PlayerRoute() {
 
   const game = getGameFromUrl();
 
-  // Bingo — one QR for everyone; every player is a pure watch-only follower.
-  if (game === "bingo") return <BingoPlayer room={room} />;
+  // Bingo — one QR for everyone; every player is a pure watch-only follower. Always the FIXED room
+  // (matches the permanent poster QR), regardless of what the scanned link carried.
+  if (game === "bingo") return <BingoPlayer room={BINGO_ROOM} />;
 
   // Frendz and Foes team phone — needs a team in the URL. Without one, fall through to Murder so
   // existing Murder join links (game=murder, or a bare code) are unaffected.

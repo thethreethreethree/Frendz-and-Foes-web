@@ -47,9 +47,21 @@ export function playerJoinUrl(room: string): string {
   return `${window.location.origin}/?room=${room}&game=murder#/play`;
 }
 
+/**
+ * Frendz Bingo uses ONE FIXED room code so its join QR is permanent — printable on a poster that
+ * never goes stale. Every Bingo host, display, and player shares this room (single-event model).
+ * Change the code here (or set VITE_BINGO_ROOM) if you need a different fixed code.
+ */
+export const BINGO_ROOM = ((import.meta.env?.VITE_BINGO_ROOM as string) || "BINGO").toUpperCase();
+
 /** URL every Bingo player scans (one QR for the whole room) to watch calls + dares on their phone. */
 export function bingoJoinUrl(room: string): string {
   return `${window.location.origin}/?room=${room}&game=bingo#/play`;
+}
+
+/** The PERMANENT Bingo poster URL — encode THIS in a printed QR. Always resolves to the fixed room. */
+export function bingoPosterUrl(): string {
+  return bingoJoinUrl(BINGO_ROOM);
 }
 
 /** Team + role carried in the URL for a Frendz and Foes phone (?team=…&role=answerer|viewer). */

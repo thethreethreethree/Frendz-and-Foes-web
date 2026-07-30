@@ -119,6 +119,9 @@ export function BingoProvider({ children, room }: { children: ReactNode; room?: 
       bingo,
       draw: () => {
         dispatch({ type: "DRAW" });
+        // Drawing starts the game, so clear the join QR off the main screen (it otherwise covers the
+        // board). The host can re-show it any time via the toggle if latecomers still need to join.
+        setJoinQrVisible(false);
         sfx("swoosh");
       },
       revealDare: () => {

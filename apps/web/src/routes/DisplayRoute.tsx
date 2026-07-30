@@ -6,7 +6,7 @@ import { BingoDisplay } from "../bingo/BingoDisplay";
 import { Murder2Display } from "../murder2/Murder2Display";
 import { DisplayPairing } from "../net/pairing";
 import { GamePicker } from "./GamePicker";
-import { getGameFromUrl, generateRoomCode, getRoomFromUrl, setUrlGame, setUrlRoom } from "../net/room";
+import { BINGO_ROOM, getGameFromUrl, generateRoomCode, getRoomFromUrl, setUrlGame, setUrlRoom } from "../net/room";
 import type { GameType } from "../net/socket";
 
 export function DisplayRoute() {
@@ -40,8 +40,9 @@ export function DisplayRoute() {
   }
 
   if (game === "bingo") {
+    // Fixed room (matches the permanent poster QR) so display, host, and players always share it.
     return (
-      <BingoDisplayProvider room={room} role="display">
+      <BingoDisplayProvider room={BINGO_ROOM} role="display">
         <BingoDisplay />
         <DisplayPairing />
       </BingoDisplayProvider>
