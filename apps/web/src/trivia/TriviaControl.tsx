@@ -30,6 +30,17 @@ export function TriviaControl() {
             : `TRIVIA — ${TRIVIA_VERSION_LABELS[trivia.version].replace("Frendz Trivia ", "")}`}
         </span>
         <div className="flex items-center gap-2">
+          {trivia.phase !== "setup" && (
+            <button
+              onClick={() => {
+                if (window.confirm("Reset the game? Returns to setup — you can change the version, mode, and teams. Scores are cleared."))
+                  t.reset();
+              }}
+              className="rounded-lg bg-tang px-2.5 py-1.5 text-xs font-bold text-white"
+            >
+              ↺ Reset
+            </button>
+          )}
           <img src={versionBadge(trivia.version)} alt={trivia.version} className="h-8 w-8 object-contain" />
           <HomeButton />
         </div>
