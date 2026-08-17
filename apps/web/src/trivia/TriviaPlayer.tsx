@@ -11,6 +11,7 @@ import { TriviaFollowerProvider, useTrivia } from "../store/triviaStore";
 import { emitIntent } from "../net/socket";
 import { QR } from "../net/pairing";
 import { triviaTeamJoinUrl } from "../net/room";
+import { TRIVIA_BG_PLAYER, TRIVIA_CHAMPIONS, letterTile, roundBadge } from "./assets";
 
 // A Trivia player's phone. Team mode: `answerer` taps A/B/C/D (locked in, sent to the host) and can
 // share a view-only QR to teammates; `viewer` just watches. View mode: `spectator`, watch-only.
@@ -29,14 +30,6 @@ export function TriviaPlayer({
     </TriviaFollowerProvider>
   );
 }
-
-// Per-letter accent colours so A/B/C/D read at a glance.
-const CHOICE: Record<TriviaLetter, string> = {
-  A: "#ff2e9a",
-  B: "#16a3a3",
-  C: "#8a4bff",
-  D: "#f0612f",
-};
 
 function TriviaPlayerView({
   room,
@@ -66,21 +59,27 @@ function TriviaPlayerView({
   };
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-md flex-col overflow-y-auto bg-grape/10 text-ink">
-      {/* Header */}
-      <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-ink/10 bg-white/95 px-3 py-2 backdrop-blur">
+    <div
+      className="mx-auto flex h-full w-full max-w-md flex-col overflow-y-auto text-ink"
+      style={{
+        backgroundColor: "#f6efdf",
+        backgroundImage: `url(${TRIVIA_BG_PLAYER})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center top",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
+      {/* Floating header — the background art already carries the title. */}
+      <div className="flex items-center gap-2 px-3 py-2">
         {team && (
-          <span
-            className="h-6 w-6 shrink-0 rounded-full border-2 border-ink"
-            style={{ backgroundColor: team.color ?? "#999" }}
-          />
+          <div className="flex items-center gap-2 rounded-full bg-white/90 px-2.5 py-1 shadow-pop backdrop-blur">
+            <span className="h-5 w-5 rounded-full border-2 border-ink" style={{ backgroundColor: team.color ?? "#999" }} />
+            <span className="max-w-[8rem] truncate font-display text-sm text-ink">{team.name}</span>
+            <span className="font-display text-lg text-grape">{team.score}</span>
+          </div>
         )}
-        <span className="min-w-0 flex-1 truncate font-display text-lg text-ink">
-          {team ? team.name : "Frendz Trivia"}
-        </span>
-        {team && <span className="font-display text-2xl text-grape">{team.score}</span>}
         <span
-          className={`h-2.5 w-2.5 rounded-full ${hostLinked ? "bg-buzz-green" : "bg-tang"}`}
+          className={`ml-auto h-3 w-3 rounded-full ring-2 ring-white ${hostLinked ? "bg-buzz-green" : "bg-tang"}`}
           title={hostLinked ? "Host linked" : "Waiting for host"}
         />
       </div>
@@ -95,14 +94,15 @@ function TriviaPlayerView({
         {(trivia.phase === "playing" || trivia.phase === "reveal") && q && (
           <>
             <div className="flex items-center justify-between text-xs font-black uppercase text-ink/50">
-              <span>
+              <span className="flex items-center gap-1.5">
+                <img src={roundBadge(q.round)} alt="" className="h-7 w-7 object-contain" />
                 {trivia.phase === "reveal" ? "Reveal · " : ""}
                 {TRIVIA_ROUNDS[q.round]?.label} · Q{triviaQuestionInRound(trivia.currentIndex)}/10
               </span>
               {revealed && <span className="text-buzz-green">Answer revealed</span>}
             </div>
 
-            <div className="rounded-xl bg-ink px-4 py-4 text-center text-lg font-extrabold text-white">
+            <div className="rounded-xl bg-ink px-4 py-4 text-center text-lg font-extrabold text-white shadow-pop">
               {q.prompt}
             </div>
 
@@ -111,28 +111,22 @@ function TriviaPlayerView({
                 const isPicked = picked === letter;
                 const isCorrect = revealed && q.correct === letter;
                 const isWrongPick = revealed && isPicked && q.correct !== letter;
-                const accent = CHOICE[letter];
                 return (
                   <button
                     key={letter}
                     onClick={() => choose(letter)}
                     disabled={!canAnswer}
-                    className={`flex items-center gap-3 rounded-xl border-2 px-3 py-3 text-left transition ${
+                    className={`flex items-center gap-3 rounded-xl border-2 px-3 py-2.5 text-left transition ${
                       isCorrect
                         ? "border-buzz-green bg-buzz-green/15"
                         : isWrongPick
                           ? "border-tang bg-tang/15"
                           : isPicked
                             ? "border-ink bg-white"
-                            : "border-ink/10 bg-white/80"
+                            : "border-ink/10 bg-white/85"
                     } ${canAnswer ? "active:translate-y-0.5" : "cursor-default"}`}
                   >
-                    <span
-                      className="grid h-9 w-9 shrink-0 place-items-center rounded-lg font-display text-xl text-white"
-                      style={{ backgroundColor: accent }}
-                    >
-                      {letter}
-                    </span>
+                    <img src={letterTile(letter)} alt={letter} className="h-11 w-11 shrink-0 object-contain" />
                     <span className="min-w-0 flex-1 font-bold">{q.choices[i]}</span>
                     {isCorrect && <span className="font-display text-lg text-buzz-green">✓</span>}
                     {isWrongPick && <span className="font-display text-lg text-tang">✕</span>}
@@ -199,6 +193,7 @@ function Results({ trivia, teamId }: { trivia: TriviaState; teamId?: string }) {
   const ourRank = teamId ? ranked.findIndex((t) => t.id === teamId) + 1 : 0;
   return (
     <div className="rounded-xl bg-white p-4 text-center shadow-pop">
+      <img src={TRIVIA_CHAMPIONS} alt="" className="mx-auto -mt-2 h-24 w-24 object-contain" />
       <div className="ff-title text-3xl text-grape">FINAL</div>
       <ol className="mt-3 space-y-1.5 text-left">
         {ranked.map((t, i) => (

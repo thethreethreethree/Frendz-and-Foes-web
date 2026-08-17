@@ -1,24 +1,19 @@
 import { motion } from "framer-motion";
-import {
-  TRIVIA_DECKS,
-  TRIVIA_LETTERS,
-  TRIVIA_ROUNDS,
-  TRIVIA_VERSION_LABELS,
-  triviaQuestionInRound,
-  type TriviaLetter,
-} from "@ff/engine";
+import { TRIVIA_DECKS, TRIVIA_LETTERS, TRIVIA_ROUNDS, triviaQuestionInRound } from "@ff/engine";
 import { useTrivia } from "../store/triviaStore";
 import { QR } from "../net/pairing";
 import { triviaViewJoinUrl } from "../net/room";
+import {
+  TRIVIA_BG_DISPLAY,
+  TRIVIA_CHAMPIONS,
+  TRIVIA_LOBBY,
+  TRIVIA_STAMP_CORRECT,
+  letterTile,
+  roundBadge,
+  versionBadge,
+} from "./assets";
 
-const CHOICE: Record<TriviaLetter, string> = {
-  A: "#ff2e9a",
-  B: "#16a3a3",
-  C: "#8a4bff",
-  D: "#f0612f",
-};
-
-// The shared big screen for Frendz Trivia. Renders the current question + choices; on a round
+// The shared big screen for Frendz Trivia. Renders the current question + choices; during the
 // reveal the correct answer lights up. View mode can flash a join QR for the whole room to scan.
 export function TriviaDisplay() {
   const { trivia, joinQrVisible, connection } = useTrivia();
@@ -29,7 +24,15 @@ export function TriviaDisplay() {
   const ranked = [...trivia.teams].sort((a, b) => b.score - a.score);
 
   return (
-    <div className="ff-backdrop relative flex h-full w-full flex-col overflow-hidden p-6 text-ink">
+    <div
+      className="relative flex h-full w-full flex-col overflow-hidden p-6 text-ink"
+      style={{
+        backgroundColor: "#f6efdf",
+        backgroundImage: `url(${TRIVIA_BG_DISPLAY})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
       {joinQrVisible && connection.room && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -45,26 +48,26 @@ export function TriviaDisplay() {
         </motion.div>
       )}
 
-      <header className="flex items-center justify-between">
-        <div className="ff-title text-4xl text-grape">FRENDZ TRIVIA</div>
-        <div className="ff-sticker bg-white px-4 py-1.5 font-display text-xl text-ink">
-          {TRIVIA_VERSION_LABELS[trivia.version].replace("Frendz Trivia ", "")}
-        </div>
+      <header className="flex items-center justify-end">
+        <img src={versionBadge(trivia.version)} alt={trivia.version} className="h-16 w-16 object-contain drop-shadow" />
       </header>
 
       <main className="flex flex-1 flex-col items-center justify-center gap-6 py-4">
         {trivia.phase === "setup" && (
-          <div className="text-center">
-            <div className="ff-title text-6xl text-grape">FRENDZ TRIVIA</div>
+          <div className="flex flex-col items-center text-center">
+            <img src={TRIVIA_LOBBY} alt="" className="max-h-[58vh] w-auto rounded-2xl object-contain shadow-pop" />
             <p className="mt-4 font-display text-3xl text-ink/70">3 rounds · 30 questions · get ready!</p>
           </div>
         )}
 
         {playing && q && (
           <>
-            <div className="ff-sticker bg-grape px-5 py-1.5 font-display text-2xl tracking-wide text-white">
-              {trivia.phase === "reveal" ? "ANSWER · " : ""}
-              {TRIVIA_ROUNDS[q.round]?.label.toUpperCase()} · QUESTION {triviaQuestionInRound(trivia.currentIndex)} / 10
+            <div className="flex items-center gap-3">
+              <img src={roundBadge(q.round)} alt="" className="h-16 w-16 object-contain drop-shadow" />
+              <div className="ff-sticker bg-grape px-5 py-1.5 font-display text-2xl tracking-wide text-white">
+                {trivia.phase === "reveal" ? "ANSWER · " : ""}
+                {TRIVIA_ROUNDS[q.round]?.label.toUpperCase()} · QUESTION {triviaQuestionInRound(trivia.currentIndex)} / 10
+              </div>
             </div>
             <motion.h1
               key={q.id}
@@ -84,14 +87,9 @@ export function TriviaDisplay() {
                       isCorrect ? "border-buzz-green bg-buzz-green/20" : "border-ink/10 bg-white"
                     }`}
                   >
-                    <span
-                      className="grid h-12 w-12 shrink-0 place-items-center rounded-xl font-display text-2xl text-white"
-                      style={{ backgroundColor: CHOICE[letter] }}
-                    >
-                      {letter}
-                    </span>
+                    <img src={letterTile(letter)} alt={letter} className="h-14 w-14 shrink-0 object-contain" />
                     <span className="min-w-0 flex-1 text-xl font-bold">{q.choices[i]}</span>
-                    {isCorrect && <span className="font-display text-3xl text-buzz-green">✓</span>}
+                    {isCorrect && <img src={TRIVIA_STAMP_CORRECT} alt="correct" className="h-12 w-12 shrink-0 object-contain" />}
                   </div>
                 );
               })}
@@ -101,7 +99,7 @@ export function TriviaDisplay() {
 
         {trivia.phase === "finished" && (
           <div className="text-center">
-            <div className="ff-title text-5xl text-grape">CHAMPIONS</div>
+            <img src={TRIVIA_CHAMPIONS} alt="Champions" className="mx-auto h-52 w-52 object-contain" />
             {ranked[0] && (
               <div className="ff-sticker mx-auto mt-6 inline-flex items-center gap-4 bg-white px-10 py-6">
                 <span

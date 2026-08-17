@@ -5,7 +5,6 @@ import {
   TRIVIA_ROUNDS,
   TRIVIA_VERSION_LABELS,
   triviaQuestionInRound,
-  type TriviaLetter,
   type TriviaMode,
   type TriviaVersion,
 } from "@ff/engine";
@@ -13,9 +12,9 @@ import { useTrivia } from "../store/triviaStore";
 import { QR } from "../net/pairing";
 import { triviaTeamJoinUrl, triviaViewJoinUrl } from "../net/room";
 import { Section, CtrlButton, HomeButton } from "../control/ui";
+import { letterTile, versionBadge } from "./assets";
 
 const PALETTE = ["#ff2e9a", "#ff6b35", "#1fd1c6", "#8a4bff", "#ffd23f", "#22c55e", "#3b82f6", "#ef4444"];
-const CHOICE: Record<TriviaLetter, string> = { A: "#ff2e9a", B: "#16a3a3", C: "#8a4bff", D: "#f0612f" };
 
 // Host controller for Frendz Trivia.
 export function TriviaControl() {
@@ -30,7 +29,10 @@ export function TriviaControl() {
             ? `${trivia.phase === "reveal" ? "REVEAL · " : ""}${TRIVIA_ROUNDS[TRIVIA_DECKS[trivia.version][trivia.currentIndex]?.round ?? 0]?.label} · Q${triviaQuestionInRound(trivia.currentIndex)}/10`
             : `TRIVIA — ${TRIVIA_VERSION_LABELS[trivia.version].replace("Frendz Trivia ", "")}`}
         </span>
-        <HomeButton />
+        <div className="flex items-center gap-2">
+          <img src={versionBadge(trivia.version)} alt={trivia.version} className="h-8 w-8 object-contain" />
+          <HomeButton />
+        </div>
       </div>
 
       <div className="flex flex-col gap-3 p-3">
@@ -237,9 +239,7 @@ function Play() {
                   isCorrect ? "border-buzz-green bg-buzz-green/10 font-bold" : "border-ink/10 bg-white"
                 }`}
               >
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded font-display text-base text-white" style={{ backgroundColor: CHOICE[letter] }}>
-                  {letter}
-                </span>
+                <img src={letterTile(letter)} alt={letter} className="h-7 w-7 shrink-0 object-contain" />
                 <span className="min-w-0 flex-1">{q.choices[i]}</span>
                 {isCorrect && <span className="text-[10px] font-black uppercase text-buzz-green">answer key</span>}
               </li>
@@ -296,9 +296,7 @@ function Reveal() {
                   highlight ? "border-buzz-green bg-buzz-green/15 font-bold" : "border-ink/10 bg-white"
                 }`}
               >
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded font-display text-base text-white" style={{ backgroundColor: CHOICE[letter] }}>
-                  {letter}
-                </span>
+                <img src={letterTile(letter)} alt={letter} className="h-7 w-7 shrink-0 object-contain" />
                 <span className="min-w-0 flex-1">{q.choices[i]}</span>
                 {highlight && <span className="text-[10px] font-black uppercase text-buzz-green">✓ correct</span>}
               </li>
