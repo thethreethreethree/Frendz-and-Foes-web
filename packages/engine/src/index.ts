@@ -5,3 +5,4 @@ export * from "./qmake.js";
 export * from "./fixtures.js";
 export * from "./bank.js";
 export * from "./bingo.js";
+export * from "./trivia.js";

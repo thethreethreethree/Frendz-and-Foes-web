@@ -64,6 +64,16 @@ export function bingoPosterUrl(): string {
   return bingoJoinUrl(BINGO_ROOM);
 }
 
+/** Trivia — team mode: a per-team link (one answerer phone; shareable as view-only to the team). */
+export function triviaTeamJoinUrl(room: string, teamId: string, role: "answerer" | "viewer"): string {
+  return `${window.location.origin}/?room=${room}&game=trivia&team=${encodeURIComponent(teamId)}&role=${role}#/play`;
+}
+
+/** Trivia — view mode: one link everyone scans to watch questions + choices (no answering). */
+export function triviaViewJoinUrl(room: string): string {
+  return `${window.location.origin}/?room=${room}&game=trivia#/play`;
+}
+
 /** Team + role carried in the URL for a Frendz and Foes phone (?team=…&role=answerer|viewer). */
 export function getTeamFromUrl(): string | null {
   return new URLSearchParams(window.location.search).get("team");

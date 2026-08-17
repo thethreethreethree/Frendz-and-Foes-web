@@ -2,14 +2,14 @@
 // controller or a display/spectator). Providers attach their own listeners.
 
 import { io, type Socket } from "socket.io-client";
-import type { GameState, BingoState } from "@ff/engine";
+import type { GameState, BingoState, TriviaState } from "@ff/engine";
 import type { Announcement } from "../store/gameStore";
 import type { SfxName } from "../audio/sfx";
 
 // "answerer"/"viewer" are per-team phone roles for Frendz and Foes: one answerer submits the
 // team's guess (upstream, host-judged), the rest are view-only. Both carry a teamId on join.
 export type Role = "host" | "display" | "spectator" | "answerer" | "viewer";
-export type GameType = "feud" | "bingo" | "murder";
+export type GameType = "feud" | "bingo" | "murder" | "trivia";
 
 /** The authoritative Feud snapshot the host broadcasts. */
 export interface Snapshot {
@@ -22,6 +22,12 @@ export interface Snapshot {
  * buzzersArmed): when the host activates it, the display shows the join QR for everyone to scan. */
 export interface BingoSnapshot {
   bingo: BingoState;
+  joinQrVisible?: boolean;
+}
+
+/** The authoritative Trivia snapshot. `joinQrVisible` shows the join QR on the display (view mode). */
+export interface TriviaSnapshot {
+  trivia: TriviaState;
   joinQrVisible?: boolean;
 }
 
@@ -56,7 +62,9 @@ export interface Presence {
  * The relay forwards it to the host peer(s) only; the host judges + scores it. Answerers never
  * emit game state — that trust boundary is enforced server-side.
  */
-export type Intent = { teamId: string; kind: "guess"; text: string };
+export type Intent =
+  | { teamId: string; kind: "guess"; text: string }
+  | { teamId: string; kind: "trivia-answer"; questionId: string; letter: "A" | "B" | "C" | "D" };
 
 export interface Song {
   id: string;
@@ -119,7 +127,7 @@ export function emitIntent(intent: Intent): void {
   getSocket().emit("intent", intent);
 }
 
-export function emitSync(room: string, snapshot: Snapshot | BingoSnapshot): void {
+export function emitSync(room: string, snapshot: Snapshot | BingoSnapshot | TriviaSnapshot): void {
   getSocket().emit("sync", snapshot);
   // room is implied server-side by the socket's joined room, but kept in the API for clarity.
   void room;

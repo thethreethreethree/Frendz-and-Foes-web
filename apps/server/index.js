@@ -139,16 +139,26 @@ io.on("connection", (socket) => {
   });
 
   // Upstream cue from a team answer-phone → forwarded to the HOST peer(s) only (not to other teams'
-  // viewers). Answerers may emit this and nothing else; the host judges and scores it.
+  // viewers). Answerers may emit this and nothing else; the host records/judges it. Two kinds:
+  // "guess" (Feud free-text) and "trivia-answer" (a locked A/B/C/D for a question).
   socket.on("intent", (intent) => {
     if (!code || socket.data.role !== "answerer") return;
-    if (!intent || intent.kind !== "guess") return; // "guess" is the only defined intent; reject anything else
+    if (!intent || (intent.kind !== "guess" && intent.kind !== "trivia-answer")) return;
     const r = rooms.get(code);
     if (!r) return;
     const teamId = (typeof intent.teamId === "string" && intent.teamId) || socket.data.teamId;
-    const text = typeof intent.text === "string" ? intent.text.slice(0, 120) : "";
-    if (!teamId || !text) return;
-    const payload = { teamId, kind: "guess", text, at: Date.now() };
+    if (!teamId) return;
+    let payload = null;
+    if (intent.kind === "guess") {
+      const text = typeof intent.text === "string" ? intent.text.slice(0, 120) : "";
+      if (!text) return;
+      payload = { teamId, kind: "guess", text, at: Date.now() };
+    } else {
+      const letter = ["A", "B", "C", "D"].includes(intent.letter) ? intent.letter : null;
+      const questionId = typeof intent.questionId === "string" ? intent.questionId.slice(0, 40) : "";
+      if (!letter || !questionId) return;
+      payload = { teamId, kind: "trivia-answer", questionId, letter, at: Date.now() };
+    }
     for (const [sid, meta] of r.peers) {
       if (meta.role === "host") io.to(sid).emit("intent", payload);
     }

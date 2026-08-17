@@ -7,7 +7,7 @@ import type { GameType } from "../net/socket";
 // server-authoritative and pairs through the display (picking it on the controller would dead-end).
 export function GamePicker({
   onPick,
-  games = ["feud", "bingo", "murder"],
+  games = ["feud", "bingo", "murder", "trivia"],
 }: {
   onPick: (g: GameType) => void;
   games?: GameType[];
@@ -45,6 +45,15 @@ export function GamePicker({
             >
               <div className="ff-title text-3xl text-ink">🔪 MURDER</div>
               <div className="mt-1 text-sm font-bold text-ink/60">Wink, kill, deduce</div>
+            </button>
+          )}
+          {games.includes("trivia") && (
+            <button
+              onClick={() => onPick("trivia")}
+              className="ff-sticker flex w-64 flex-col items-center bg-white px-6 py-6 transition hover:-translate-y-1"
+            >
+              <div className="ff-title text-3xl text-grape">🧠 TRIVIA</div>
+              <div className="mt-1 text-sm font-bold text-ink/60">3 rounds · A B C D</div>
             </button>
           )}
         </div>

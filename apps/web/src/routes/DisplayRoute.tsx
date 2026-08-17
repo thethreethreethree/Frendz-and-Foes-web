@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { DisplayProvider } from "../store/DisplayProvider";
 import { BingoDisplayProvider } from "../store/bingoStore";
+import { TriviaFollowerProvider } from "../store/triviaStore";
 import { DisplayView } from "../display/DisplayView";
 import { BingoDisplay } from "../bingo/BingoDisplay";
+import { TriviaDisplay } from "../trivia/TriviaDisplay";
 import { Murder2Display } from "../murder2/Murder2Display";
 import { DisplayPairing } from "../net/pairing";
 import { GamePicker } from "./GamePicker";
@@ -46,6 +48,15 @@ export function DisplayRoute() {
         <BingoDisplay />
         <DisplayPairing />
       </BingoDisplayProvider>
+    );
+  }
+
+  if (game === "trivia") {
+    return (
+      <TriviaFollowerProvider room={room} role="display">
+        <TriviaDisplay />
+        <DisplayPairing />
+      </TriviaFollowerProvider>
     );
   }
 

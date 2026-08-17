@@ -128,6 +128,42 @@ test("a non-host peer cannot broadcast game state (sync is host-only)", async ()
   disp.close();
 });
 
+test("a trivia-answer intent relays answerer → host with its letter", async () => {
+  const host = client();
+  const answerer = client();
+  await Promise.all([connected(host), connected(answerer)]);
+  host.emit("join", { room: "ROOM6T", role: "host" });
+  answerer.emit("join", { room: "ROOM6T", role: "answerer", teamId: "t1" });
+  await delay(40);
+
+  const got = nextEvent(host, "intent");
+  answerer.emit("intent", { teamId: "t1", kind: "trivia-answer", questionId: "v1-q03", letter: "C" });
+  const intent = await got;
+  assert.equal(intent.kind, "trivia-answer");
+  assert.equal(intent.teamId, "t1");
+  assert.equal(intent.questionId, "v1-q03");
+  assert.equal(intent.letter, "C");
+  host.close();
+  answerer.close();
+});
+
+test("a trivia-answer with an invalid letter is dropped", async () => {
+  const host = client();
+  const answerer = client();
+  await Promise.all([connected(host), connected(answerer)]);
+  host.emit("join", { room: "ROOM6U", role: "host" });
+  answerer.emit("join", { room: "ROOM6U", role: "answerer", teamId: "t1" });
+  await delay(40);
+
+  let hostGot = false;
+  host.on("intent", () => { hostGot = true; });
+  answerer.emit("intent", { teamId: "t1", kind: "trivia-answer", questionId: "v1-q03", letter: "E" });
+  await delay(40);
+  assert.equal(hostGot, false, "letter must be one of A/B/C/D");
+  host.close();
+  answerer.close();
+});
+
 test("a malformed intent (kind is not 'guess') is dropped, not coerced", async () => {
   const host = client();
   const answerer = client();
