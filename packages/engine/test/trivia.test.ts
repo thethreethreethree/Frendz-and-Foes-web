@@ -45,17 +45,17 @@ describe("trivia decks are well-formed", () => {
   }
 });
 
-describe("trivia scoring reveals at round end", () => {
+describe("trivia per-round one-by-one reveal + scoring", () => {
   const setup = () => {
     let s = createTrivia({ mode: "team", teams: [{ id: "a", name: "A" }, { id: "b", name: "B" }] });
     s = triviaReducer(s, { type: "START" });
     return s;
   };
 
-  it("+1 per correct answer for the revealed round; hidden until reveal", () => {
+  it("team scores +1 per correct as each answer is revealed; hidden until reveal", () => {
     let s = setup();
     const deck = TRIVIA_DECKS[s.version];
-    // Team A answers all 10 of round 0 correctly; Team B answers all 10 wrong.
+    // Answer all 10 of round 0: A correct, B wrong.
     for (let i = 0; i < QUESTIONS_PER_ROUND; i++) {
       const q = deck[i];
       const wrong = TRIVIA_LETTERS.find((l) => l !== q.correct)!;
@@ -63,31 +63,56 @@ describe("trivia scoring reveals at round end", () => {
       s = triviaReducer(s, { type: "ANSWER", teamId: "b", questionId: q.id, letter: wrong });
       if (i < QUESTIONS_PER_ROUND - 1) s = triviaReducer(s, { type: "NEXT" });
     }
-    // Not revealed yet → no score.
-    expect(s.teams.find((t) => t.id === "a")!.score).toBe(0);
+    expect(s.teams.find((t) => t.id === "a")!.score).toBe(0); // hidden until reveal
 
-    s = triviaReducer(s, { type: "REVEAL_ROUND", round: 0 });
+    s = triviaReducer(s, { type: "BEGIN_REVEAL" });
+    expect(s.phase).toBe("reveal");
+    expect(s.currentIndex).toBe(0); // reveal starts at the round's first question
+    for (let i = 0; i < QUESTIONS_PER_ROUND; i++) {
+      s = triviaReducer(s, { type: "REVEAL_CURRENT" });
+      if (i < QUESTIONS_PER_ROUND - 1) s = triviaReducer(s, { type: "NEXT" });
+    }
     expect(s.teams.find((t) => t.id === "a")!.score).toBe(10);
     expect(s.teams.find((t) => t.id === "b")!.score).toBe(0);
   });
 
-  it("revealing the same round twice does not double-score", () => {
+  it("revealing the same question twice does not double-score", () => {
     let s = setup();
     const q = TRIVIA_DECKS[s.version][0];
     s = triviaReducer(s, { type: "ANSWER", teamId: "a", questionId: q.id, letter: q.correct });
-    s = triviaReducer(s, { type: "REVEAL_ROUND", round: 0 });
+    s = triviaReducer(s, { type: "BEGIN_REVEAL" });
+    s = triviaReducer(s, { type: "REVEAL_CURRENT" });
     const after = s.teams.find((t) => t.id === "a")!.score;
-    s = triviaReducer(s, { type: "REVEAL_ROUND", round: 0 });
+    s = triviaReducer(s, { type: "REVEAL_CURRENT" });
     expect(s.teams.find((t) => t.id === "a")!.score).toBe(after);
   });
 
-  it("cannot change an answer once its round is revealed", () => {
+  it("answers lock once the round enters reveal", () => {
     let s = setup();
     const q = TRIVIA_DECKS[s.version][0];
     s = triviaReducer(s, { type: "ANSWER", teamId: "a", questionId: q.id, letter: "A" });
-    s = triviaReducer(s, { type: "REVEAL_ROUND", round: 0 });
+    s = triviaReducer(s, { type: "BEGIN_REVEAL" });
     const before = s.answers["a"][q.id];
     s = triviaReducer(s, { type: "ANSWER", teamId: "a", questionId: q.id, letter: "B" });
     expect(s.answers["a"][q.id]).toBe(before);
+  });
+
+  it("navigation stays inside the current round; CONTINUE advances rounds then finishes", () => {
+    let s = setup(); // round 0, index 0
+    for (let i = 0; i < 20; i++) s = triviaReducer(s, { type: "NEXT" });
+    expect(s.currentIndex).toBe(9); // clamped to round-0 end, cannot cross into round 1
+
+    s = triviaReducer(s, { type: "BEGIN_REVEAL" });
+    s = triviaReducer(s, { type: "CONTINUE" });
+    expect(s.phase).toBe("playing");
+    expect(s.currentIndex).toBe(10); // round 1 start
+
+    s = triviaReducer(s, { type: "BEGIN_REVEAL" });
+    s = triviaReducer(s, { type: "CONTINUE" });
+    expect(s.currentIndex).toBe(20); // round 2 start
+
+    s = triviaReducer(s, { type: "BEGIN_REVEAL" });
+    s = triviaReducer(s, { type: "CONTINUE" });
+    expect(s.phase).toBe("finished"); // after the last round
   });
 });

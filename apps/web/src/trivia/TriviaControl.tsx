@@ -26,8 +26,8 @@ export function TriviaControl() {
     <div className="mx-auto flex h-full w-full max-w-md flex-col overflow-y-auto overflow-x-hidden bg-concrete/40 text-ink">
       <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-ink/10 bg-white/95 px-3 py-2 backdrop-blur">
         <span className="font-display text-lg text-ink">
-          {trivia.phase === "playing"
-            ? `${TRIVIA_ROUNDS[TRIVIA_DECKS[trivia.version][trivia.currentIndex]?.round ?? 0]?.label} · Q${triviaQuestionInRound(trivia.currentIndex)}/10`
+          {trivia.phase === "playing" || trivia.phase === "reveal"
+            ? `${trivia.phase === "reveal" ? "REVEAL · " : ""}${TRIVIA_ROUNDS[TRIVIA_DECKS[trivia.version][trivia.currentIndex]?.round ?? 0]?.label} · Q${triviaQuestionInRound(trivia.currentIndex)}/10`
             : `TRIVIA — ${TRIVIA_VERSION_LABELS[trivia.version].replace("Frendz Trivia ", "")}`}
         </span>
         <HomeButton />
@@ -35,8 +35,9 @@ export function TriviaControl() {
 
       <div className="flex flex-col gap-3 p-3">
         {trivia.phase === "setup" && <Setup />}
-        {trivia.phase !== "setup" && <JoinCodes />}
+        {(trivia.phase === "playing" || trivia.phase === "reveal") && <JoinCodes />}
         {trivia.phase === "playing" && <Play />}
+        {trivia.phase === "reveal" && <Reveal />}
         {trivia.phase === "finished" && (
           <div className="space-y-2">
             <div className="rounded-lg bg-grape/10 px-3 py-2 text-center font-display text-lg">Game over — champions on screen.</div>
@@ -211,15 +212,16 @@ function JoinCodes() {
   );
 }
 
+// Playing: teams lock answers as the host advances. Nothing is revealed. When done, begin the reveal.
 function Play() {
   const t = useTrivia();
   const { trivia } = t;
   const deck = TRIVIA_DECKS[trivia.version];
   const q = deck[trivia.currentIndex];
   if (!q) return null;
-  const revealed = trivia.revealedRounds.includes(q.round);
   const answeredCount = trivia.mode === "team" ? trivia.teams.filter((tm) => trivia.answers[tm.id]?.[q.id]).length : 0;
-  const atRoundEnd = triviaQuestionInRound(trivia.currentIndex) === 10;
+  const roundEnd = q.round * 10 + 9;
+  const atRoundEnd = trivia.currentIndex >= roundEnd;
 
   return (
     <>
@@ -239,35 +241,108 @@ function Play() {
                   {letter}
                 </span>
                 <span className="min-w-0 flex-1">{q.choices[i]}</span>
-                {isCorrect && <span className="text-[10px] font-black uppercase text-buzz-green">answer</span>}
+                {isCorrect && <span className="text-[10px] font-black uppercase text-buzz-green">answer key</span>}
               </li>
             );
           })}
         </ul>
         {trivia.mode === "team" && (
-          <div className="mt-1.5 text-xs font-bold text-ink/50">
-            {answeredCount}/{trivia.teams.length} teams answered {revealed && "· round revealed"}
+          <div className="mt-1.5 text-xs font-bold text-ink/50">{answeredCount}/{trivia.teams.length} teams locked in</div>
+        )}
+        <div className="mt-1 text-[10px] font-semibold text-ink/40">Answer key is host-only — teams don't see it until the reveal.</div>
+      </Section>
+
+      <div className="flex items-center gap-2">
+        <CtrlButton tone="ink" onClick={t.prev} disabled={trivia.currentIndex === q.round * 10}>◀ Prev</CtrlButton>
+        <CtrlButton tone="pink" className="flex-1" onClick={() => { t.next(); t.sfx("swoosh"); }} disabled={atRoundEnd}>
+          Next question ▶
+        </CtrlButton>
+      </div>
+
+      <CtrlButton tone="grape" className="w-full py-3" onClick={() => { t.beginReveal(); t.sfx("drumroll"); }}>
+        ▶ Reveal {TRIVIA_ROUNDS[q.round]?.label} answers{atRoundEnd ? "" : " (round not finished)"}
+      </CtrlButton>
+    </>
+  );
+}
+
+// Reveal: at the end of the game the host walks every question in order, revealing answers one by
+// one. Team mode tallies scores as each answer is revealed; view mode is scored manually.
+function Reveal() {
+  const t = useTrivia();
+  const { trivia } = t;
+  const deck = TRIVIA_DECKS[trivia.version];
+  const q = deck[trivia.currentIndex];
+  if (!q) return null;
+  const shown = trivia.revealedQuestions.includes(q.id);
+  const roundStart = q.round * 10;
+  const roundEnd = roundStart + 9;
+  const atRoundEnd = trivia.currentIndex >= roundEnd;
+  const roundAllRevealed = deck.slice(roundStart, roundEnd + 1).every((qq) => trivia.revealedQuestions.includes(qq.id));
+  const isLastRound = q.round >= 2;
+
+  return (
+    <>
+      <Section title={`Reveal · ${TRIVIA_ROUNDS[q.round]?.label} · Question ${triviaQuestionInRound(trivia.currentIndex)} of 10`}>
+        <div className="rounded-lg bg-ink px-3 py-2 text-center text-sm font-extrabold text-white">{q.prompt}</div>
+        <ul className="mt-2 space-y-1">
+          {TRIVIA_LETTERS.map((letter, i) => {
+            const isCorrect = q.correct === letter;
+            const highlight = shown && isCorrect;
+            return (
+              <li
+                key={letter}
+                className={`flex items-center gap-2 rounded-lg border-2 px-2 py-1.5 text-sm ${
+                  highlight ? "border-buzz-green bg-buzz-green/15 font-bold" : "border-ink/10 bg-white"
+                }`}
+              >
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded font-display text-base text-white" style={{ backgroundColor: CHOICE[letter] }}>
+                  {letter}
+                </span>
+                <span className="min-w-0 flex-1">{q.choices[i]}</span>
+                {highlight && <span className="text-[10px] font-black uppercase text-buzz-green">✓ correct</span>}
+              </li>
+            );
+          })}
+        </ul>
+        {trivia.mode === "team" && shown && (
+          <div className="mt-1.5 flex flex-wrap gap-1 text-[11px] font-bold">
+            {trivia.teams.map((tm) => {
+              const got = trivia.answers[tm.id]?.[q.id] === q.correct;
+              return (
+                <span key={tm.id} className={`rounded px-1.5 py-0.5 ${got ? "bg-buzz-green/20 text-ink" : "bg-ink/10 text-ink/50"}`}>
+                  {tm.name} {got ? "+1" : "✕"}
+                </span>
+              );
+            })}
           </div>
         )}
       </Section>
 
       <div className="flex items-center gap-2">
-        <CtrlButton tone="ink" onClick={t.prev} disabled={trivia.currentIndex === 0}>◀ Prev</CtrlButton>
+        <CtrlButton tone="ink" onClick={t.prev} disabled={trivia.currentIndex === roundStart}>◀ Prev</CtrlButton>
         <CtrlButton
-          tone={revealed ? "ink" : "grape"}
+          tone={shown ? "ink" : "grape"}
           className="flex-1"
-          onClick={() => t.revealRound(q.round)}
-          disabled={revealed}
+          onClick={() => { t.revealCurrent(); t.sfx("ding"); }}
+          disabled={shown}
         >
-          {revealed ? "✓ Round revealed" : `Reveal ${TRIVIA_ROUNDS[q.round]?.label} answers${atRoundEnd ? "" : " (round not finished)"}`}
+          {shown ? "✓ Revealed" : "👁 Reveal this answer"}
         </CtrlButton>
-        <CtrlButton tone="pink" onClick={() => { t.next(); t.sfx("swoosh"); }} disabled={trivia.currentIndex >= deck.length - 1}>
-          Next ▶
-        </CtrlButton>
+        <CtrlButton tone="pink" onClick={() => { t.next(); t.sfx("swoosh"); }} disabled={atRoundEnd}>Next ▶</CtrlButton>
       </div>
 
-      <CtrlButton tone="grape" className="w-full py-2" onClick={() => { t.end(); t.sfx("applause"); }}>
-        🏆 End game & show champions
+      <CtrlButton
+        tone={isLastRound ? "grape" : "teal"}
+        className="w-full py-3"
+        onClick={() => { t.continueReveal(); t.sfx(isLastRound ? "applause" : "swoosh"); }}
+        disabled={!roundAllRevealed}
+      >
+        {roundAllRevealed
+          ? isLastRound
+            ? "🏆 Show champions"
+            : `Continue to ${TRIVIA_ROUNDS[q.round + 1]?.label} ▶`
+          : `Reveal all ${TRIVIA_ROUNDS[q.round]?.label} answers to continue`}
       </CtrlButton>
     </>
   );

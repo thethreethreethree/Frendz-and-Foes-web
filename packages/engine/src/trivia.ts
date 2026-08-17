@@ -17,7 +17,9 @@ export type TriviaCategory = "Science" | "Sports" | "Entertainment";
 export type TriviaVersion = "v1" | "v2" | "v3";
 /** team = one answer-phone per team (Feud-style); view = one QR, everyone watches (Bingo-style). */
 export type TriviaMode = "team" | "view";
-export type TriviaPhase = "setup" | "playing" | "finished";
+// setup → playing (teams lock answers, nothing shown) → reveal (host walks every question in order,
+// revealing answers one by one; team mode tallies as it goes) → finished.
+export type TriviaPhase = "setup" | "playing" | "reveal" | "finished";
 
 /** The raw shape each deck data file exports. */
 export interface TriviaRaw {
@@ -84,8 +86,9 @@ export interface TriviaState {
   currentIndex: number;
   /** teamId -> questionId -> locked letter. Host-held, broadcast; correctness stays hidden until reveal. */
   answers: Record<string, Record<string, TriviaLetter>>;
-  /** Rounds whose answers the host has revealed (scored). */
-  revealedRounds: number[];
+  /** Question ids the host has revealed during the end-of-game reveal (in reveal order). Team-mode
+   * scores are recomputed from these, so revealing is idempotent (re-revealing can't double-count). */
+  revealedQuestions: string[];
 }
 
 export type TriviaAction =
@@ -96,7 +99,9 @@ export type TriviaAction =
   | { type: "NEXT" }
   | { type: "PREV" }
   | { type: "GOTO"; index: number }
-  | { type: "REVEAL_ROUND"; round: number }
+  | { type: "BEGIN_REVEAL" }
+  | { type: "REVEAL_CURRENT" }
+  | { type: "CONTINUE" }
   | { type: "END" }
   | { type: "RESET" };
 
@@ -112,7 +117,7 @@ export function createTrivia(opts?: {
     teams: (opts?.teams ?? []).map((t) => ({ ...t, score: 0 })),
     currentIndex: 0,
     answers: {},
-    revealedRounds: [],
+    revealedQuestions: [],
   };
 }
 
@@ -133,9 +138,13 @@ export function triviaQuestionInRound(index: number): number {
   return (index % QUESTIONS_PER_ROUND) + 1;
 }
 
-/** Whether every question of the current round has been revealed (round complete). */
-export function isRoundRevealed(state: TriviaState, round: number): boolean {
-  return state.revealedRounds.includes(round);
+export function questionById(version: TriviaVersion, id: string): TriviaQuestion | null {
+  return TRIVIA_DECKS[version].find((q) => q.id === id) ?? null;
+}
+
+/** Whether the host has revealed this question's answer during the reveal phase. */
+export function isQuestionRevealed(state: TriviaState, id: string): boolean {
+  return state.revealedQuestions.includes(id);
 }
 
 export function triviaReducer(state: TriviaState, action: TriviaAction): TriviaState {
@@ -158,15 +167,15 @@ export function triviaReducer(state: TriviaState, action: TriviaAction): TriviaS
         phase: "playing",
         currentIndex: 0,
         answers: {},
-        revealedRounds: [],
+        revealedQuestions: [],
         teams: state.teams.map((t) => ({ ...t, score: 0 })),
       };
     }
     case "ANSWER": {
       if (state.phase !== "playing") return state;
       const q = triviaDeck(state)[state.currentIndex];
-      // Only the currently-shown question is answerable, and only before its round is revealed.
-      if (!q || q.id !== action.questionId || state.revealedRounds.includes(q.round)) return state;
+      // Only the currently-shown question is answerable (host-paced). Nothing is revealed during play.
+      if (!q || q.id !== action.questionId) return state;
       if (!state.teams.some((t) => t.id === action.teamId)) return state;
       const forTeam = state.answers[action.teamId] ?? {};
       return {
@@ -175,29 +184,52 @@ export function triviaReducer(state: TriviaState, action: TriviaAction): TriviaS
       };
     }
     case "NEXT": {
-      if (state.phase !== "playing") return state;
-      return { ...state, currentIndex: Math.min(state.currentIndex + 1, triviaDeck(state).length - 1) };
+      // Both play and reveal stay INSIDE the current round; rounds advance only via CONTINUE.
+      if (state.phase !== "playing" && state.phase !== "reveal") return state;
+      const roundEnd = triviaRoundOf(state.currentIndex) * QUESTIONS_PER_ROUND + (QUESTIONS_PER_ROUND - 1);
+      return { ...state, currentIndex: Math.min(state.currentIndex + 1, roundEnd) };
     }
     case "PREV": {
-      if (state.phase !== "playing") return state;
-      return { ...state, currentIndex: Math.max(state.currentIndex - 1, 0) };
+      if (state.phase !== "playing" && state.phase !== "reveal") return state;
+      const roundStart = triviaRoundOf(state.currentIndex) * QUESTIONS_PER_ROUND;
+      return { ...state, currentIndex: Math.max(state.currentIndex - 1, roundStart) };
     }
     case "GOTO": {
-      if (state.phase !== "playing") return state;
+      if (state.phase !== "playing" && state.phase !== "reveal") return state;
       const max = triviaDeck(state).length - 1;
       return { ...state, currentIndex: Math.min(Math.max(action.index, 0), max) };
     }
-    case "REVEAL_ROUND": {
+    case "BEGIN_REVEAL": {
+      // Reveal happens PER ROUND: walk this round's 10 questions in order, revealing one by one.
       if (state.phase !== "playing") return state;
-      if (state.revealedRounds.includes(action.round)) return state;
-      const roundQs = triviaDeck(state).filter((q) => q.round === action.round);
-      if (roundQs.length === 0) return state;
-      const teams = state.teams.map((t) => {
-        const a = state.answers[t.id] ?? {};
-        const correct = roundQs.reduce((n, q) => n + (a[q.id] === q.correct ? 1 : 0), 0);
-        return { ...t, score: t.score + correct };
-      });
-      return { ...state, teams, revealedRounds: [...state.revealedRounds, action.round] };
+      const roundStart = triviaRoundOf(state.currentIndex) * QUESTIONS_PER_ROUND;
+      return { ...state, phase: "reveal", currentIndex: roundStart };
+    }
+    case "REVEAL_CURRENT": {
+      if (state.phase !== "reveal") return state;
+      const q = triviaDeck(state)[state.currentIndex];
+      if (!q || state.revealedQuestions.includes(q.id)) return state;
+      const revealed = [...state.revealedQuestions, q.id];
+      // Team mode: recompute each team's score from ALL revealed questions (idempotent — no double count).
+      const teams =
+        state.mode === "team"
+          ? state.teams.map((t) => {
+              const a = state.answers[t.id] ?? {};
+              const score = revealed.reduce((n, qid) => {
+                const qq = questionById(state.version, qid);
+                return n + (qq && a[qid] === qq.correct ? 1 : 0);
+              }, 0);
+              return { ...t, score };
+            })
+          : state.teams;
+      return { ...state, revealedQuestions: revealed, teams };
+    }
+    case "CONTINUE": {
+      // Finish this round's reveal → play the next round, or finish after the last round.
+      if (state.phase !== "reveal") return state;
+      const nextRoundStart = (triviaRoundOf(state.currentIndex) + 1) * QUESTIONS_PER_ROUND;
+      if (nextRoundStart >= triviaDeck(state).length) return { ...state, phase: "finished" };
+      return { ...state, phase: "playing", currentIndex: nextRoundStart };
     }
     case "END": {
       return { ...state, phase: "finished" };
@@ -212,12 +244,4 @@ export function triviaReducer(state: TriviaState, action: TriviaAction): TriviaS
     default:
       return state;
   }
-}
-
-/** A team's correct-answer count for a round (used in round-review UI once revealed). */
-export function teamRoundScore(state: TriviaState, teamId: string, round: number): number {
-  const a = state.answers[teamId] ?? {};
-  return triviaDeck(state)
-    .filter((q) => q.round === round)
-    .reduce((n, q) => n + (a[q.id] === q.correct ? 1 : 0), 0);
 }

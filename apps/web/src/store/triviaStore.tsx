@@ -43,7 +43,9 @@ export interface TriviaStore {
   start: () => void;
   next: () => void;
   prev: () => void;
-  revealRound: (round: number) => void;
+  beginReveal: () => void;
+  revealCurrent: () => void;
+  continueReveal: () => void;
   end: () => void;
   reset: () => void;
   joinQrVisible: boolean;
@@ -134,7 +136,9 @@ export function TriviaProvider({ children, room }: { children: ReactNode; room?:
       start: () => dispatch({ type: "START" }),
       next: () => dispatch({ type: "NEXT" }),
       prev: () => dispatch({ type: "PREV" }),
-      revealRound: (round) => dispatch({ type: "REVEAL_ROUND", round }),
+      beginReveal: () => dispatch({ type: "BEGIN_REVEAL" }),
+      revealCurrent: () => dispatch({ type: "REVEAL_CURRENT" }),
+      continueReveal: () => dispatch({ type: "CONTINUE" }),
       end: () => dispatch({ type: "END" }),
       reset: () => dispatch({ type: "RESET" }),
       joinQrVisible,
@@ -202,7 +206,9 @@ export function TriviaFollowerProvider({
       start: noop,
       next: noop,
       prev: noop,
-      revealRound: noop,
+      beginReveal: noop,
+      revealCurrent: noop,
+      continueReveal: noop,
       end: noop,
       reset: noop,
       joinQrVisible,

@@ -53,8 +53,8 @@ function TriviaPlayerView({
   const team = teamId ? trivia.teams.find((t) => t.id === teamId) ?? null : null;
   const deck = TRIVIA_DECKS[trivia.version];
   const q = deck[trivia.currentIndex] ?? null;
-  const revealed = q ? trivia.revealedRounds.includes(q.round) : false;
-  const canAnswer = role === "answerer" && trivia.phase === "playing" && !revealed;
+  const revealed = q ? trivia.revealedQuestions.includes(q.id) : false;
+  const canAnswer = role === "answerer" && trivia.phase === "playing";
 
   const broadcastPick = q && teamId ? trivia.answers[teamId]?.[q.id] : undefined;
   const picked = q ? localPicks[q.id] ?? broadcastPick : undefined;
@@ -92,13 +92,14 @@ function TriviaPlayerView({
           </div>
         )}
 
-        {trivia.phase === "playing" && q && (
+        {(trivia.phase === "playing" || trivia.phase === "reveal") && q && (
           <>
             <div className="flex items-center justify-between text-xs font-black uppercase text-ink/50">
               <span>
+                {trivia.phase === "reveal" ? "Reveal · " : ""}
                 {TRIVIA_ROUNDS[q.round]?.label} · Q{triviaQuestionInRound(trivia.currentIndex)}/10
               </span>
-              {revealed && <span className="text-buzz-green">Answers revealed</span>}
+              {revealed && <span className="text-buzz-green">Answer revealed</span>}
             </div>
 
             <div className="rounded-xl bg-ink px-4 py-4 text-center text-lg font-extrabold text-white">
@@ -142,8 +143,12 @@ function TriviaPlayerView({
 
             {role === "answerer" && (
               <div className="text-center text-xs font-bold text-ink/50">
-                {revealed
-                  ? "Round scored — waiting for the host."
+                {trivia.phase === "reveal"
+                  ? revealed
+                    ? picked === q.correct
+                      ? "✓ Correct! +1 this question."
+                      : `Correct answer: ${q.correct}.${picked ? " Not this time." : " No answer locked."}`
+                    : "Reveal in progress — watch along."
                   : picked
                     ? `Locked in ${picked} — tap another to change.`
                     : hostLinked

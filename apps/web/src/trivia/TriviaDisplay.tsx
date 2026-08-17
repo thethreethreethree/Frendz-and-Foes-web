@@ -24,7 +24,8 @@ export function TriviaDisplay() {
   const { trivia, joinQrVisible, connection } = useTrivia();
   const deck = TRIVIA_DECKS[trivia.version];
   const q = deck[trivia.currentIndex] ?? null;
-  const revealed = q ? trivia.revealedRounds.includes(q.round) : false;
+  const revealed = q ? trivia.revealedQuestions.includes(q.id) : false;
+  const playing = trivia.phase === "playing" || trivia.phase === "reveal";
   const ranked = [...trivia.teams].sort((a, b) => b.score - a.score);
 
   return (
@@ -59,9 +60,10 @@ export function TriviaDisplay() {
           </div>
         )}
 
-        {trivia.phase === "playing" && q && (
+        {playing && q && (
           <>
             <div className="ff-sticker bg-grape px-5 py-1.5 font-display text-2xl tracking-wide text-white">
+              {trivia.phase === "reveal" ? "ANSWER · " : ""}
               {TRIVIA_ROUNDS[q.round]?.label.toUpperCase()} · QUESTION {triviaQuestionInRound(trivia.currentIndex)} / 10
             </div>
             <motion.h1
