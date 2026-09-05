@@ -43,10 +43,14 @@ const GAME_KEYS = ["feud", "bingo", "murder", "trivia", "taboo", "headsup", "rev
 const clone = (b: Brand): Brand => JSON.parse(JSON.stringify(b));
 
 export function AdminRoute() {
-  const [passcode, setPasscode] = useState(sessionStorage.getItem("ff-admin-pass") || "");
-  const [authed, setAuthed] = useState(false);
+  const [user, setUser] = useState<{ email: string } | null>(null);
+  const [checking, setChecking] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [mode, setMode] = useState<"login" | "signup">("login");
   const [authErr, setAuthErr] = useState("");
-  const [slug, setSlug] = useState("default");
+  const [myBrands, setMyBrands] = useState<{ slug: string; productName: string }[]>([]);
+  const [slug, setSlug] = useState("");
   const [brand, setBrand] = useState<Brand>(clone(defaultBrand));
   const [status, setStatus] = useState("");
 
@@ -58,26 +62,48 @@ export function AdminRoute() {
     if (link.href !== brand.fonts.googleUrl) link.href = brand.fonts.googleUrl;
   }, [brand.fonts.googleUrl]);
 
-  async function unlock() {
+  // Resume an existing session (the cookie is httpOnly, so we ask the server who we are).
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((d) => { if (d.user) { setUser(d.user); loadMyBrands(); } })
+      .catch(() => {})
+      .finally(() => setChecking(false));
+  }, []);
+
+  async function submitAuth() {
     setAuthErr("");
     try {
-      const res = await fetch("/api/brands", { headers: { "x-admin-passcode": passcode } });
-      if (res.status === 401) return setAuthErr("Wrong passcode.");
-      if (res.status === 503) return setAuthErr("Admin is disabled on the server (no passcode configured).");
-      if (!res.ok) return setAuthErr("Server error.");
-      sessionStorage.setItem("ff-admin-pass", passcode);
-      setAuthed(true);
-      loadBrand("default");
+      const res = await fetch(mode === "signup" ? "/api/auth/signup" : "/api/auth/login", {
+        method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return setAuthErr(data.error || "Something went wrong.");
+      setUser(data.user); setPassword(""); loadMyBrands();
     } catch { setAuthErr("Could not reach the server."); }
+  }
+
+  async function logout() {
+    try { await fetch("/api/auth/logout", { method: "POST" }); } catch { /* ignore */ }
+    setUser(null); setMyBrands([]); setSlug(""); setStatus("");
+  }
+
+  async function loadMyBrands() {
+    try { const r = await fetch("/api/my/brands"); if (r.ok) setMyBrands((await r.json()).brands || []); } catch { /* ignore */ }
   }
 
   async function loadBrand(s: string) {
     setStatus("");
+    setSlug(s);
     try {
       const res = await fetch(`/api/brand/${s}`);
       if (res.ok) { setBrand(await res.json()); setStatus(`Loaded "${s}".`); }
       else { setBrand({ ...clone(defaultBrand), id: s }); setStatus(`No saved brand "${s}" yet — starting from the default template.`); }
     } catch { setStatus("Could not load."); }
+  }
+
+  function newBrand() {
+    setSlug(""); setBrand(clone(defaultBrand)); setStatus("New brand from the default template — pick a slug and Save.");
   }
 
   async function save() {
@@ -86,12 +112,11 @@ export function AdminRoute() {
     const body: Brand = { ...brand, id: slug, wordmark: brand.wordmark.filter((p) => p.text.trim()) };
     try {
       const res = await fetch(`/api/brand/${slug}`, {
-        method: "PUT",
-        headers: { "content-type": "application/json", "x-admin-passcode": passcode },
-        body: JSON.stringify(body),
+        method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(body),
       });
       const data = await res.json().catch(() => ({}));
-      if (res.ok) setStatus(`Saved. Live at ?brand=${slug}`);
+      if (res.ok) { setStatus(`Saved. Live at ?brand=${slug}`); loadMyBrands(); }
+      else if (res.status === 401) { setStatus("Your session expired — sign in again."); setUser(null); }
       else setStatus(`Save failed: ${data.error || res.status}`);
     } catch { setStatus("Save failed: could not reach the server."); }
   }
@@ -103,20 +128,28 @@ export function AdminRoute() {
   const setGame = (key: string, field: "label" | "tagline", val: string) =>
     setBrand((b) => ({ ...b, games: { ...b.games, [key]: { ...b.games[key], [field]: val } } }));
 
-  if (!authed) {
+  if (checking) return <Shell><div className="mx-auto mt-24 text-center text-sm text-gray-500">Loading…</div></Shell>;
+
+  if (!user) {
     return (
       <Shell>
-        <div className="mx-auto mt-24 w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h1 className="text-lg font-semibold text-gray-900">Brand admin</h1>
-          <p className="mt-1 text-sm text-gray-500">Enter the admin passcode to manage brands.</p>
-          <input
-            type="password" value={passcode} autoFocus
-            onChange={(e) => setPasscode(e.target.value)} onKeyDown={(e) => e.key === "Enter" && unlock()}
-            placeholder="Passcode"
-            className="mt-4 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900"
-          />
+        <div className="mx-auto mt-20 w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <h1 className="text-lg font-semibold text-gray-900">PlayZoo brand admin</h1>
+          <p className="mt-1 text-sm text-gray-500">{mode === "signup" ? "Create an account to brand your own PlayZoo." : "Sign in to manage your brands."}</p>
+          <input type="email" value={email} autoFocus autoComplete="email" onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email" className="mt-4 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900" />
+          <input type="password" value={password} autoComplete={mode === "signup" ? "new-password" : "current-password"}
+            onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submitAuth()}
+            placeholder={mode === "signup" ? "Password (8+ characters)" : "Password"}
+            className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900" />
           {authErr && <p className="mt-2 text-sm text-red-600">{authErr}</p>}
-          <button onClick={unlock} className="mt-4 w-full rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800">Unlock</button>
+          <button onClick={submitAuth} className="mt-4 w-full rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800">
+            {mode === "signup" ? "Create account" : "Sign in"}
+          </button>
+          <button onClick={() => { setMode(mode === "signup" ? "login" : "signup"); setAuthErr(""); }}
+            className="mt-3 w-full text-center text-sm text-gray-500 hover:text-gray-900">
+            {mode === "signup" ? "Already have an account? Sign in" : "New here? Create an account"}
+          </button>
         </div>
       </Shell>
     );
@@ -130,12 +163,22 @@ export function AdminRoute() {
       <div className="mx-auto max-w-6xl">
         {/* action bar */}
         <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 pb-4">
-          <h1 className="mr-2 text-lg font-semibold text-gray-900">Brand admin</h1>
-          <label className="text-xs font-mono uppercase tracking-wide text-gray-500">Slug</label>
-          <input value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase())} className="w-40 rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm" />
-          <button onClick={() => loadBrand(slug)} className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium hover:bg-gray-50">Load</button>
+          <h1 className="mr-2 text-lg font-semibold text-gray-900">PlayZoo brand admin</h1>
+          {myBrands.length > 0 && (
+            <select value={slug || ""} onChange={(e) => e.target.value && loadBrand(e.target.value)} className="rounded-lg border border-gray-300 px-2 py-1.5 text-sm">
+              <option value="">My brands…</option>
+              {myBrands.map((b) => <option key={b.slug} value={b.slug}>{b.productName} ({b.slug})</option>)}
+            </select>
+          )}
+          <button onClick={newBrand} className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium hover:bg-gray-50">+ New</button>
+          <label className="ml-1 text-xs font-mono uppercase tracking-wide text-gray-500">Slug</label>
+          <input value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase())} placeholder="my-brand" className="w-40 rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm" />
           <button onClick={save} className="rounded-lg bg-gray-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-gray-800">Save</button>
           {status && <span className="ml-1 text-sm text-gray-600">{status}</span>}
+          <div className="ml-auto flex items-center gap-2 text-sm text-gray-500">
+            <span className="hidden sm:inline">{user.email}</span>
+            <button onClick={logout} className="rounded-lg border border-gray-300 px-3 py-1.5 font-medium hover:bg-gray-50">Sign out</button>
+          </div>
         </div>
 
         <div className="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">

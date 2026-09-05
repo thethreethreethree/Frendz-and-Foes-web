@@ -25,13 +25,65 @@ import { registerBallparkHandlers } from "./ballpark.js";
 import { registerTelestrationsHandlers } from "./telestrations.js";
 import { registerAfterDarkHandlers } from "./afterdark.js";
 import { getBrand, listBrandSlugs, upsertBrand, deleteBrand, dbReady } from "./db.js";
+import {
+  authReady, createUser, authenticate, getUser, makeSession, readSession,
+  ownerOf, setOwner, removeOwner, brandsOwnedBy,
+  SESSION_COOKIE, parseCookies, sessionCookie, clearCookie,
+} from "./auth.js";
 
 const PORT = process.env.PORT || 8787;
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
+app.set("trust proxy", 1); // behind nginx — so req.secure reflects X-Forwarded-Proto (Secure cookies)
 app.use(express.json({ limit: "256kb" }));
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
+
+// --- Accounts (Phase 2b) --------------------------------------------------------------------
+// Open self-serve signup; scrypt passwords + stateless HMAC cookie sessions (see auth.js). The
+// legacy ADMIN_PASSCODE (below) still works as a superadmin override so the founder keeps god-mode.
+const isSecure = (req) => req.secure || req.get("x-forwarded-proto") === "https";
+const sessionUser = (req) => {
+  const tok = parseCookies(req.headers.cookie)[SESSION_COOKIE];
+  const s = tok && readSession(tok);
+  return s ? getUser(s.uid) : null;
+};
+
+app.post("/api/auth/signup", (req, res) => {
+  const { email, password } = req.body || {};
+  const r = createUser(email, password);
+  if (r.error) return res.status(400).json({ error: r.error });
+  res.append("Set-Cookie", sessionCookie(makeSession(r.user.id), isSecure(req)));
+  res.json({ user: r.user });
+});
+
+app.post("/api/auth/login", (req, res) => {
+  const { email, password } = req.body || {};
+  const user = authenticate(email, password);
+  if (!user) return res.status(401).json({ error: "Wrong email or password." });
+  res.append("Set-Cookie", sessionCookie(makeSession(user.id), isSecure(req)));
+  res.json({ user });
+});
+
+app.post("/api/auth/logout", (req, res) => {
+  res.append("Set-Cookie", clearCookie(isSecure(req)));
+  res.json({ ok: true });
+});
+
+app.get("/api/auth/me", (req, res) => {
+  res.json({ user: sessionUser(req), ready: authReady() });
+});
+
+// Brands owned by the signed-in user (for the admin's "my brands" list).
+app.get("/api/my/brands", (req, res) => {
+  const user = sessionUser(req);
+  if (!user) return res.status(401).json({ error: "Sign in first." });
+  const brands = brandsOwnedBy(user.id).map((slug) => {
+    const b = getBrand(slug);
+    return { slug, productName: b?.productName || slug };
+  });
+  res.json({ brands });
+});
 
 // --- White-label brand API (Phase 2) --------------------------------------------------------
 // Reads are public (the web app fetches its active brand at bootstrap). Writes are gated by a
@@ -51,18 +103,6 @@ function validBrand(b) {
   );
 }
 
-function requirePasscode(req, res) {
-  if (!ADMIN_PASSCODE) {
-    res.status(503).json({ error: "Admin writes are disabled (ADMIN_PASSCODE not set on the server)." });
-    return false;
-  }
-  if (req.get("x-admin-passcode") !== ADMIN_PASSCODE) {
-    res.status(401).json({ error: "Wrong passcode." });
-    return false;
-  }
-  return true;
-}
-
 app.get("/api/brand/:slug", (req, res) => {
   if (!validSlug(req.params.slug)) return res.status(400).json({ error: "Bad slug." });
   const brand = getBrand(req.params.slug);
@@ -70,23 +110,38 @@ app.get("/api/brand/:slug", (req, res) => {
   res.json(brand);
 });
 
+const isSuperadmin = (req) => ADMIN_PASSCODE && req.get("x-admin-passcode") === ADMIN_PASSCODE;
+
+// Superadmin-only: list every brand in the store (founder god-mode).
 app.get("/api/brands", (req, res) => {
-  if (!requirePasscode(req, res)) return;
+  if (!isSuperadmin(req)) return res.status(401).json({ error: "Superadmin only." });
   res.json({ ready: dbReady(), brands: listBrandSlugs() });
 });
 
 app.put("/api/brand/:slug", (req, res) => {
-  if (!requirePasscode(req, res)) return;
   if (!validSlug(req.params.slug)) return res.status(400).json({ error: "Bad slug." });
+  const superadmin = isSuperadmin(req);
+  const user = sessionUser(req);
+  if (!superadmin && !user) return res.status(401).json({ error: "Sign in to save a brand." });
+  // "default" is the built-in brand — only the superadmin may shadow it in the store.
+  if (req.params.slug === "default" && !superadmin) return res.status(403).json({ error: "That name is reserved." });
+  const owner = ownerOf(req.params.slug);
+  if (owner && !superadmin && owner !== user.id) return res.status(403).json({ error: "That brand belongs to another account." });
   if (!validBrand(req.body)) return res.status(400).json({ error: "Invalid brand config." });
   if (!upsertBrand(req.params.slug, req.body)) return res.status(503).json({ error: "Store unavailable." });
+  if (!owner && user) setOwner(req.params.slug, user.id); // first writer claims ownership
   res.json({ ok: true });
 });
 
 app.delete("/api/brand/:slug", (req, res) => {
-  if (!requirePasscode(req, res)) return;
   if (!validSlug(req.params.slug)) return res.status(400).json({ error: "Bad slug." });
+  const superadmin = isSuperadmin(req);
+  const user = sessionUser(req);
+  if (!superadmin && !user) return res.status(401).json({ error: "Sign in first." });
+  const owner = ownerOf(req.params.slug);
+  if (owner && !superadmin && owner !== user.id) return res.status(403).json({ error: "That brand belongs to another account." });
   deleteBrand(req.params.slug);
+  removeOwner(req.params.slug);
   res.json({ ok: true });
 });
 
