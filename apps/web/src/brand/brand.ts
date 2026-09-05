@@ -109,5 +109,6 @@ export const defaultBrand: Brand = {
     taboo: { label: "Off Limits", tagline: "Describe it — watch your words", icon: "🚫" },
     headsup: { label: "Foreheads", tagline: "Guess the word on your head", icon: "🙈" },
     reverse: { label: "Full Cast", tagline: "The whole team acts it out", icon: "🎭" },
+    monikers: { label: "Encore", tagline: "Same cards, three ways", icon: "🎬" },
   },
 };

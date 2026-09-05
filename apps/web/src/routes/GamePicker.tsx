@@ -14,6 +14,7 @@ const DEFAULT_GAME_META: Record<string, GameMeta> = {
   taboo: { label: "Off Limits", tagline: "Describe it — watch your words", icon: "🚫" },
   headsup: { label: "Foreheads", tagline: "Guess the word on your head", icon: "🙈" },
   reverse: { label: "Full Cast", tagline: "The whole team acts it out", icon: "🎭" },
+  monikers: { label: "Encore", tagline: "Same cards, three ways", icon: "🎬" },
 };
 
 // Shown on the display first: the host picks which game to run, then pairing/QR appears.
@@ -23,7 +24,7 @@ const DEFAULT_GAME_META: Record<string, GameMeta> = {
 // can rename the games to their own event without a code change.
 export function GamePicker({
   onPick,
-  games = ["feud", "bingo", "murder", "trivia", "taboo", "headsup", "reverse"],
+  games = ["feud", "bingo", "murder", "trivia", "taboo", "headsup", "reverse", "monikers"],
 }: {
   onPick: (g: GameType) => void;
   games?: GameType[];

@@ -5,12 +5,14 @@ import { TriviaProvider } from "../store/triviaStore";
 import { OffLimitsProvider } from "../store/offlimitsStore";
 import { HeadsUpProvider } from "../store/headsupStore";
 import { FullCastProvider } from "../store/fullcastStore";
+import { MonikersProvider } from "../store/monikersStore";
 import { ControlView } from "../control/ControlView";
 import { BingoControl } from "../bingo/BingoControl";
 import { TriviaControl } from "../trivia/TriviaControl";
 import { OffLimitsControl } from "../offlimits/OffLimitsControl";
 import { HeadsUpControl } from "../headsup/HeadsUpControl";
 import { FullCastControl } from "../fullcast/FullCastControl";
+import { MonikersControl } from "../monikers/MonikersControl";
 import { Murder2Host } from "../murder2/Murder2Host";
 import { GamePicker } from "./GamePicker";
 import { BINGO_ROOM, generateRoomCode, getGameFromUrl, getRoomFromUrl, setUrlGame, setUrlRoom } from "../net/room";
@@ -28,7 +30,7 @@ export function ControlRoute() {
     if (existing) return existing;
     // Feud + Trivia mint a fresh room each session; Bingo uses the FIXED room (see the bingo branch
     // below) so its poster QR is permanent, so it needs no mint here.
-    if (game === "feud" || game === "trivia" || game === "taboo" || game === "headsup" || game === "reverse") {
+    if (game === "feud" || game === "trivia" || game === "taboo" || game === "headsup" || game === "reverse" || game === "monikers") {
       const code = generateRoomCode();
       setUrlRoom(code);
       return code;
@@ -41,7 +43,7 @@ export function ControlRoute() {
       <GamePicker
         // Feud + Bingo + Trivia: they mint/own their room here (phone-first). Murder is
         // server-authoritative and pairs through the display, so offering it here would dead-end.
-        games={["feud", "bingo", "trivia", "taboo", "headsup", "reverse"]}
+        games={["feud", "bingo", "trivia", "taboo", "headsup", "reverse", "monikers"]}
         onPick={(g) => {
           setUrlGame(g);
           // Reload so the room initializer above mints a fresh room for the chosen game.
@@ -99,6 +101,14 @@ export function ControlRoute() {
       <FullCastProvider room={room}>
         <FullCastControl />
       </FullCastProvider>
+    );
+  }
+
+  if (game === "monikers") {
+    return (
+      <MonikersProvider room={room}>
+        <MonikersControl />
+      </MonikersProvider>
     );
   }
 

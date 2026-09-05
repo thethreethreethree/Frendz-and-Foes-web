@@ -2,14 +2,14 @@
 // controller or a display/spectator). Providers attach their own listeners.
 
 import { io, type Socket } from "socket.io-client";
-import type { GameState, BingoState, TriviaState, OffLimitsPublic, WordGamePublic } from "@ff/engine";
+import type { GameState, BingoState, TriviaState, OffLimitsPublic, WordGamePublic, MonikersPublic } from "@ff/engine";
 import type { Announcement } from "../store/gameStore";
 import type { SfxName } from "../audio/sfx";
 
 // "answerer"/"viewer" are per-team phone roles for Frendz and Foes: one answerer submits the
 // team's guess (upstream, host-judged), the rest are view-only. Both carry a teamId on join.
 export type Role = "host" | "display" | "spectator" | "answerer" | "viewer";
-export type GameType = "feud" | "bingo" | "murder" | "trivia" | "taboo" | "headsup" | "reverse";
+export type GameType = "feud" | "bingo" | "murder" | "trivia" | "taboo" | "headsup" | "reverse" | "monikers";
 
 /** The authoritative Feud snapshot the host broadcasts. */
 export interface Snapshot {
@@ -47,6 +47,12 @@ export interface HeadsUpSnapshot {
 /** The authoritative "Full Cast" (Reverse Charades) snapshot — public projection only. */
 export interface FullCastSnapshot {
   fullcast: WordGamePublic;
+  joinQrVisible?: boolean;
+}
+
+/** The authoritative "Encore" (Monikers) snapshot — public projection only (no live card). */
+export interface MonikersSnapshot {
+  monikers: MonikersPublic;
   joinQrVisible?: boolean;
 }
 
@@ -148,7 +154,14 @@ export function emitIntent(intent: Intent): void {
 
 export function emitSync(
   room: string,
-  snapshot: Snapshot | BingoSnapshot | TriviaSnapshot | OffLimitsSnapshot | HeadsUpSnapshot | FullCastSnapshot,
+  snapshot:
+    | Snapshot
+    | BingoSnapshot
+    | TriviaSnapshot
+    | OffLimitsSnapshot
+    | HeadsUpSnapshot
+    | FullCastSnapshot
+    | MonikersSnapshot,
 ): void {
   getSocket().emit("sync", snapshot);
   // room is implied server-side by the socket's joined room, but kept in the API for clarity.
