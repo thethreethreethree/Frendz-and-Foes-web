@@ -9,7 +9,7 @@ import type { SfxName } from "../audio/sfx";
 // "answerer"/"viewer" are per-team phone roles for Frendz and Foes: one answerer submits the
 // team's guess (upstream, host-judged), the rest are view-only. Both carry a teamId on join.
 export type Role = "host" | "display" | "spectator" | "answerer" | "viewer";
-export type GameType = "feud" | "bingo" | "murder" | "trivia" | "taboo" | "headsup";
+export type GameType = "feud" | "bingo" | "murder" | "trivia" | "taboo" | "headsup" | "reverse";
 
 /** The authoritative Feud snapshot the host broadcasts. */
 export interface Snapshot {
@@ -41,6 +41,12 @@ export interface OffLimitsSnapshot {
 /** The authoritative "Foreheads" (Heads Up!) snapshot — public projection only, like Off Limits. */
 export interface HeadsUpSnapshot {
   headsup: WordGamePublic;
+  joinQrVisible?: boolean;
+}
+
+/** The authoritative "Full Cast" (Reverse Charades) snapshot — public projection only. */
+export interface FullCastSnapshot {
+  fullcast: WordGamePublic;
   joinQrVisible?: boolean;
 }
 
@@ -142,7 +148,7 @@ export function emitIntent(intent: Intent): void {
 
 export function emitSync(
   room: string,
-  snapshot: Snapshot | BingoSnapshot | TriviaSnapshot | OffLimitsSnapshot | HeadsUpSnapshot,
+  snapshot: Snapshot | BingoSnapshot | TriviaSnapshot | OffLimitsSnapshot | HeadsUpSnapshot | FullCastSnapshot,
 ): void {
   getSocket().emit("sync", snapshot);
   // room is implied server-side by the socket's joined room, but kept in the API for clarity.

@@ -108,5 +108,6 @@ export const defaultBrand: Brand = {
     trivia: { label: "Trivia", tagline: "3 rounds · A B C D", icon: "🧠" },
     taboo: { label: "Off Limits", tagline: "Describe it — watch your words", icon: "🚫" },
     headsup: { label: "Foreheads", tagline: "Guess the word on your head", icon: "🙈" },
+    reverse: { label: "Full Cast", tagline: "The whole team acts it out", icon: "🎭" },
   },
 };

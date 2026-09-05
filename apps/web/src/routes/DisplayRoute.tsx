@@ -4,11 +4,13 @@ import { BingoDisplayProvider } from "../store/bingoStore";
 import { TriviaFollowerProvider } from "../store/triviaStore";
 import { OffLimitsFollowerProvider } from "../store/offlimitsStore";
 import { HeadsUpFollowerProvider } from "../store/headsupStore";
+import { FullCastFollowerProvider } from "../store/fullcastStore";
 import { DisplayView } from "../display/DisplayView";
 import { BingoDisplay } from "../bingo/BingoDisplay";
 import { TriviaDisplay } from "../trivia/TriviaDisplay";
 import { OffLimitsDisplay } from "../offlimits/OffLimitsDisplay";
 import { HeadsUpDisplay } from "../headsup/HeadsUpDisplay";
+import { FullCastDisplay } from "../fullcast/FullCastDisplay";
 import { Murder2Display } from "../murder2/Murder2Display";
 import { DisplayPairing } from "../net/pairing";
 import { GamePicker } from "./GamePicker";
@@ -79,6 +81,15 @@ export function DisplayRoute() {
         <HeadsUpDisplay />
         <DisplayPairing />
       </HeadsUpFollowerProvider>
+    );
+  }
+
+  if (game === "reverse") {
+    return (
+      <FullCastFollowerProvider room={room} role="display">
+        <FullCastDisplay />
+        <DisplayPairing />
+      </FullCastFollowerProvider>
     );
   }
 
