@@ -2,6 +2,17 @@ import { Logo, BingoLogo } from "../display/Logo";
 import { FloatingAccents } from "../display/Icons";
 import { getBrand } from "../brand/theme";
 import type { GameType } from "../net/socket";
+import type { GameMeta } from "../brand/brand";
+
+// Fallback names so a game still renders on the picker even for a brand config saved before that
+// game existed (forward-compat). A brand's own games map overrides these.
+const DEFAULT_GAME_META: Record<string, GameMeta> = {
+  feud: { label: "Survey Showdown", tagline: "Top answers win", icon: "📊" },
+  bingo: { label: "Bingo Night", tagline: "Draw a ball, do the dare", icon: "🎱" },
+  murder: { label: "Murder Mystery", tagline: "Wink, kill, deduce", icon: "🔪" },
+  trivia: { label: "Trivia", tagline: "3 rounds · A B C D", icon: "🧠" },
+  taboo: { label: "Off Limits", tagline: "Describe it — watch your words", icon: "🚫" },
+};
 
 // Shown on the display first: the host picks which game to run, then pairing/QR appears.
 // `games` limits which options appear — the controller passes ["feud","bingo"] because Murder is
@@ -10,7 +21,7 @@ import type { GameType } from "../net/socket";
 // can rename the games to their own event without a code change.
 export function GamePicker({
   onPick,
-  games = ["feud", "bingo", "murder", "trivia"],
+  games = ["feud", "bingo", "murder", "trivia", "taboo"],
 }: {
   onPick: (g: GameType) => void;
   games?: GameType[];
@@ -25,7 +36,7 @@ export function GamePicker({
 
         <div className="mt-8 flex flex-col gap-4 sm:flex-row">
           {games.map((g) => {
-            const meta = brand.games[g];
+            const meta = brand.games[g] ?? DEFAULT_GAME_META[g];
             if (!meta) return null;
             return (
               <button

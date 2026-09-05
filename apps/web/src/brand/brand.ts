@@ -106,5 +106,6 @@ export const defaultBrand: Brand = {
     bingo: { label: "Bingo Night", tagline: "Draw a ball, do the dare", icon: "🎱" },
     murder: { label: "Murder Mystery", tagline: "Wink, kill, deduce", icon: "🔪" },
     trivia: { label: "Trivia", tagline: "3 rounds · A B C D", icon: "🧠" },
+    taboo: { label: "Off Limits", tagline: "Describe it — watch your words", icon: "🚫" },
   },
 };

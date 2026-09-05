@@ -2,9 +2,11 @@ import { useState } from "react";
 import { DisplayProvider } from "../store/DisplayProvider";
 import { BingoDisplayProvider } from "../store/bingoStore";
 import { TriviaFollowerProvider } from "../store/triviaStore";
+import { OffLimitsFollowerProvider } from "../store/offlimitsStore";
 import { DisplayView } from "../display/DisplayView";
 import { BingoDisplay } from "../bingo/BingoDisplay";
 import { TriviaDisplay } from "../trivia/TriviaDisplay";
+import { OffLimitsDisplay } from "../offlimits/OffLimitsDisplay";
 import { Murder2Display } from "../murder2/Murder2Display";
 import { DisplayPairing } from "../net/pairing";
 import { GamePicker } from "./GamePicker";
@@ -57,6 +59,15 @@ export function DisplayRoute() {
         <TriviaDisplay />
         <DisplayPairing />
       </TriviaFollowerProvider>
+    );
+  }
+
+  if (game === "taboo") {
+    return (
+      <OffLimitsFollowerProvider room={room} role="display">
+        <OffLimitsDisplay />
+        <DisplayPairing />
+      </OffLimitsFollowerProvider>
     );
   }
 
