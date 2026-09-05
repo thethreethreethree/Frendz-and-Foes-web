@@ -3,6 +3,7 @@ import { currentQuestion } from "@ff/engine";
 import { useGame } from "../store/gameStore";
 import { SFX_LABELS, SFX_NAMES, SFX_VARIANTS, type SfxName } from "../audio/sfx";
 import { Section, CtrlButton } from "./ui";
+import { getBrand } from "../brand/theme";
 
 // Manual score override — the host's final say (safety-net feature B).
 export function ScoreOverride() {
@@ -38,7 +39,7 @@ export function ScreenDirector() {
   return (
     <Section title="Screen director">
       <div className="flex flex-wrap gap-1.5">
-        <CtrlButton tone="pink" onClick={b("title", "FRENDZ & FOES")}>Title</CtrlButton>
+        <CtrlButton tone="pink" onClick={b("title", getBrand().productName.toUpperCase())}>Title</CtrlButton>
         <CtrlButton tone="teal" onClick={b("round", "ROUND 1")}>Round 1</CtrlButton>
         <CtrlButton tone="teal" onClick={b("round", "ROUND 2")}>Round 2</CtrlButton>
         <CtrlButton tone="sun" onClick={b("bonus", "BONUS ROUND!")}>Bonus</CtrlButton>

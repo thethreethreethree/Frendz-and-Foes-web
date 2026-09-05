@@ -89,7 +89,7 @@ function Board({ question, state }: { question: Question; state: GameState }) {
         {question.answers.map((a: Answer, i: number) => {
           const points = question.kind === "bonus" ? state.config.bonusFlatPoints : a.rankPoints;
           const team = teamById(a.awardedTeamId ?? null);
-          const accent = team?.color ?? "#15131a";
+          const accent = team?.color ?? "rgb(var(--c-ink))";
           return (
             <li
               key={a.id}

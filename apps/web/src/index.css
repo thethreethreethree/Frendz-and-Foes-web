@@ -6,7 +6,31 @@
   /* Light scheme so the default text color is dark — controller cards are white, and the
      display always sets its own explicit colors, so this is safe for both surfaces. */
   color-scheme: light;
-  color: theme("colors.ink");
+
+  /* WHITE-LABEL DEFAULTS. These seed the token variables so the app is correctly themed
+     on first paint, before applyBrand() runs. applyBrand() (src/brand/theme.ts) overrides
+     them at runtime per active brand. Keep in sync with defaultBrand in src/brand/brand.ts. */
+  --c-ink: 28 25 23;
+  --c-canvas: 250 248 244;
+  --c-surface: 255 253 251;
+  --c-muted: 120 113 108;
+  --c-line: 231 226 218;
+  --c-primary: 5 150 105;
+  --c-primary-ink: 255 255 255;
+  --c-secondary: 180 83 9;
+  --c-accent: 234 88 12;
+  --c-sun: 234 179 8;
+  --c-grape: 124 58 237;
+  --c-tang: 234 88 12;
+  --c-coral: 225 29 72;
+  --c-success: 22 163 74;
+  --c-danger: 220 38 38;
+  --c-warning: 217 119 6;
+  --c-info: 37 99 235;
+  --font-display: "Archivo", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+
+  color: rgb(var(--c-ink));
 }
 
 html,
@@ -17,22 +41,21 @@ body,
 }
 
 body {
-  font-family: theme("fontFamily.sans");
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
 }
 
 @layer components {
-  /* Brand brain/lightbulb artwork as the backdrop, with a translucent cream scrim so the
-     game's text and answer pills stay readable on top. */
+  /* Neutral, brand-agnostic backdrop for the shell (home / game picker): a clean canvas
+     with a soft wash of the brand's primary color, so it recolors with the theme instead
+     of depending on a brand-specific artwork file. */
   .ff-backdrop {
-    background-color: theme("colors.cream");
+    background-color: rgb(var(--c-canvas));
     background-image:
-      linear-gradient(rgba(244, 241, 234, 0.62), rgba(244, 241, 234, 0.62)),
-      url("/brand/brain.jpg");
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+      radial-gradient(1100px 620px at 50% -12%, rgb(var(--c-primary) / 0.12), transparent 60%),
+      radial-gradient(900px 520px at 100% 110%, rgb(var(--c-secondary) / 0.1), transparent 55%);
+    background-attachment: fixed;
   }
 
   /* Bingo display uses its own "Frendz Bingo Night" artwork as the backdrop. */
@@ -90,16 +113,18 @@ body {
       url("/brand/victory-murderer.webp");
   }
 
+  /* Premium display headline: the brand's display font, tight tracking, no comic shadow. */
   .ff-title {
-    font-family: theme("fontFamily.display");
-    letter-spacing: 0.04em;
-    text-shadow: 0 3px 0 rgba(21, 38, 63, 0.35);
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.015em;
   }
 
-  /* Sticker-style outlined card. */
+  /* Clean, premium card/button surface: hairline border + soft elevation (replaced the
+     4px-outline "sticker" look). Kept the class name so every existing usage restyles. */
   .ff-sticker {
-    border: 4px solid theme("colors.ink");
-    border-radius: 1.25rem;
+    border: 1px solid rgb(var(--c-line) / 0.9);
+    border-radius: 1rem;
     box-shadow: theme("boxShadow.sticker");
   }
 }

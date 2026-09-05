@@ -1,14 +1,16 @@
 import { Link } from "react-router-dom";
 import { Logo } from "../display/Logo";
 import { FloatingAccents } from "../display/Icons";
+import { getBrand } from "../brand/theme";
 
 export function HomeRoute() {
+  const brand = getBrand();
   return (
     <div className="ff-backdrop relative grid h-full place-items-center p-6">
       <FloatingAccents />
       <div className="relative flex flex-col items-center text-center">
         <Logo className="text-6xl" />
-        <p className="mt-3 font-display text-3xl tracking-wide text-ink/70">EL NIDO EDITION</p>
+        <p className="mt-3 font-display text-2xl tracking-wide text-muted">{brand.tagline}</p>
         <div className="mt-10 flex flex-col items-center gap-3">
           <Link
             to="/display"

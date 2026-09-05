@@ -12,7 +12,7 @@ interface Props {
 // A single answer pill: a covered card that flips open to reveal the answer + points.
 export function AnswerSlot({ question, answer, rankLabel, bonusPoints, team }: Props) {
   const points = question.kind === "bonus" ? bonusPoints : answer.rankPoints;
-  const accent = team?.color ?? "#15131a";
+  const accent = team?.color ?? "rgb(var(--c-ink))";
 
   return (
     <div className="[perspective:900px]">

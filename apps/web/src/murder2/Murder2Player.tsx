@@ -17,7 +17,7 @@ export function Murder2Player({ room }: { room: string }) {
 
   // A transient banner for server rejections (pick taken, cooldown, invalid move), shown over any view.
   const banner = error ? (
-    <div className="fixed inset-x-0 top-0 z-50 bg-red-600 px-4 py-2 text-center text-sm font-semibold text-white">{error}</div>
+    <div className="fixed inset-x-0 top-0 z-50 bg-danger px-4 py-2 text-center text-sm font-semibold text-white">{error}</div>
   ) : null;
 
   const inner = (() => {
@@ -145,14 +145,14 @@ function MurdererView({ state, you }: { state: any; you: any }) {
           const blocked = w.remaining <= 0 || cd > 0 || !victim || (you.mustUseOwnNow && !isOwn);
           const open = pickedSet === w.id;
           return (
-            <div key={w.id} className={`rounded-lg border-2 ${open ? "border-pink" : isOwn ? "border-amber-400" : "border-white/20"} ${blocked ? "opacity-30" : ""}`}>
+            <div key={w.id} className={`rounded-lg border-2 ${open ? "border-pink" : isOwn ? "border-sun" : "border-white/20"} ${blocked ? "opacity-30" : ""}`}>
               {/* Stacked, not side-by-side: at 375px the "frames …" column either clipped or squeezed
                   the card. Everything but the card reads top-down in one narrow column. */}
               <button disabled={blocked} onClick={() => setPickedSet(open ? null : w.id)}
                 className="flex w-full items-center gap-2 px-3 py-2 text-left">
                 <VillagerAvatar art={w.thumb} emoji={w.emoji} />
                 <span className="min-w-0 flex-1">
-                  <b>Item Set {w.setNumber} · {w.label}</b> {isOwn && <span className="text-amber-300">(yours)</span>}
+                  <b>Item Set {w.setNumber} · {w.label}</b> {isOwn && <span className="text-sun">(yours)</span>}
                   <span className="block text-xs text-white/50">{w.methods?.join(" · ")}</span>
                   <span className="mt-0.5 block text-xs text-white/60">frames {w.framesName} · {w.remaining} left</span>
                 </span>

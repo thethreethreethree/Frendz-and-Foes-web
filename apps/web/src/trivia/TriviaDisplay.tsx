@@ -27,7 +27,7 @@ export function TriviaDisplay() {
     <div
       className="relative flex h-full w-full flex-col overflow-hidden p-6 text-ink"
       style={{
-        backgroundColor: "#f6efdf",
+        backgroundColor: "#faf8f4",
         backgroundImage: `url(${TRIVIA_BG_DISPLAY})`,
         backgroundSize: "cover",
         backgroundPosition: "center",

@@ -62,7 +62,7 @@ function TriviaPlayerView({
     <div
       className="mx-auto flex h-full w-full max-w-md flex-col overflow-y-auto text-ink"
       style={{
-        backgroundColor: "#f6efdf",
+        backgroundColor: "#faf8f4",
         backgroundImage: `url(${TRIVIA_BG_PLAYER})`,
         backgroundSize: "cover",
         backgroundPosition: "center top",
