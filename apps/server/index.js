@@ -20,6 +20,7 @@ import { Server } from "socket.io";
 // filenames are historical: there is only one murder game now, reached as ?game=murder.
 import { registerMurder2Handlers } from "./murder2.js";
 import { registerCodenamesHandlers } from "./codenames.js";
+import { registerJustOneHandlers } from "./justone.js";
 import { getBrand, listBrandSlugs, upsertBrand, deleteBrand, dbReady } from "./db.js";
 
 const PORT = process.env.PORT || 8787;
@@ -160,6 +161,7 @@ io.on("connection", (socket) => {
   let code = null;
   registerMurder2Handlers(io, socket, rooms); // roomKey/now default to uppercase/Date.now here
   registerCodenamesHandlers(io, socket, rooms);
+  registerJustOneHandlers(io, socket, rooms);
 
   socket.on("join", ({ room, role, teamId }) => {
     if (typeof room !== "string" || !room) return;

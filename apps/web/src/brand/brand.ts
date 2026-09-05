@@ -111,5 +111,6 @@ export const defaultBrand: Brand = {
     reverse: { label: "Full Cast", tagline: "The whole team acts it out", icon: "🎭" },
     monikers: { label: "Encore", tagline: "Same cards, three ways", icon: "🎬" },
     codenames: { label: "Cover Ops", tagline: "Crack the secret grid", icon: "🕵️" },
+    justone: { label: "Solo Clue", tagline: "One word — but not the same one", icon: "💡" },
   },
 };

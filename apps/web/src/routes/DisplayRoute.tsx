@@ -15,6 +15,7 @@ import { FullCastDisplay } from "../fullcast/FullCastDisplay";
 import { MonikersDisplay } from "../monikers/MonikersDisplay";
 import { Murder2Display } from "../murder2/Murder2Display";
 import { CodenamesDisplay } from "../codenames/CodenamesDisplay";
+import { JustOneDisplay } from "../justone/JustOneDisplay";
 import { DisplayPairing } from "../net/pairing";
 import { GamePicker } from "./GamePicker";
 import { BINGO_ROOM, getGameFromUrl, generateRoomCode, getRoomFromUrl, setUrlGame, setUrlRoom } from "../net/room";
@@ -53,6 +54,10 @@ export function DisplayRoute() {
   if (game === "codenames") {
     // Server-authoritative like Murder; the display watches via cn:sync.
     return <CodenamesDisplay room={room} />;
+  }
+
+  if (game === "justone") {
+    return <JustOneDisplay room={room} />;
   }
 
   if (game === "bingo") {
