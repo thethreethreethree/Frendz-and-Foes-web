@@ -70,7 +70,7 @@ export interface Brand {
 // per customer; the product name "Playhouse" is a one-line change.
 export const defaultBrand: Brand = {
   id: "default",
-  productName: "Playhouse",
+  productName: "PlayZoo",
   tagline: "Party games for any crowd",
   // Dark, gradient-forward default (party-app energy). Every color still flows through the theme
   // engine, so a brand can recolor or go light via the admin.
@@ -100,7 +100,7 @@ export const defaultBrand: Brand = {
   },
   wordmark: [
     { text: "Play", color: "ink" },
-    { text: "house", color: "primary" },
+    { text: "Zoo", color: "primary" },
   ],
   games: {
     feud: { label: "Survey Showdown", tagline: "Top answers win", icon: "📊" },
