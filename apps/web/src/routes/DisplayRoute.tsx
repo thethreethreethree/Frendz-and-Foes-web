@@ -3,10 +3,12 @@ import { DisplayProvider } from "../store/DisplayProvider";
 import { BingoDisplayProvider } from "../store/bingoStore";
 import { TriviaFollowerProvider } from "../store/triviaStore";
 import { OffLimitsFollowerProvider } from "../store/offlimitsStore";
+import { HeadsUpFollowerProvider } from "../store/headsupStore";
 import { DisplayView } from "../display/DisplayView";
 import { BingoDisplay } from "../bingo/BingoDisplay";
 import { TriviaDisplay } from "../trivia/TriviaDisplay";
 import { OffLimitsDisplay } from "../offlimits/OffLimitsDisplay";
+import { HeadsUpDisplay } from "../headsup/HeadsUpDisplay";
 import { Murder2Display } from "../murder2/Murder2Display";
 import { DisplayPairing } from "../net/pairing";
 import { GamePicker } from "./GamePicker";
@@ -68,6 +70,15 @@ export function DisplayRoute() {
         <OffLimitsDisplay />
         <DisplayPairing />
       </OffLimitsFollowerProvider>
+    );
+  }
+
+  if (game === "headsup") {
+    return (
+      <HeadsUpFollowerProvider room={room} role="display">
+        <HeadsUpDisplay />
+        <DisplayPairing />
+      </HeadsUpFollowerProvider>
     );
   }
 

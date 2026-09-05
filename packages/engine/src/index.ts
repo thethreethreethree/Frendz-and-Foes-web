@@ -6,4 +6,6 @@ export * from "./fixtures.js";
 export * from "./bank.js";
 export * from "./bingo.js";
 export * from "./trivia.js";
+export * from "./wordgame.js";
 export * from "./offlimits.js";
+export * from "./headsup.js";

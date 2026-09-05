@@ -2,14 +2,14 @@
 // controller or a display/spectator). Providers attach their own listeners.
 
 import { io, type Socket } from "socket.io-client";
-import type { GameState, BingoState, TriviaState, OffLimitsPublic } from "@ff/engine";
+import type { GameState, BingoState, TriviaState, OffLimitsPublic, WordGamePublic } from "@ff/engine";
 import type { Announcement } from "../store/gameStore";
 import type { SfxName } from "../audio/sfx";
 
 // "answerer"/"viewer" are per-team phone roles for Frendz and Foes: one answerer submits the
 // team's guess (upstream, host-judged), the rest are view-only. Both carry a teamId on join.
 export type Role = "host" | "display" | "spectator" | "answerer" | "viewer";
-export type GameType = "feud" | "bingo" | "murder" | "trivia" | "taboo";
+export type GameType = "feud" | "bingo" | "murder" | "trivia" | "taboo" | "headsup";
 
 /** The authoritative Feud snapshot the host broadcasts. */
 export interface Snapshot {
@@ -35,6 +35,12 @@ export interface TriviaSnapshot {
  * and taboo list stay on the host device and are never broadcast to the room's display. */
 export interface OffLimitsSnapshot {
   offlimits: OffLimitsPublic;
+  joinQrVisible?: boolean;
+}
+
+/** The authoritative "Foreheads" (Heads Up!) snapshot — public projection only, like Off Limits. */
+export interface HeadsUpSnapshot {
+  headsup: WordGamePublic;
   joinQrVisible?: boolean;
 }
 
@@ -134,7 +140,10 @@ export function emitIntent(intent: Intent): void {
   getSocket().emit("intent", intent);
 }
 
-export function emitSync(room: string, snapshot: Snapshot | BingoSnapshot | TriviaSnapshot | OffLimitsSnapshot): void {
+export function emitSync(
+  room: string,
+  snapshot: Snapshot | BingoSnapshot | TriviaSnapshot | OffLimitsSnapshot | HeadsUpSnapshot,
+): void {
   getSocket().emit("sync", snapshot);
   // room is implied server-side by the socket's joined room, but kept in the API for clarity.
   void room;

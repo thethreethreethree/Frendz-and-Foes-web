@@ -107,5 +107,6 @@ export const defaultBrand: Brand = {
     murder: { label: "Murder Mystery", tagline: "Wink, kill, deduce", icon: "🔪" },
     trivia: { label: "Trivia", tagline: "3 rounds · A B C D", icon: "🧠" },
     taboo: { label: "Off Limits", tagline: "Describe it — watch your words", icon: "🚫" },
+    headsup: { label: "Foreheads", tagline: "Guess the word on your head", icon: "🙈" },
   },
 };
