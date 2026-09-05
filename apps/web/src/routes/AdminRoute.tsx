@@ -38,7 +38,7 @@ const COLOR_FIELDS: { key: keyof Brand["colors"]; label: string }[] = [
   { key: "line", label: "Line" },
 ];
 const WM_COLORS: WordmarkColor[] = ["ink", "primary", "secondary", "accent", "sun", "grape"];
-const GAME_KEYS = ["feud", "bingo", "murder", "trivia", "taboo", "headsup", "reverse", "monikers", "codenames", "justone", "ballpark", "pictionary", "telestrations"] as const;
+const GAME_KEYS = ["feud", "bingo", "murder", "trivia", "taboo", "headsup", "reverse", "monikers", "codenames", "justone", "ballpark", "pictionary", "telestrations", "afterdark"] as const;
 
 const clone = (b: Brand): Brand => JSON.parse(JSON.stringify(b));
 

@@ -20,6 +20,7 @@ import { BallparkHost } from "../ballpark/BallparkHost";
 import { PictionaryProvider } from "../store/pictionaryStore";
 import { PictionaryControl } from "../pictionary/PictionaryControl";
 import { TelestrationsHost } from "../telestrations/TelestrationsHost";
+import { AfterDarkHost } from "../afterdark/AfterDarkHost";
 import { GamePicker } from "./GamePicker";
 import { BINGO_ROOM, generateRoomCode, getGameFromUrl, getRoomFromUrl, setUrlGame, setUrlRoom } from "../net/room";
 import type { GameType } from "../net/socket";
@@ -121,6 +122,16 @@ export function ControlRoute() {
         </div>
       );
     return <TelestrationsHost room={room} />;
+  }
+
+  if (game === "afterdark") {
+    if (!room)
+      return (
+        <div className="ff-backdrop grid h-full place-items-center p-6 text-center font-bold text-ink/60">
+          Open the host link from the After Dark display QR.
+        </div>
+      );
+    return <AfterDarkHost room={room} />;
   }
 
   if (game === "bingo") {

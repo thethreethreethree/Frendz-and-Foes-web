@@ -115,5 +115,6 @@ export const defaultBrand: Brand = {
     ballpark: { label: "Ballpark", tagline: "Guess the number, bet on the best", icon: "🎯" },
     pictionary: { label: "Quick Draw", tagline: "Sketch it, they guess", icon: "✏️" },
     telestrations: { label: "Sketch Relay", tagline: "Draw, guess, repeat — telephone", icon: "🖍️" },
+    afterdark: { label: "After Dark", tagline: "Fill the blank — 18+", icon: "🌙" },
   },
 };

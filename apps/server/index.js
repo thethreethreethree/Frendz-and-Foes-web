@@ -23,6 +23,7 @@ import { registerCodenamesHandlers } from "./codenames.js";
 import { registerJustOneHandlers } from "./justone.js";
 import { registerBallparkHandlers } from "./ballpark.js";
 import { registerTelestrationsHandlers } from "./telestrations.js";
+import { registerAfterDarkHandlers } from "./afterdark.js";
 import { getBrand, listBrandSlugs, upsertBrand, deleteBrand, dbReady } from "./db.js";
 
 const PORT = process.env.PORT || 8787;
@@ -166,6 +167,7 @@ io.on("connection", (socket) => {
   registerJustOneHandlers(io, socket, rooms);
   registerBallparkHandlers(io, socket, rooms);
   registerTelestrationsHandlers(io, socket, rooms);
+  registerAfterDarkHandlers(io, socket, rooms);
 
   socket.on("join", ({ room, role, teamId }) => {
     if (typeof room !== "string" || !room) return;

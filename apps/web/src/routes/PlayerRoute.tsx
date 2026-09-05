@@ -7,6 +7,7 @@ import { CodenamesPlayer } from "../codenames/CodenamesPlayer";
 import { JustOnePlayer } from "../justone/JustOnePlayer";
 import { BallparkPlayer } from "../ballpark/BallparkPlayer";
 import { TelestrationsPlayer } from "../telestrations/TelestrationsPlayer";
+import { AfterDarkPlayer } from "../afterdark/AfterDarkPlayer";
 import { BINGO_ROOM, getGameFromUrl, getRoleFromUrl, getRoomFromUrl, getTeamFromUrl, setUrlRoom } from "../net/room";
 
 // Players reach this by scanning a join QR (carries ?room=). Murder → each player's own screen;
@@ -61,6 +62,7 @@ export function PlayerRoute() {
   if (game === "justone") return <JustOnePlayer room={room} />;
   if (game === "ballpark") return <BallparkPlayer room={room} />;
   if (game === "telestrations") return <TelestrationsPlayer room={room} />;
+  if (game === "afterdark") return <AfterDarkPlayer room={room} />;
 
   // Frendz and Foes team phone — needs a team in the URL. Without one, fall through to Murder so
   // existing Murder join links (game=murder, or a bare code) are unaffected.

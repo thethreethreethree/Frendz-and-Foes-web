@@ -15,7 +15,7 @@ export function getGameFromUrl(): GameType {
   // "villagers" is a legacy alias: Murder Mystery: The Villagers is now the only murder game, so
   // links minted while it briefly had its own game type still resolve.
   if (g === "villagers") return "murder";
-  return g === "bingo" || g === "murder" || g === "trivia" || g === "taboo" || g === "headsup" || g === "reverse" || g === "monikers" || g === "codenames" || g === "justone" || g === "ballpark" || g === "pictionary" || g === "telestrations"
+  return g === "bingo" || g === "murder" || g === "trivia" || g === "taboo" || g === "headsup" || g === "reverse" || g === "monikers" || g === "codenames" || g === "justone" || g === "ballpark" || g === "pictionary" || g === "telestrations" || g === "afterdark"
     ? g
     : "feud";
 }
@@ -67,6 +67,11 @@ export function ballparkJoinUrl(room: string): string {
 /** URL players scan to join a Sketch Relay (Telestrations) game from their own phones. */
 export function telestrationsJoinUrl(room: string): string {
   return `${window.location.origin}/?room=${room}&game=telestrations#/play`;
+}
+
+/** URL players scan to join an After Dark game from their own phones. */
+export function afterdarkJoinUrl(room: string): string {
+  return `${window.location.origin}/?room=${room}&game=afterdark#/play`;
 }
 
 /**
