@@ -3,31 +3,30 @@
 @tailwind utilities;
 
 :root {
-  /* Light scheme so the default text color is dark — controller cards are white, and the
-     display always sets its own explicit colors, so this is safe for both surfaces. */
-  color-scheme: light;
+  /* Dark default scheme (party-app look). */
+  color-scheme: dark;
 
   /* WHITE-LABEL DEFAULTS. These seed the token variables so the app is correctly themed
      on first paint, before applyBrand() runs. applyBrand() (src/brand/theme.ts) overrides
      them at runtime per active brand. Keep in sync with defaultBrand in src/brand/brand.ts. */
-  --c-ink: 28 25 23;
-  --c-canvas: 250 248 244;
-  --c-surface: 255 253 251;
-  --c-muted: 120 113 108;
-  --c-line: 231 226 218;
-  --c-primary: 5 150 105;
+  --c-ink: 244 247 255;
+  --c-canvas: 11 15 26;
+  --c-surface: 22 28 43;
+  --c-muted: 148 163 184;
+  --c-line: 42 49 66;
+  --c-primary: 139 92 246;
   --c-primary-ink: 255 255 255;
-  --c-secondary: 180 83 9;
-  --c-accent: 234 88 12;
-  --c-sun: 234 179 8;
-  --c-grape: 124 58 237;
-  --c-tang: 234 88 12;
-  --c-coral: 225 29 72;
-  --c-success: 22 163 74;
-  --c-danger: 220 38 38;
-  --c-warning: 217 119 6;
-  --c-info: 37 99 235;
-  --font-display: "Archivo", system-ui, sans-serif;
+  --c-secondary: 20 184 166;
+  --c-accent: 236 72 153;
+  --c-sun: 245 158 11;
+  --c-grape: 167 139 250;
+  --c-tang: 251 146 60;
+  --c-coral: 244 114 182;
+  --c-success: 34 197 94;
+  --c-danger: 239 68 68;
+  --c-warning: 245 158 11;
+  --c-info: 56 189 248;
+  --font-display: "Inter", system-ui, sans-serif;
   --font-body: "Inter", system-ui, sans-serif;
 
   color: rgb(var(--c-ink));
@@ -42,6 +41,7 @@ body,
 
 body {
   font-family: var(--font-body);
+  background: rgb(var(--c-canvas)); /* dark ground; avoids a white flash before the app paints */
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
 }
@@ -53,8 +53,9 @@ body {
   .ff-backdrop {
     background-color: rgb(var(--c-canvas));
     background-image:
-      radial-gradient(1100px 620px at 50% -12%, rgb(var(--c-primary) / 0.12), transparent 60%),
-      radial-gradient(900px 520px at 100% 110%, rgb(var(--c-secondary) / 0.1), transparent 55%);
+      radial-gradient(1200px 680px at 12% -10%, rgb(var(--c-primary) / 0.28), transparent 58%),
+      radial-gradient(1000px 620px at 100% 8%, rgb(var(--c-accent) / 0.2), transparent 55%),
+      radial-gradient(900px 560px at 50% 120%, rgb(var(--c-secondary) / 0.18), transparent 55%);
     background-attachment: fixed;
   }
 
@@ -120,11 +121,14 @@ body {
     letter-spacing: -0.015em;
   }
 
-  /* Clean, premium card/button surface: hairline border + soft elevation (replaced the
-     4px-outline "sticker" look). Kept the class name so every existing usage restyles. */
+  /* Card/button surface: hairline border + soft elevation + a faint top highlight that reads
+     well on the dark ground. Kept the class name so every existing usage restyles. */
   .ff-sticker {
     border: 1px solid rgb(var(--c-line) / 0.9);
     border-radius: 1rem;
-    box-shadow: theme("boxShadow.sticker");
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.06),
+      0 1px 2px rgb(0 0 0 / 0.3),
+      0 18px 40px -20px rgb(0 0 0 / 0.6);
   }
 }

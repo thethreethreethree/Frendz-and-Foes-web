@@ -72,30 +72,31 @@ export const defaultBrand: Brand = {
   id: "default",
   productName: "Playhouse",
   tagline: "Party games for any crowd",
+  // Dark, gradient-forward default (party-app energy). Every color still flows through the theme
+  // engine, so a brand can recolor or go light via the admin.
   colors: {
-    ink: "28 25 23", // #1c1917 warm near-black (soft black)
-    canvas: "250 248 244", // #faf8f4 warm ivory
-    surface: "255 253 251", // #fffdfb warm white
-    muted: "120 113 108", // #78716c warm grey
-    line: "231 226 218", // #e7e2da warm hairline
-    primary: "5 150 105", // #059669 deep emerald
+    ink: "244 247 255", // #f4f7ff near-white text
+    canvas: "11 15 26", // #0b0f1a near-black with a blue bias
+    surface: "22 28 43", // #161c2b elevated dark card
+    muted: "148 163 184", // #94a3b8 slate
+    line: "42 49 66", // #2a3142 dark hairline
+    primary: "139 92 246", // #8b5cf6 vivid violet
     primaryInk: "255 255 255",
-    secondary: "180 83 9", // #b45309 deep ochre (warm complement to emerald)
-    accent: "234 88 12", // #ea580c orange (energy moments)
-    sun: "234 179 8", // amber-500
-    grape: "124 58 237", // violet-600
-    tang: "234 88 12", // orange-600
-    coral: "225 29 72", // rose-600
-    success: "22 163 74", // green-600
-    danger: "220 38 38", // red-600
-    warning: "217 119 6", // amber-600
-    info: "37 99 235", // blue-600
+    secondary: "20 184 166", // #14b8a6 teal
+    accent: "236 72 153", // #ec4899 pink
+    sun: "245 158 11", // amber-500
+    grape: "167 139 250", // violet-400
+    tang: "251 146 60", // orange-400
+    coral: "244 114 182", // pink-400
+    success: "34 197 94", // green-500
+    danger: "239 68 68", // red-500
+    warning: "245 158 11", // amber-500
+    info: "56 189 248", // sky-400
   },
   fonts: {
-    display: '"Archivo", system-ui, sans-serif',
+    display: '"Inter", system-ui, sans-serif',
     body: '"Inter", system-ui, sans-serif',
-    googleUrl:
-      "https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap",
+    googleUrl: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap",
   },
   wordmark: [
     { text: "Play", color: "ink" },
