@@ -33,11 +33,13 @@ export function GamePicker({
   return (
     <div className="ff-backdrop relative grid h-full place-items-center p-6">
       <FloatingAccents />
-      <div className="relative flex flex-col items-center text-center">
+      <div className="relative flex w-full max-w-5xl flex-col items-center text-center">
         <Logo className="text-5xl" />
         <p className="mt-2 font-display text-xl tracking-wide text-muted">Pick a game</p>
 
-        <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+        {/* Wrap into a centered grid so every game is visible at once — the row must never run off
+            the screen (there's no swipe). Cards flow onto more rows as games are added. */}
+        <div className="mt-8 flex w-full flex-wrap justify-center gap-4">
           {games.map((g) => {
             const meta = brand.games[g] ?? DEFAULT_GAME_META[g];
             if (!meta) return null;
@@ -45,7 +47,7 @@ export function GamePicker({
               <button
                 key={g}
                 onClick={() => onPick(g)}
-                className="ff-sticker flex w-64 flex-col items-center bg-surface px-6 py-6 transition hover:-translate-y-1"
+                className="ff-sticker flex w-56 flex-col items-center bg-surface px-6 py-5 transition hover:-translate-y-1"
               >
                 {g === "bingo" ? (
                   <BingoLogo className="text-xl" />
