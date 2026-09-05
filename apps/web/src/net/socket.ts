@@ -9,7 +9,7 @@ import type { SfxName } from "../audio/sfx";
 // "answerer"/"viewer" are per-team phone roles for Frendz and Foes: one answerer submits the
 // team's guess (upstream, host-judged), the rest are view-only. Both carry a teamId on join.
 export type Role = "host" | "display" | "spectator" | "answerer" | "viewer";
-export type GameType = "feud" | "bingo" | "murder" | "trivia" | "taboo" | "headsup" | "reverse" | "monikers" | "codenames" | "justone";
+export type GameType = "feud" | "bingo" | "murder" | "trivia" | "taboo" | "headsup" | "reverse" | "monikers" | "codenames" | "justone" | "ballpark";
 
 /** The authoritative Feud snapshot the host broadcasts. */
 export interface Snapshot {

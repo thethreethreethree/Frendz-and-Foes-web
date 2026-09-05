@@ -16,6 +16,7 @@ import { MonikersDisplay } from "../monikers/MonikersDisplay";
 import { Murder2Display } from "../murder2/Murder2Display";
 import { CodenamesDisplay } from "../codenames/CodenamesDisplay";
 import { JustOneDisplay } from "../justone/JustOneDisplay";
+import { BallparkDisplay } from "../ballpark/BallparkDisplay";
 import { DisplayPairing } from "../net/pairing";
 import { GamePicker } from "./GamePicker";
 import { BINGO_ROOM, getGameFromUrl, generateRoomCode, getRoomFromUrl, setUrlGame, setUrlRoom } from "../net/room";
@@ -58,6 +59,10 @@ export function DisplayRoute() {
 
   if (game === "justone") {
     return <JustOneDisplay room={room} />;
+  }
+
+  if (game === "ballpark") {
+    return <BallparkDisplay room={room} />;
   }
 
   if (game === "bingo") {

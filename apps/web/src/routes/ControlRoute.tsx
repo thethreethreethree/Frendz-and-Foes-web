@@ -16,6 +16,7 @@ import { MonikersControl } from "../monikers/MonikersControl";
 import { Murder2Host } from "../murder2/Murder2Host";
 import { CodenamesHost } from "../codenames/CodenamesHost";
 import { JustOneHost } from "../justone/JustOneHost";
+import { BallparkHost } from "../ballpark/BallparkHost";
 import { GamePicker } from "./GamePicker";
 import { BINGO_ROOM, generateRoomCode, getGameFromUrl, getRoomFromUrl, setUrlGame, setUrlRoom } from "../net/room";
 import type { GameType } from "../net/socket";
@@ -83,6 +84,16 @@ export function ControlRoute() {
         </div>
       );
     return <JustOneHost room={room} />;
+  }
+
+  if (game === "ballpark") {
+    if (!room)
+      return (
+        <div className="ff-backdrop grid h-full place-items-center p-6 text-center font-bold text-ink/60">
+          Open the host link from the Ballpark display QR.
+        </div>
+      );
+    return <BallparkHost room={room} />;
   }
 
   if (game === "bingo") {

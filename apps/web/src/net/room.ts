@@ -15,7 +15,7 @@ export function getGameFromUrl(): GameType {
   // "villagers" is a legacy alias: Murder Mystery: The Villagers is now the only murder game, so
   // links minted while it briefly had its own game type still resolve.
   if (g === "villagers") return "murder";
-  return g === "bingo" || g === "murder" || g === "trivia" || g === "taboo" || g === "headsup" || g === "reverse" || g === "monikers" || g === "codenames" || g === "justone"
+  return g === "bingo" || g === "murder" || g === "trivia" || g === "taboo" || g === "headsup" || g === "reverse" || g === "monikers" || g === "codenames" || g === "justone" || g === "ballpark"
     ? g
     : "feud";
 }
@@ -57,6 +57,11 @@ export function codenamesJoinUrl(room: string): string {
 /** URL players scan to join a Solo Clue (Just One) game from their own phones. */
 export function justoneJoinUrl(room: string): string {
   return `${window.location.origin}/?room=${room}&game=justone#/play`;
+}
+
+/** URL players scan to join a Ballpark (Wits & Wagers) game from their own phones. */
+export function ballparkJoinUrl(room: string): string {
+  return `${window.location.origin}/?room=${room}&game=ballpark#/play`;
 }
 
 /**
