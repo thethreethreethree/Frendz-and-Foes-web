@@ -15,7 +15,7 @@ export function getGameFromUrl(): GameType {
   // "villagers" is a legacy alias: Murder Mystery: The Villagers is now the only murder game, so
   // links minted while it briefly had its own game type still resolve.
   if (g === "villagers") return "murder";
-  return g === "bingo" || g === "murder" || g === "trivia" || g === "taboo" || g === "headsup" || g === "reverse" || g === "monikers"
+  return g === "bingo" || g === "murder" || g === "trivia" || g === "taboo" || g === "headsup" || g === "reverse" || g === "monikers" || g === "codenames"
     ? g
     : "feud";
 }
@@ -47,6 +47,11 @@ export function controllerUrl(room: string): string {
 /** URL players scan to join a Murder game from their own phones. */
 export function playerJoinUrl(room: string): string {
   return `${window.location.origin}/?room=${room}&game=murder#/play`;
+}
+
+/** URL players scan to join a Cover Ops (Codenames) game from their own phones. */
+export function codenamesJoinUrl(room: string): string {
+  return `${window.location.origin}/?room=${room}&game=codenames#/play`;
 }
 
 /**

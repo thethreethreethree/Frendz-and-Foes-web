@@ -19,6 +19,7 @@ import { Server } from "socket.io";
 // earlier 30-character mode (retired 2026-07-17; its last state is commit 1705229). The `murder2`
 // filenames are historical: there is only one murder game now, reached as ?game=murder.
 import { registerMurder2Handlers } from "./murder2.js";
+import { registerCodenamesHandlers } from "./codenames.js";
 import { getBrand, listBrandSlugs, upsertBrand, deleteBrand, dbReady } from "./db.js";
 
 const PORT = process.env.PORT || 8787;
@@ -158,6 +159,7 @@ function presence(room) {
 io.on("connection", (socket) => {
   let code = null;
   registerMurder2Handlers(io, socket, rooms); // roomKey/now default to uppercase/Date.now here
+  registerCodenamesHandlers(io, socket, rooms);
 
   socket.on("join", ({ room, role, teamId }) => {
     if (typeof room !== "string" || !room) return;
