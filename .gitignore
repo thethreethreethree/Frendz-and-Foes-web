@@ -12,6 +12,9 @@ coverage/
 .vitest/
 *.tsbuildinfo
 
+# Brand store (SQLite DB lives on the server, per-deploy)
+apps/server/data/
+
 # Source art originals (optimized copies live in apps/web/public/brand)
 Media Assets/
 det-playthrough.mjs

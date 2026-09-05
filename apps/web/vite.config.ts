@@ -18,6 +18,7 @@ export default defineConfig({
       // Music + the villager roster are served by the game server; proxy them in dev.
       "/music": "http://localhost:8787",
       "/murder": "http://localhost:8787",
+      "/api": "http://localhost:8787", // white-label brand API
     },
   },
 });

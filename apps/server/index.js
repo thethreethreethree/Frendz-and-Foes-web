@@ -19,12 +19,71 @@ import { Server } from "socket.io";
 // earlier 30-character mode (retired 2026-07-17; its last state is commit 1705229). The `murder2`
 // filenames are historical: there is only one murder game now, reached as ?game=murder.
 import { registerMurder2Handlers } from "./murder2.js";
+import { getBrand, listBrandSlugs, upsertBrand, deleteBrand, dbReady } from "./db.js";
 
 const PORT = process.env.PORT || 8787;
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
+app.use(express.json({ limit: "256kb" }));
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
+
+// --- White-label brand API (Phase 2) --------------------------------------------------------
+// Reads are public (the web app fetches its active brand at bootstrap). Writes are gated by a
+// shared passcode header (ADMIN_PASSCODE) until real accounts land with HTTPS. If the passcode
+// env isn't set, writes are refused rather than defaulting to something guessable.
+const ADMIN_PASSCODE = process.env.ADMIN_PASSCODE || "";
+const validSlug = (s) => typeof s === "string" && /^[a-z0-9][a-z0-9-]{0,39}$/.test(s);
+
+function validBrand(b) {
+  return (
+    b && typeof b === "object" &&
+    typeof b.productName === "string" && b.productName.length > 0 && b.productName.length <= 60 &&
+    b.colors && typeof b.colors === "object" &&
+    b.fonts && typeof b.fonts === "object" &&
+    Array.isArray(b.wordmark) &&
+    b.games && typeof b.games === "object"
+  );
+}
+
+function requirePasscode(req, res) {
+  if (!ADMIN_PASSCODE) {
+    res.status(503).json({ error: "Admin writes are disabled (ADMIN_PASSCODE not set on the server)." });
+    return false;
+  }
+  if (req.get("x-admin-passcode") !== ADMIN_PASSCODE) {
+    res.status(401).json({ error: "Wrong passcode." });
+    return false;
+  }
+  return true;
+}
+
+app.get("/api/brand/:slug", (req, res) => {
+  if (!validSlug(req.params.slug)) return res.status(400).json({ error: "Bad slug." });
+  const brand = getBrand(req.params.slug);
+  if (!brand) return res.status(404).json({ error: "No such brand." });
+  res.json(brand);
+});
+
+app.get("/api/brands", (req, res) => {
+  if (!requirePasscode(req, res)) return;
+  res.json({ ready: dbReady(), brands: listBrandSlugs() });
+});
+
+app.put("/api/brand/:slug", (req, res) => {
+  if (!requirePasscode(req, res)) return;
+  if (!validSlug(req.params.slug)) return res.status(400).json({ error: "Bad slug." });
+  if (!validBrand(req.body)) return res.status(400).json({ error: "Invalid brand config." });
+  if (!upsertBrand(req.params.slug, req.body)) return res.status(503).json({ error: "Store unavailable." });
+  res.json({ ok: true });
+});
+
+app.delete("/api/brand/:slug", (req, res) => {
+  if (!requirePasscode(req, res)) return;
+  if (!validSlug(req.params.slug)) return res.status(400).json({ error: "Bad slug." });
+  deleteBrand(req.params.slug);
+  res.json({ ok: true });
+});
 
 // The villager roster (characters + their signature weapons) — the server owns this list.
 // (The retired 30-character mode served its roster from GET /murder/characters. The Villagers roster
