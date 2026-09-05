@@ -52,7 +52,7 @@ export function IncomingGuesses() {
           const t = team(item.teamId);
           const match = item.text.trim().length >= 2 ? bestMatch(item.text, hidden, (a) => a.text) : null;
           return (
-            <li key={item.id} className="rounded-lg border-2 border-ink/10 bg-white p-2">
+            <li key={item.id} className="rounded-lg border-2 border-line bg-surface p-2">
               <div className="flex items-center gap-2">
                 <span
                   className="h-4 w-4 shrink-0 rounded-full border border-ink"

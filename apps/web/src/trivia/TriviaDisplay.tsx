@@ -27,7 +27,7 @@ export function TriviaDisplay() {
     <div
       className="relative flex h-full w-full flex-col overflow-hidden p-6 text-ink"
       style={{
-        backgroundColor: "#faf8f4",
+        backgroundColor: "#0b0f1a",
         backgroundImage: `url(${TRIVIA_BG_DISPLAY})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
@@ -37,9 +37,9 @@ export function TriviaDisplay() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="absolute inset-0 z-50 grid place-items-center bg-ink/90 backdrop-blur"
+          className="absolute inset-0 z-50 grid place-items-center bg-canvas/90 backdrop-blur"
         >
-          <div className="ff-sticker flex flex-col items-center gap-4 bg-white px-12 py-10 text-center">
+          <div className="ff-sticker flex flex-col items-center gap-4 bg-surface px-12 py-10 text-center">
             <div className="ff-title text-4xl text-grape">SCAN TO WATCH</div>
             <QR text={triviaViewJoinUrl(connection.room)} size={340} />
             <div className="font-display text-2xl tracking-widest text-ink/70">Room {connection.room}</div>
@@ -73,7 +73,7 @@ export function TriviaDisplay() {
               key={q.id}
               initial={{ y: -16, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              className="ff-sticker max-w-4xl bg-ink px-8 py-5 text-center text-3xl font-extrabold text-white"
+              className="ff-sticker max-w-4xl bg-grape px-8 py-5 text-center text-3xl font-extrabold text-white"
             >
               {q.prompt}
             </motion.h1>
@@ -84,7 +84,7 @@ export function TriviaDisplay() {
                   <div
                     key={letter}
                     className={`flex items-center gap-3 rounded-2xl border-4 px-4 py-3 ${
-                      isCorrect ? "border-buzz-green bg-buzz-green/20" : "border-ink/10 bg-white"
+                      isCorrect ? "border-buzz-green bg-buzz-green/20" : "border-ink/10 bg-surface"
                     }`}
                   >
                     <img src={letterTile(letter)} alt={letter} className="h-14 w-14 shrink-0 object-contain" />
@@ -101,7 +101,7 @@ export function TriviaDisplay() {
           <div className="text-center">
             <img src={TRIVIA_CHAMPIONS} alt="Champions" className="mx-auto h-52 w-52 object-contain" />
             {ranked[0] && (
-              <div className="ff-sticker mx-auto mt-6 inline-flex items-center gap-4 bg-white px-10 py-6">
+              <div className="ff-sticker mx-auto mt-6 inline-flex items-center gap-4 bg-surface px-10 py-6">
                 <span
                   className="h-10 w-10 rounded-full border-4 border-ink"
                   style={{ backgroundColor: ranked[0].color ?? "#999" }}
@@ -117,7 +117,7 @@ export function TriviaDisplay() {
       {trivia.teams.length > 0 && (
         <footer className="flex flex-wrap items-stretch justify-center gap-2 pt-2">
           {ranked.map((t) => (
-            <div key={t.id} className="ff-sticker flex items-center gap-2 bg-white px-3 py-1.5">
+            <div key={t.id} className="ff-sticker flex items-center gap-2 bg-surface px-3 py-1.5">
               <span className="h-4 w-4 rounded-full border-2 border-ink" style={{ backgroundColor: t.color ?? "#999" }} />
               <span className="max-w-[10rem] truncate text-base font-bold text-ink">{t.name}</span>
               <span className="font-display text-2xl text-ink">{t.score}</span>

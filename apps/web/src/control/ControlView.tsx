@@ -28,7 +28,7 @@ export function ControlView() {
   return (
     <div className="mx-auto flex h-full w-full max-w-md flex-col overflow-y-auto overflow-x-hidden bg-concrete/40 text-ink">
       {/* Sticky command bar */}
-      <div className="sticky top-0 z-10 border-b border-ink/10 bg-white/95 px-3 py-2 backdrop-blur">
+      <div className="sticky top-0 z-10 border-b border-line bg-surface/95 px-3 py-2 backdrop-blur">
         <div className="flex items-center justify-between gap-2">
           <span className="font-display text-xl text-ink">
             {g.state.phase === "playing" && q
@@ -46,7 +46,7 @@ export function ControlView() {
           <CtrlButton tone="ink" onClick={() => g.dispatch({ type: "PREV_QUESTION" })}>◀</CtrlButton>
           <div
             className={`flex-1 rounded-lg px-3 py-1.5 text-center text-sm font-black ${
-              info.complete ? "bg-buzz-green text-white" : "bg-sun text-ink"
+              info.complete ? "bg-buzz-green text-white" : "bg-sun text-canvas"
             }`}
           >
             {info.label}

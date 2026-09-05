@@ -31,7 +31,7 @@ export function TeamJoinCodes() {
               key={t.id}
               onClick={() => setSel(t.id)}
               className={`flex items-center gap-1.5 rounded-lg border-2 px-2 py-1 text-xs font-bold ${
-                active ? "border-ink bg-ink text-white" : "border-ink/15 bg-white text-ink"
+                active ? "border-ink bg-ink text-canvas" : "border-line bg-surface text-ink"
               }`}
             >
               <span
@@ -48,7 +48,7 @@ export function TeamJoinCodes() {
       {!open ? (
         <button
           onClick={() => setOpen(true)}
-          className="w-full rounded-lg border-2 border-ink/15 bg-white px-3 py-2 text-sm font-bold text-ink"
+          className="w-full rounded-lg border-2 border-line bg-surface px-3 py-2 text-sm font-bold text-ink"
         >
           ▸ Show QR to pair a team's answer-phone
         </button>

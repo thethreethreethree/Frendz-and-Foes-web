@@ -20,14 +20,14 @@ export function Murder2Host({ room }: { room: string }) {
 
       {state.phase === "playing" && (
         <div className="mt-4 space-y-2">
-          <p className="rounded-lg bg-cream px-3 py-2 text-sm">Kills {state.killCount}/{state.killTarget}. Let the room discuss, then call a meeting.</p>
+          <p className="rounded-lg bg-surface px-3 py-2 text-sm">Kills {state.killCount}/{state.killTarget}. Let the room discuss, then call a meeting.</p>
           <button onClick={m2OpenVote} className="ff-sticker w-full bg-pink px-4 py-3 font-display text-xl text-white">OPEN TOWN MEETING</button>
         </div>
       )}
 
       {state.phase === "voting" && (
         <div className="mt-4 space-y-2">
-          <p className="rounded-lg bg-cream px-3 py-2 text-sm">Voting open. Close it when the room has voted (or all living players vote).</p>
+          <p className="rounded-lg bg-surface px-3 py-2 text-sm">Voting open. Close it when the room has voted (or all living players vote).</p>
           <VoteList state={state} />
           <button onClick={m2CloseVote} className="ff-sticker w-full bg-teal px-4 py-3 font-display text-xl text-white">CLOSE VOTE & RESOLVE</button>
         </div>
@@ -67,7 +67,7 @@ function Config({ state, canStart }: { state: V2State; canStart: boolean }) {
   const apply = () => m2Config({ killTarget: kills, cooldownSec: cooldown });
   return (
     <div className="mt-4 space-y-3">
-      {canStart && <p className="rounded-lg bg-cream px-3 py-2 text-sm text-ink/70">This game: <b>{roleComposition(picked)}</b>.</p>}
+      {canStart && <p className="rounded-lg bg-surface px-3 py-2 text-sm text-ink/70">This game: <b>{roleComposition(picked)}</b>.</p>}
       <label className="block text-sm font-semibold text-ink/70">Kills to win: {kills}
         <input type="range" min={2} max={8} value={kills} onChange={(e) => setKills(+e.target.value)} onMouseUp={apply} onTouchEnd={apply} className="w-full" />
       </label>
@@ -88,7 +88,7 @@ function Standings({ state }: { state: V2State }) {
   if (!rows.length) return null;
   const top = rows[0]?.pts ?? 0;
   return (
-    <div className="rounded-lg bg-cream px-3 py-2 text-sm">
+    <div className="rounded-lg bg-surface px-3 py-2 text-sm">
       <div className="font-semibold text-ink/70">Standings after {state.round} round{state.round === 1 ? "" : "s"}</div>
       {rows.map((r, i) => (
         <div key={i} className={`flex justify-between ${r.pts === top && top > 0 ? "font-bold" : ""}`}>
@@ -104,7 +104,7 @@ function VoteList({ state }: { state: V2State }) {
   return (
     <div className="flex flex-wrap gap-2">
       {Object.entries(tally).map(([id, n]) => (
-        <span key={id} className="rounded bg-cream px-2 py-1 text-sm">{name(state, id)}: <b>{n}</b></span>
+        <span key={id} className="rounded bg-surface px-2 py-1 text-sm">{name(state, id)}: <b>{n}</b></span>
       ))}
       {Object.keys(tally).length === 0 && <span className="text-sm text-ink/50">no votes yet</span>}
     </div>
@@ -117,7 +117,7 @@ function PlayerList({ state }: { state: V2State }) {
       <div className="font-display text-lg text-ink">Players</div>
       <div className="mt-1 grid grid-cols-2 gap-1 text-sm">
         {state.players.map((p: V2Player) => (
-          <div key={p.id} className={`rounded px-2 py-1 ${p.alive ? "bg-white" : "bg-ink/10 line-through opacity-60"}`}>
+          <div key={p.id} className={`rounded px-2 py-1 ${p.alive ? "bg-surface" : "bg-ink/10 line-through opacity-60"}`}>
             {p.name}{p.characterId ? ` · ${prof(state, p.characterId)}` : " · (choosing…)"}
           </div>
         ))}

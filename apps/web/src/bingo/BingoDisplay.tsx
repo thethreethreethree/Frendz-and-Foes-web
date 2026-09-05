@@ -28,9 +28,9 @@ export function BingoDisplay() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="absolute inset-0 z-50 grid place-items-center bg-ink/90 backdrop-blur"
+          className="absolute inset-0 z-50 grid place-items-center bg-canvas/90 backdrop-blur"
         >
-          <div className="ff-sticker flex flex-col items-center gap-4 bg-white px-12 py-10 text-center text-ink">
+          <div className="ff-sticker flex flex-col items-center gap-4 bg-surface px-12 py-10 text-center text-ink">
             <BingoLogo className="text-3xl" />
             <div className="font-display text-4xl text-grape">SCAN TO JOIN</div>
             <QR text={bingoJoinUrl(connection.room)} size={360} />
@@ -45,7 +45,7 @@ export function BingoDisplay() {
       )}
       <header className="flex items-center justify-between">
         <BingoLogo className="text-3xl" />
-        <div className="ff-sticker bg-white px-3 py-1 text-sm font-bold text-ink">
+        <div className="ff-sticker bg-surface px-3 py-1 text-sm font-bold text-ink">
           {bingo.drawn.length}/75 drawn
         </div>
       </header>
@@ -80,12 +80,12 @@ export function BingoDisplay() {
                 key={`dare-${cur.id}`}
                 initial={{ y: 12, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                className="ff-sticker bg-white px-5 py-4 text-center text-2xl font-extrabold text-ink"
+                className="ff-sticker bg-surface px-5 py-4 text-center text-2xl font-extrabold text-ink"
               >
                 {dareForBall(cur.id)}
               </motion.div>
             ) : cur ? (
-              <div className="ff-sticker bg-ink/90 px-5 py-4 text-center font-display text-3xl tracking-widest text-white/80">
+              <div className="ff-sticker bg-surface px-5 py-4 text-center font-display text-3xl tracking-widest text-ink/70">
                 DARE HIDDEN
               </div>
             ) : null}
@@ -114,10 +114,10 @@ export function BingoDisplay() {
                       key={b.id}
                       className={`grid h-8 place-items-center rounded text-sm font-bold transition ${
                         isCurrent
-                          ? "scale-110 bg-sun text-ink ring-2 ring-ink"
+                          ? "scale-110 bg-sun text-canvas ring-2 ring-ink"
                           : isDrawn
-                            ? "bg-ink text-white"
-                            : "bg-white/70 text-ink/40"
+                            ? "bg-ink text-canvas"
+                            : "bg-surface text-ink/40"
                       }`}
                     >
                       {b.number}

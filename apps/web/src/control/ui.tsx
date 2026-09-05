@@ -27,7 +27,7 @@ export function HomeButton({ className = "" }: { className?: string }) {
 
 export function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="rounded-xl border border-ink/10 bg-white p-3 shadow-sm">
+    <section className="rounded-xl border border-line bg-surface p-3 shadow-sm">
       <h2 className="mb-2 text-xs font-black uppercase tracking-wide text-ink/50">{title}</h2>
       {children}
     </section>
@@ -48,10 +48,10 @@ export function CtrlButton({
   className?: string;
 }) {
   const tones: Record<string, string> = {
-    ink: "bg-ink text-white",
+    ink: "bg-ink text-canvas",
     pink: "bg-pink text-white",
-    teal: "bg-teal text-ink",
-    sun: "bg-sun text-ink",
+    teal: "bg-teal text-canvas",
+    sun: "bg-sun text-canvas",
     grape: "bg-grape text-white",
     tang: "bg-tang text-white",
     green: "bg-buzz-green text-white",

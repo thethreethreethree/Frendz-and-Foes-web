@@ -23,7 +23,7 @@ export function TriviaControl() {
 
   return (
     <div className="mx-auto flex h-full w-full max-w-md flex-col overflow-y-auto overflow-x-hidden bg-concrete/40 text-ink">
-      <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-ink/10 bg-white/95 px-3 py-2 backdrop-blur">
+      <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-ink/10 bg-surface/95 px-3 py-2 backdrop-blur">
         <span className="font-display text-lg text-ink">
           {trivia.phase === "playing" || trivia.phase === "reveal"
             ? `${trivia.phase === "reveal" ? "REVEAL · " : ""}${TRIVIA_ROUNDS[TRIVIA_DECKS[trivia.version][trivia.currentIndex]?.round ?? 0]?.label} · Q${triviaQuestionInRound(trivia.currentIndex)}/10`
@@ -96,7 +96,7 @@ function Setup() {
               key={v}
               onClick={() => t.configure({ version: v })}
               className={`rounded-lg border-2 px-2 py-2 text-sm font-black ${
-                trivia.version === v ? "border-grape bg-grape text-white" : "border-ink/15 bg-white text-ink"
+                trivia.version === v ? "border-grape bg-grape text-white" : "border-ink/15 bg-surface text-ink"
               }`}
             >
               {v.toUpperCase()}
@@ -117,7 +117,7 @@ function Setup() {
               key={m}
               onClick={() => t.configure({ mode: m })}
               className={`rounded-lg border-2 px-3 py-2 text-left text-sm font-bold ${
-                trivia.mode === m ? "border-ink bg-ink text-white" : "border-ink/15 bg-white text-ink"
+                trivia.mode === m ? "border-grape bg-grape text-white" : "border-ink/15 bg-surface text-ink"
               }`}
             >
               {label}
@@ -137,7 +137,7 @@ function Setup() {
                   value={tm.name}
                   onChange={(e) => update(tm.id, e.target.value)}
                   maxLength={20}
-                  className="min-w-0 flex-1 rounded-lg border-2 border-ink/15 bg-white px-2 py-1.5 text-sm outline-none focus:border-teal"
+                  className="min-w-0 flex-1 rounded-lg border-2 border-ink/15 bg-surface px-2 py-1.5 text-sm outline-none focus:border-teal"
                 />
                 <button
                   onClick={() => remove(tm.id)}
@@ -201,7 +201,7 @@ function JoinCodes() {
             key={tm.id}
             onClick={() => setSel(tm.id)}
             className={`flex items-center gap-1.5 rounded-lg border-2 px-2 py-1 text-xs font-bold ${
-              selected?.id === tm.id ? "border-ink bg-ink text-white" : "border-ink/15 bg-white text-ink"
+              selected?.id === tm.id ? "border-grape bg-grape text-white" : "border-ink/15 bg-surface text-ink"
             }`}
           >
             <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: tm.color ?? "#999" }} />
@@ -239,7 +239,7 @@ function Play() {
   return (
     <>
       <Section title={`${TRIVIA_ROUNDS[q.round]?.label} · Question ${triviaQuestionInRound(trivia.currentIndex)} of 10`}>
-        <div className="rounded-lg bg-ink px-3 py-2 text-center text-sm font-extrabold text-white">{q.prompt}</div>
+        <div className="rounded-lg bg-grape px-3 py-2 text-center text-sm font-extrabold text-white">{q.prompt}</div>
         <ul className="mt-2 space-y-1">
           {TRIVIA_LETTERS.map((letter, i) => {
             const isCorrect = q.correct === letter;
@@ -247,7 +247,7 @@ function Play() {
               <li
                 key={letter}
                 className={`flex items-center gap-2 rounded-lg border-2 px-2 py-1.5 text-sm ${
-                  isCorrect ? "border-buzz-green bg-buzz-green/10 font-bold" : "border-ink/10 bg-white"
+                  isCorrect ? "border-buzz-green bg-buzz-green/10 font-bold" : "border-ink/10 bg-surface"
                 }`}
               >
                 <img src={letterTile(letter)} alt={letter} className="h-7 w-7 shrink-0 object-contain" />
@@ -295,7 +295,7 @@ function Reveal() {
   return (
     <>
       <Section title={`Reveal · ${TRIVIA_ROUNDS[q.round]?.label} · Question ${triviaQuestionInRound(trivia.currentIndex)} of 10`}>
-        <div className="rounded-lg bg-ink px-3 py-2 text-center text-sm font-extrabold text-white">{q.prompt}</div>
+        <div className="rounded-lg bg-grape px-3 py-2 text-center text-sm font-extrabold text-white">{q.prompt}</div>
         <ul className="mt-2 space-y-1">
           {TRIVIA_LETTERS.map((letter, i) => {
             const isCorrect = q.correct === letter;
@@ -304,7 +304,7 @@ function Reveal() {
               <li
                 key={letter}
                 className={`flex items-center gap-2 rounded-lg border-2 px-2 py-1.5 text-sm ${
-                  highlight ? "border-buzz-green bg-buzz-green/15 font-bold" : "border-ink/10 bg-white"
+                  highlight ? "border-buzz-green bg-buzz-green/15 font-bold" : "border-ink/10 bg-surface"
                 }`}
               >
                 <img src={letterTile(letter)} alt={letter} className="h-7 w-7 shrink-0 object-contain" />
@@ -365,7 +365,7 @@ function Scoreboard() {
     <Section title="Scores">
       <div className="grid grid-cols-2 gap-1 text-sm">
         {ranked.map((t) => (
-          <div key={t.id} className="flex items-center gap-1.5 rounded bg-white px-2 py-1">
+          <div key={t.id} className="flex items-center gap-1.5 rounded bg-surface px-2 py-1">
             <span className="h-3 w-3 rounded-full" style={{ backgroundColor: t.color ?? "#999" }} />
             <span className="min-w-0 flex-1 truncate font-bold">{t.name}</span>
             <span className="font-display text-lg">{t.score}</span>

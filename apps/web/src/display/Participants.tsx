@@ -19,7 +19,7 @@ export function Participants({ state }: { state: GameState }) {
         return (
           <div
             key={p.slot}
-            className={`ff-sticker flex items-center gap-2 bg-white px-3 py-1.5 transition ${
+            className={`ff-sticker flex items-center gap-2 bg-surface px-3 py-1.5 transition ${
               active ? "scale-110 ring-4 ring-sun" : "opacity-80"
             }`}
           >

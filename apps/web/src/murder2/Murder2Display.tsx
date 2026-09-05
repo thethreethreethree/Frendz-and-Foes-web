@@ -37,25 +37,25 @@ function Lobby({ room, state }: { room: string; state: V2State | null }) {
   return (
     <Backdrop phase="lobby">
       <img src="/brand/logo-villagers.png" alt="" className="mb-2 max-h-28" onError={(e)=>{(e.currentTarget as HTMLImageElement).style.display="none";}} />
-      <div className="ff-title text-5xl text-ink">MURDER MYSTERY: THE VILLAGERS</div>
+      <div className="ff-title text-5xl text-canvas">MURDER MYSTERY: THE VILLAGERS</div>
       <div className="mt-6 flex flex-col items-center gap-4 md:flex-row md:items-start">
-        <div className="ff-sticker bg-white p-5 text-center">
+        <div className="ff-sticker bg-surface p-5 text-center">
           <div className="ff-title text-2xl text-pink">SCAN TO JOIN</div>
           {qr && <img src={qr} alt="join" className="mt-2" />}
           <div className="mt-1 font-display text-4xl tracking-widest text-ink">{room.split(":").pop()}</div>
         </div>
         <div className="min-w-[16rem]">
-          <div className="font-display text-2xl text-ink">Villagers ({picked.length})</div>
+          <div className="font-display text-2xl text-canvas">Villagers ({picked.length})</div>
           <div className="mt-2 grid grid-cols-2 gap-1">
             {picked.map((p) => (
-              <div key={p.id} className="rounded bg-white px-2 py-1 text-sm">
+              <div key={p.id} className="rounded bg-surface px-2 py-1 text-sm">
                 {charEmoji(state, p.characterId)} <b>{p.name}</b> · <span className="text-ink/60">{charName(state, p.characterId)}</span>
               </div>
             ))}
           </div>
         </div>
       </div>
-      <p className="mt-6 text-ink/60">Host: start the game once everyone has picked a character.</p>
+      <p className="mt-6 text-canvas/70">Host: start the game once everyone has picked a character.</p>
     </Backdrop>
   );
 }
@@ -65,13 +65,13 @@ function Header({ state }: { state: V2State }) {
   // Dark backing pill so the header stays legible on every phase backdrop — dark text vanished on the
   // night/reveal scenes (verified by screenshot, 2026-07-23).
   return (
-    <div className="mb-3 flex items-center justify-between rounded-xl bg-ink/55 px-4 py-2 text-cream backdrop-blur-sm">
-      <div className="ff-title text-3xl">THE VILLAGERS{state.round ? <span className="ml-2 text-lg text-cream/70">Round {state.round}</span> : null}</div>
+    <div className="mb-3 flex items-center justify-between rounded-xl bg-canvas/70 px-4 py-2 text-ink backdrop-blur-sm">
+      <div className="ff-title text-3xl">THE VILLAGERS{state.round ? <span className="ml-2 text-lg text-ink/70">Round {state.round}</span> : null}</div>
       <div className="flex items-center gap-4 font-display text-xl">
         <span className="text-pink"><Icon name="icon-kills" className="inline h-6 w-6 align-[-5px]" /> Kills {state.killCount}/{state.killTarget}</span>
         {state.hasDetective && state.phase !== "ended" && <span className="text-teal">🔍 a detective walks among you</span>}
         {state.hasDoctor && state.phase !== "ended" && <span className="text-teal">🛡️ a doctor tends the town</span>}
-        {state.phase === "playing" && cd > 0 && <span className="text-cream/70"><Icon name="icon-timer" className="inline h-5 w-5 align-[-4px]" /> next kill in {cd}s</span>}
+        {state.phase === "playing" && cd > 0 && <span className="text-ink/70"><Icon name="icon-timer" className="inline h-5 w-5 align-[-4px]" /> next kill in {cd}s</span>}
         {state.phase === "voting" && <span className="text-teal"><Icon name="icon-vote" className="inline h-6 w-6 align-[-5px]" /> TOWN MEETING</span>}
       </div>
     </div>
@@ -80,11 +80,11 @@ function Header({ state }: { state: V2State }) {
 
 function Clues({ state }: { state: V2State }) {
   return (
-    <div className="ff-sticker bg-white p-4">
+    <div className="ff-sticker bg-surface p-4">
       <div className="font-display text-2xl text-ink"><Icon name="icon-clue" className="inline h-7 w-7 align-[-6px]" /> Clues</div>
       {state.clues.length === 0 && <p className="text-ink/50">No one has died… yet.</p>}
       {state.clues.map((c: V2Clue, i) => (
-        <div key={i} className="mt-2 flex items-center gap-3 rounded-lg bg-cream px-3 py-2">
+        <div key={i} className="mt-2 flex items-center gap-3 rounded-lg bg-canvas px-3 py-2">
           {/* The crime-scene plate for this clue's location, then the item-set card (the deduction key). */}
           <ScenePlate location={c.weapon.location} />
           <ClueArt art={c.weapon.art} emoji={c.weapon.emoji} />
@@ -115,14 +115,14 @@ function RosterGrid({ state }: { state: V2State }) {
   const framedCount = (charId: string | null) => state.clues.filter((c) => c.framedCharacterId === charId).length;
   const max = Math.max(0, ...picked.map((p) => framedCount(p.characterId)));
   return (
-    <div className="ff-sticker bg-white p-4">
+    <div className="ff-sticker bg-surface p-4">
       <div className="font-display text-2xl text-ink">Suspects <span className="text-base text-ink/50">— who's being framed</span></div>
       <div className="mt-2 space-y-1 text-sm">
         {picked.map((p) => {
           const n = framedCount(p.characterId);
           const hot = n > 0 && n === max; // most-framed suspect(s) — the crowd's prime lead
           return (
-            <div key={p.id} className={`rounded px-2 py-1 ${!p.alive ? "bg-ink/10 opacity-70" : hot ? "bg-pink/15" : "bg-cream"}`}>
+            <div key={p.id} className={`rounded px-2 py-1 ${!p.alive ? "bg-ink/10 opacity-70" : hot ? "bg-pink/15" : "bg-canvas"}`}>
               <div>
                 {!p.alive && <Icon name="icon-dead" className="inline h-4 w-4 align-[-2px]" />}{" "}
                 <span className={!p.alive ? "line-through" : ""}>{charEmoji(state, p.characterId)} <b>{p.name}</b> · {charName(state, p.characterId)}</span>
@@ -141,11 +141,11 @@ function RosterGrid({ state }: { state: V2State }) {
 function VoteTally({ state }: { state: V2State }) {
   const tally = state.vote?.tally || {};
   return (
-    <div className="ff-sticker mt-4 bg-white p-4">
+    <div className="ff-sticker mt-4 bg-surface p-4">
       <div className="font-display text-2xl text-pink">Votes</div>
       <div className="mt-2 flex flex-wrap gap-2">
         {Object.entries(tally).map(([id, n]) => (
-          <span key={id} className="rounded-lg bg-cream px-3 py-1">{playerName(state, id)}: <b>{n}</b></span>
+          <span key={id} className="rounded-lg bg-canvas px-3 py-1">{playerName(state, id)}: <b>{n}</b></span>
         ))}
         {Object.keys(tally).length === 0 && <span className="text-ink/50">waiting for votes…</span>}
       </div>
@@ -269,9 +269,9 @@ function MomentBanner({ announce }: { announce: { a: V2Announce; nonce: number }
           initial={{ opacity: 0, scale: 1.1 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
-          className="absolute inset-0 z-30 grid place-items-center bg-ink/70 backdrop-blur-sm"
+          className="absolute inset-0 z-30 grid place-items-center bg-canvas/70 backdrop-blur-sm"
         >
-          <div className="ff-sticker animate-pop relative overflow-hidden bg-white text-center">
+          <div className="ff-sticker animate-pop relative overflow-hidden bg-surface text-center">
             {show.art && <img src={show.art} alt="" className="absolute inset-0 h-full w-full object-cover opacity-30" />}
             <div className="relative px-12 py-8">
               <div className="ff-title text-5xl text-pink">{show.text}</div>

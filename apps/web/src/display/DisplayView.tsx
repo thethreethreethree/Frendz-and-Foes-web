@@ -25,14 +25,14 @@ export function DisplayView() {
           {timerRemaining != null && (
             <div
               className={`ff-sticker grid h-14 w-14 place-items-center font-display text-4xl ${
-                timerRemaining <= 3 ? "bg-pink text-white" : "bg-white text-ink"
+                timerRemaining <= 3 ? "bg-pink text-white" : "bg-surface text-ink"
               }`}
             >
               {timerRemaining}
             </div>
           )}
           {state.phase === "playing" && question && (
-            <div className="ff-sticker bg-white px-4 py-1.5 font-display text-2xl tracking-wide text-ink">
+            <div className="ff-sticker bg-surface px-4 py-1.5 font-display text-2xl tracking-wide text-ink">
               {question.kind === "bonus" ? "BONUS ROUND" : "QUESTION"}
             </div>
           )}
@@ -59,7 +59,7 @@ export function DisplayView() {
               key={question.id}
               initial={{ y: -16, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              className="ff-sticker max-w-5xl bg-ink px-6 py-4 text-center text-3xl font-extrabold text-white"
+              className="ff-sticker max-w-5xl bg-surface px-6 py-4 text-center text-3xl font-extrabold text-ink"
             >
               {question.prompt}
             </motion.h1>
@@ -102,7 +102,7 @@ function WinnerScene() {
           initial={{ scale: 0.6, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", stiffness: 200, damping: 14 }}
-          className="ff-sticker mx-auto mt-6 inline-flex items-center gap-4 bg-white px-10 py-6"
+          className="ff-sticker mx-auto mt-6 inline-flex items-center gap-4 bg-surface px-10 py-6"
         >
           <span
             className="h-10 w-10 rounded-full border-4 border-ink"

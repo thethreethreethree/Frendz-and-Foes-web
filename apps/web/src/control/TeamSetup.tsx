@@ -65,7 +65,7 @@ export function TeamSetup() {
           <button
             onClick={() => setMode("standard")}
             className={`rounded-lg border-2 px-2 py-2 text-xs font-bold ${
-              mode === "standard" ? "border-ink bg-ink text-white" : "border-ink/15 bg-white text-ink"
+              mode === "standard" ? "border-ink bg-ink text-canvas" : "border-line bg-surface text-ink"
             }`}
           >
             Standard
@@ -74,7 +74,7 @@ export function TeamSetup() {
           <button
             onClick={() => setMode("randomize")}
             className={`rounded-lg border-2 px-2 py-2 text-xs font-bold ${
-              mode === "randomize" ? "border-grape bg-grape text-white" : "border-ink/15 bg-white text-ink"
+              mode === "randomize" ? "border-grape bg-grape text-white" : "border-line bg-surface text-ink"
             }`}
           >
             🎲 Randomize Survey
@@ -108,14 +108,14 @@ export function TeamSetup() {
                   type="color"
                   value={t.color}
                   onChange={(e) => update(t.id, { color: e.target.value })}
-                  className="h-8 w-8 shrink-0 cursor-pointer rounded border border-ink/20 bg-white p-0.5"
+                  className="h-8 w-8 shrink-0 cursor-pointer rounded border border-line bg-surface p-0.5"
                   title="Team color"
                 />
                 <input
                   value={t.name}
                   onChange={(e) => update(t.id, { name: e.target.value })}
                   maxLength={20}
-                  className="min-w-0 flex-1 rounded-lg border-2 border-ink/15 bg-white px-2 py-1.5 text-sm text-ink outline-none focus:border-teal"
+                  className="min-w-0 flex-1 rounded-lg border-2 border-line bg-surface px-2 py-1.5 text-sm text-ink outline-none focus:border-teal"
                 />
                 <button
                   onClick={() => removeTeam(t.id)}

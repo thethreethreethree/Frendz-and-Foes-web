@@ -26,7 +26,7 @@ export function Murder2Player({ room }: { room: string }) {
         <Screen>
           <div className="ff-title text-3xl text-pink">JOIN THE VILLAGE</div>
           <input aria-label="Your name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" autoFocus
-            className="mt-4 w-56 rounded-lg border-2 border-ink/20 bg-white px-4 py-3 text-center text-xl text-ink outline-none focus:border-teal" />
+            className="mt-4 w-56 rounded-lg border-2 border-ink/20 bg-surface px-4 py-3 text-center text-xl text-ink outline-none focus:border-teal" />
           <button disabled={!name.trim()} onClick={() => join(name.trim())}
             className="ff-sticker mt-3 bg-pink px-8 py-3 font-display text-2xl text-white disabled:opacity-40">JOIN</button>
         </Screen>
@@ -69,8 +69,8 @@ function PhoneMoment({ announce }: { announce: { a: V2Announce; nonce: number } 
   }, [announce]);
   if (!show) return null;
   return (
-    <div key={show.nonce} className="fixed inset-0 z-40 grid animate-pop place-items-center bg-ink/80 p-6 backdrop-blur-sm">
-      <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border-4 border-white bg-ink text-center">
+    <div key={show.nonce} className="fixed inset-0 z-40 grid animate-pop place-items-center bg-canvas/80 p-6 backdrop-blur-sm">
+      <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border-4 border-white bg-surface text-center">
         {show.art && <img src={show.art} alt="" className="absolute inset-0 h-full w-full object-cover opacity-40" />}
         <div className="relative px-6 py-10">
           <div className="ff-title text-4xl text-pink">{show.text}</div>
@@ -269,7 +269,7 @@ function LastWords({ me, dark }: { me: any; dark: boolean }) {
     <div className={`mt-3 rounded-lg p-3 ${dark ? "bg-white/10" : "bg-ink/5"}`}>
       <div className="text-sm font-semibold">Leave your last words — a true hint, or a lie…</div>
       <input value={text} maxLength={120} onChange={(e) => setText(e.target.value)} placeholder="e.g. I saw them near the Clinic…"
-        className="mt-2 w-full rounded border-2 border-ink/20 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-teal" />
+        className="mt-2 w-full rounded border-2 border-ink/20 bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-teal" />
       <button disabled={!text.trim()} onClick={() => m2LastWords(text.trim())}
         className="ff-sticker mt-2 bg-pink px-4 py-2 text-sm text-white disabled:opacity-40">Speak</button>
     </div>
@@ -319,7 +319,7 @@ function Voting({ state, you }: { state: any; you: any }) {
             <p className="mb-2 text-sm text-ink/60">Who is the murderer? A wrong majority clears the suspect.</p>
             <div className="grid grid-cols-2 gap-2">
               {suspects.map((p) => (
-                <button key={p.id} onClick={() => m2Vote(p.id)} className="rounded-lg border-2 border-ink/20 bg-white px-2 py-3 text-sm font-semibold text-ink">
+                <button key={p.id} onClick={() => m2Vote(p.id)} className="rounded-lg border-2 border-ink/20 bg-surface px-2 py-3 text-sm font-semibold text-ink">
                   {p.name}
                 </button>
               ))}
@@ -388,7 +388,7 @@ function ClueFeed({ state }: { state: any }) {
     <div className="mt-3">
       <div className="font-display text-lg text-ink">Clues</div>
       {state.clues.map((c: any, i: number) => (
-        <div key={i} className="mt-1 flex items-center gap-2 rounded-lg bg-white px-2 py-2 text-sm">
+        <div key={i} className="mt-1 flex items-center gap-2 rounded-lg bg-surface px-2 py-2 text-sm">
           {/* The crime-scene plate — so players see the place, not just read it. Hides if art is missing. */}
           <CluePlate location={c.weapon.location} />
           <div>
@@ -407,7 +407,7 @@ function Roster({ state }: { state: any }) {
       <div className="font-display text-lg text-ink">Villagers</div>
       <div className="mt-1 grid grid-cols-2 gap-1 text-sm">
         {state.players.filter((p: V2Player) => p.characterId).map((p: V2Player) => (
-          <div key={p.id} className={`rounded px-2 py-1 ${p.alive ? "bg-white" : "bg-ink/10 line-through opacity-60"}`}>
+          <div key={p.id} className={`rounded px-2 py-1 ${p.alive ? "bg-surface" : "bg-ink/10 line-through opacity-60"}`}>
             {!p.alive && <Icon name="icon-dead" />} {charEmoji(state, p.characterId)} {p.name} · <span className="text-ink/60">{charName(state, p.characterId)}</span>{p.cleared && " ✓"}
           </div>
         ))}

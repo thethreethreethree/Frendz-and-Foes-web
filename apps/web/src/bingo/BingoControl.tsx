@@ -16,7 +16,7 @@ export function BingoControl() {
   return (
     <div className="mx-auto flex h-full w-full max-w-md flex-col overflow-y-auto overflow-x-hidden bg-concrete/40 text-ink">
       {/* Command bar */}
-      <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-ink/10 bg-white/95 px-3 py-2 backdrop-blur">
+      <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-ink/10 bg-surface/95 px-3 py-2 backdrop-blur">
         <BingoLogo className="text-base" />
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold text-ink/50">{bingo.drawn.length}/75</span>
@@ -35,7 +35,7 @@ export function BingoControl() {
         <Section title="Current ball">
           {cur ? (
             <div className="flex items-center gap-3">
-              <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full border-4 border-ink bg-ink font-display text-3xl text-white">
+              <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full border-4 border-ink bg-ink font-display text-3xl text-canvas">
                 <span className="-mb-1 text-base">{cur.letter}</span>
                 <span className="leading-none">{cur.number}</span>
               </div>
@@ -88,7 +88,7 @@ export function BingoControl() {
                 <span
                   key={id}
                   className={`rounded-md px-1.5 py-0.5 text-xs font-bold ${
-                    id === bingo.currentId ? "bg-sun text-ink" : "bg-ink/10 text-ink"
+                    id === bingo.currentId ? "bg-sun text-canvas" : "bg-ink/10 text-ink"
                   }`}
                 >
                   {id}

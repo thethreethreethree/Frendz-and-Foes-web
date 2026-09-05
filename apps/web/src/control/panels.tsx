@@ -125,7 +125,7 @@ export function SfxBoard() {
                       sfx(name, i); // preview the choice
                     }}
                     className={`h-7 w-7 rounded-md text-xs font-bold ${
-                      sfxVariant[name] === i ? "bg-ink text-white" : "bg-ink/10 text-ink"
+                      sfxVariant[name] === i ? "bg-ink text-canvas" : "bg-ink/10 text-ink"
                     }`}
                   >
                     {i + 1}

@@ -26,7 +26,7 @@ export function TeamView({
   return (
     <div className="mx-auto flex h-full w-full max-w-md flex-col overflow-y-auto bg-concrete/40 text-ink">
       {/* Team header */}
-      <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-ink/10 bg-white/95 px-3 py-2 backdrop-blur">
+      <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-line bg-surface/95 px-3 py-2 backdrop-blur">
         <span
           className="h-6 w-6 shrink-0 rounded-full border-2 border-ink"
           style={{ backgroundColor: team?.color ?? "#999" }}
@@ -45,7 +45,7 @@ export function TeamView({
         {/* Turn banner */}
         <div
           className={`rounded-lg px-3 py-2 text-center text-sm font-black ${
-            isOurTurn ? "bg-buzz-green text-white" : "bg-sun/70 text-ink"
+            isOurTurn ? "bg-buzz-green text-white" : "bg-sun/70 text-canvas"
           }`}
         >
           {state.phase === "playing"
@@ -81,20 +81,20 @@ export function TeamView({
 function Board({ question, state }: { question: Question; state: GameState }) {
   const teamById = (id: string | null) => (id ? state.teams.find((t) => t.id === id) ?? null : null);
   return (
-    <div className="rounded-xl bg-white/70 p-2">
-      <div className="mb-2 rounded-lg bg-ink px-3 py-2 text-center text-sm font-extrabold text-white">
+    <div className="rounded-xl border border-line bg-surface/70 p-2">
+      <div className="mb-2 rounded-lg bg-ink px-3 py-2 text-center text-sm font-extrabold text-canvas">
         {question.prompt}
       </div>
       <ul className="space-y-1.5">
         {question.answers.map((a: Answer, i: number) => {
           const points = question.kind === "bonus" ? state.config.bonusFlatPoints : a.rankPoints;
           const team = teamById(a.awardedTeamId ?? null);
-          const accent = team?.color ?? "rgb(var(--c-ink))";
+          const accent = team?.color ?? "rgb(var(--c-primary))";
           return (
             <li
               key={a.id}
               className={`flex items-center gap-2 rounded-lg px-2.5 py-2 ${
-                a.revealed ? "bg-white" : "bg-ink/90 text-concrete"
+                a.revealed ? "bg-surface text-ink" : "bg-ink/90 text-concrete"
               }`}
               style={a.revealed ? { boxShadow: `inset 4px 0 0 ${accent}` } : undefined}
             >
@@ -142,7 +142,7 @@ function AnswerBox({ teamId, disabled }: { teamId: string; disabled: boolean }) 
   };
 
   return (
-    <div className="rounded-xl bg-white p-3 shadow-pop">
+    <div className="rounded-xl border border-line bg-surface p-3 shadow-pop">
       <div className="mb-1 text-[10px] font-black uppercase text-ink/50">Your team's answer</div>
       <div className="flex gap-2">
         <input
@@ -151,7 +151,7 @@ function AnswerBox({ teamId, disabled }: { teamId: string; disabled: boolean }) 
           onKeyDown={(e) => e.key === "Enter" && send()}
           maxLength={120}
           placeholder="Type your guess…"
-          className="min-w-0 flex-1 rounded-lg border-2 border-ink/15 bg-white px-3 py-2 text-base text-ink outline-none focus:border-teal"
+          className="min-w-0 flex-1 rounded-lg border-2 border-line bg-surface px-3 py-2 text-base text-ink outline-none focus:border-teal"
         />
         <button
           onClick={send}
@@ -171,10 +171,10 @@ function AnswerBox({ teamId, disabled }: { teamId: string; disabled: boolean }) 
 function ShareViewOnly({ room, teamId }: { room: string; teamId: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="rounded-xl bg-white/70 p-3">
+    <div className="rounded-xl border border-line bg-surface/70 p-3">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full rounded-lg border-2 border-ink/15 bg-white px-3 py-2 text-sm font-bold text-ink"
+        className="w-full rounded-lg border-2 border-line bg-surface px-3 py-2 text-sm font-bold text-ink"
       >
         {open ? "▾ Hide team QR" : "▸ Share a view-only screen with your team"}
       </button>
@@ -195,7 +195,7 @@ function Results({ state, teamId }: { state: GameState; teamId: string }) {
   const ranked = [...state.teams].sort((a, b) => b.score - a.score);
   const ourRank = ranked.findIndex((t) => t.id === teamId) + 1;
   return (
-    <div className="rounded-xl bg-white p-4 text-center shadow-pop">
+    <div className="rounded-xl border border-line bg-surface p-4 text-center shadow-pop">
       <div className="ff-title text-3xl text-grape">FINAL</div>
       <ol className="mt-3 space-y-1.5 text-left">
         {ranked.map((t, i) => (

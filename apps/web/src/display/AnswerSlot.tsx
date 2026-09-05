@@ -12,7 +12,7 @@ interface Props {
 // A single answer pill: a covered card that flips open to reveal the answer + points.
 export function AnswerSlot({ question, answer, rankLabel, bonusPoints, team }: Props) {
   const points = question.kind === "bonus" ? bonusPoints : answer.rankPoints;
-  const accent = team?.color ?? "rgb(var(--c-ink))";
+  const accent = team?.color ?? "rgb(var(--c-primary))";
 
   return (
     <div className="[perspective:900px]">
@@ -35,7 +35,7 @@ export function AnswerSlot({ question, answer, rankLabel, bonusPoints, team }: P
             initial={{ rotateX: -90, opacity: 0 }}
             animate={{ rotateX: 0, opacity: 1 }}
             transition={{ type: "spring", stiffness: 260, damping: 18 }}
-            className="ff-sticker flex items-center justify-between gap-3 bg-white px-4 py-3 text-ink"
+            className="ff-sticker flex items-center justify-between gap-3 bg-surface px-4 py-3 text-ink"
             style={{ borderColor: accent }}
           >
             <div className="flex min-w-0 items-center gap-3">

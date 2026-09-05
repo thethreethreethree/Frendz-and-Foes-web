@@ -62,7 +62,7 @@ function TriviaPlayerView({
     <div
       className="mx-auto flex h-full w-full max-w-md flex-col overflow-y-auto text-ink"
       style={{
-        backgroundColor: "#faf8f4",
+        backgroundColor: "#0b0f1a",
         backgroundImage: `url(${TRIVIA_BG_PLAYER})`,
         backgroundSize: "cover",
         backgroundPosition: "center top",
@@ -72,7 +72,7 @@ function TriviaPlayerView({
       {/* Floating header — the background art already carries the title. */}
       <div className="flex items-center gap-2 px-3 py-2">
         {team && (
-          <div className="flex items-center gap-2 rounded-full bg-white/90 px-2.5 py-1 shadow-pop backdrop-blur">
+          <div className="flex items-center gap-2 rounded-full bg-surface/90 px-2.5 py-1 shadow-pop backdrop-blur">
             <span className="h-5 w-5 rounded-full border-2 border-ink" style={{ backgroundColor: team.color ?? "#999" }} />
             <span className="max-w-[8rem] truncate font-display text-sm text-ink">{team.name}</span>
             <span className="font-display text-lg text-grape">{team.score}</span>
@@ -86,7 +86,7 @@ function TriviaPlayerView({
 
       <div className="flex flex-col gap-3 p-3">
         {trivia.phase === "setup" && (
-          <div className="rounded-lg bg-sun/70 px-3 py-6 text-center text-sm font-black text-ink">
+          <div className="rounded-lg bg-surface px-3 py-6 text-center text-sm font-black text-ink">
             Waiting for the host to start…
           </div>
         )}
@@ -102,7 +102,7 @@ function TriviaPlayerView({
               {revealed && <span className="text-buzz-green">Answer revealed</span>}
             </div>
 
-            <div className="rounded-xl bg-ink px-4 py-4 text-center text-lg font-extrabold text-white shadow-pop">
+            <div className="rounded-xl bg-grape px-4 py-4 text-center text-lg font-extrabold text-white shadow-pop">
               {q.prompt}
             </div>
 
@@ -122,8 +122,8 @@ function TriviaPlayerView({
                         : isWrongPick
                           ? "border-tang bg-tang/15"
                           : isPicked
-                            ? "border-ink bg-white"
-                            : "border-ink/10 bg-white/85"
+                            ? "border-ink bg-surface"
+                            : "border-ink/10 bg-surface/85"
                     } ${canAnswer ? "active:translate-y-0.5" : "cursor-default"}`}
                   >
                     <img src={letterTile(letter)} alt={letter} className="h-11 w-11 shrink-0 object-contain" />
@@ -169,10 +169,10 @@ function TriviaPlayerView({
 function ShareViewOnly({ room, teamId }: { room: string; teamId: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="rounded-xl bg-white/70 p-3">
+    <div className="rounded-xl bg-surface/70 p-3">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full rounded-lg border-2 border-ink/15 bg-white px-3 py-2 text-sm font-bold text-ink"
+        className="w-full rounded-lg border-2 border-ink/15 bg-surface px-3 py-2 text-sm font-bold text-ink"
       >
         {open ? "▾ Hide team QR" : "▸ Share a view-only screen with your team"}
       </button>
@@ -192,7 +192,7 @@ function Results({ trivia, teamId }: { trivia: TriviaState; teamId?: string }) {
   const ranked = [...trivia.teams].sort((a, b) => b.score - a.score);
   const ourRank = teamId ? ranked.findIndex((t) => t.id === teamId) + 1 : 0;
   return (
-    <div className="rounded-xl bg-white p-4 text-center shadow-pop">
+    <div className="rounded-xl bg-surface p-4 text-center shadow-pop">
       <img src={TRIVIA_CHAMPIONS} alt="" className="mx-auto -mt-2 h-24 w-24 object-contain" />
       <div className="ff-title text-3xl text-grape">FINAL</div>
       <ol className="mt-3 space-y-1.5 text-left">

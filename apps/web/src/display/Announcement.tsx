@@ -31,10 +31,10 @@ export function Announcement() {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
           transition={{ type: "spring", stiffness: 200, damping: 20 }}
-          className="absolute inset-0 z-30 grid place-items-center bg-ink/70 backdrop-blur-sm"
+          className="absolute inset-0 z-30 grid place-items-center bg-canvas/70 backdrop-blur-sm"
         >
           <FloatingAccents tone="light" />
-          <div className="ff-sticker animate-pop bg-white px-12 py-10 text-center">
+          <div className="ff-sticker animate-pop bg-surface px-12 py-10 text-center">
             <div
               className={`ff-title text-7xl ${KIND_STYLES[announcement.kind] ?? "text-ink"}`}
             >

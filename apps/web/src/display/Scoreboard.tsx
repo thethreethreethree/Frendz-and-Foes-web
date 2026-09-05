@@ -15,7 +15,7 @@ export function Scoreboard({ state }: { state: GameState }) {
           <motion.div
             layout
             key={t.id}
-            className={`ff-sticker flex items-center gap-2 bg-white px-3 py-1.5 ${
+            className={`ff-sticker flex items-center gap-2 bg-surface px-3 py-1.5 ${
               isLeader ? "ring-4 ring-sun" : ""
             }`}
           >

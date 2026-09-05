@@ -38,7 +38,7 @@ export function AnswerKey() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Type what they said…"
-        className="mb-2 w-full rounded-lg border-2 border-ink/15 bg-white px-3 py-2 text-base text-ink outline-none focus:border-teal"
+        className="mb-2 w-full rounded-lg border-2 border-line bg-surface px-3 py-2 text-base text-ink outline-none focus:border-teal"
       />
       {match && (
         <div className="mb-2 text-xs font-bold text-ink/60">
@@ -63,15 +63,15 @@ export function AnswerKey() {
                     ? "border-transparent bg-ink/5 text-ink/40"
                     : isMatch
                       ? "border-teal bg-teal/15"
-                      : "border-ink/10 bg-white"
+                      : "border-line bg-surface"
                 }`}
               >
-                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-ink/80 font-display text-lg text-white">
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-ink/80 font-display text-lg text-canvas">
                   {i + 1}
                 </span>
                 <span className="flex-1 truncate font-bold">{a.text}</span>
                 <span className="text-[10px] font-semibold text-ink/40">({a.surveyCount})</span>
-                <span className="grid h-7 min-w-7 place-items-center rounded bg-ink px-1 font-display text-lg text-white">
+                <span className="grid h-7 min-w-7 place-items-center rounded bg-ink px-1 font-display text-lg text-canvas">
                   {points}
                 </span>
                 {team && (
@@ -93,7 +93,7 @@ export function AnswerKey() {
                       <button
                         key={t.id}
                         onClick={() => credit(a.id, t.id)}
-                        className="flex items-center gap-1 rounded-lg border-2 border-ink/15 bg-white px-2 py-1 text-xs font-bold"
+                        className="flex items-center gap-1 rounded-lg border-2 border-line bg-surface px-2 py-1 text-xs font-bold text-ink"
                       >
                         <span
                           className="h-2.5 w-2.5 rounded-full"

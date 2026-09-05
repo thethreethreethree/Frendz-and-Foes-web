@@ -43,7 +43,7 @@ export function BuzzInPicker() {
               key={t.id}
               onClick={() => toggleTeam(t.id)}
               className={`relative rounded-lg border-2 px-2 py-2 text-xs font-bold ${
-                picked ? "border-ink bg-ink text-white" : "border-ink/15 bg-white text-ink"
+                picked ? "border-ink bg-ink text-canvas" : "border-line bg-surface text-ink"
               }`}
             >
               {meta && (

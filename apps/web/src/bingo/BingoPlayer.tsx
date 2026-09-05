@@ -34,7 +34,7 @@ function BingoPlayerView() {
     <div
       className="relative flex h-full w-full flex-col overflow-hidden text-ink"
       style={{
-        backgroundColor: "#faf8f4", // warm-ivory fallback before the bg art loads / if it 404s
+        backgroundColor: "#0b0f1a", // dark canvas fallback before the bg art loads / if it 404s
         backgroundImage: "url(/ui/bingo-player-bg-2.jpg)", // v2: corrected "BINGO" spelling
         backgroundSize: "cover",
         backgroundPosition: "center top", // anchor to the top so the title stays at top-center
@@ -44,7 +44,7 @@ function BingoPlayerView() {
       {/* Header — the background art already carries the title, so only the functional bits here. */}
       <div className="flex items-center justify-end px-4 py-3">
         <div className="flex items-center gap-2">
-          <span className="ff-sticker bg-white px-2.5 py-1 text-xs font-bold text-ink">
+          <span className="ff-sticker bg-surface px-2.5 py-1 text-xs font-bold text-ink">
             {bingo.drawn.length}/75
           </span>
           <span
@@ -84,12 +84,12 @@ function BingoPlayerView() {
               key={`dare-${cur.id}`}
               initial={{ y: 12, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              className="ff-sticker bg-white px-5 py-4 text-center text-xl font-extrabold text-ink"
+              className="ff-sticker bg-surface px-5 py-4 text-center text-xl font-extrabold text-ink"
             >
               {dareForBall(cur.id)}
             </motion.div>
           ) : cur ? (
-            <div className="ff-sticker bg-ink/90 px-5 py-4 text-center font-display text-2xl tracking-widest text-white/70">
+            <div className="ff-sticker bg-surface px-5 py-4 text-center font-display text-2xl tracking-widest text-ink/70">
               WAITING FOR THE DARE…
             </div>
           ) : null}
@@ -100,7 +100,7 @@ function BingoPlayerView() {
       <div className="px-5 pb-6">
         <button
           onClick={() => setShowAll(true)}
-          className="ff-sticker w-full bg-ink px-4 py-3 font-display text-xl text-white"
+          className="ff-sticker w-full bg-ink px-4 py-3 font-display text-xl text-canvas"
         >
           See all called numbers ({bingo.drawn.length})
         </button>
@@ -128,13 +128,13 @@ function AllNumbers({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-50 flex flex-col bg-ink/95 p-4 backdrop-blur"
+      className="absolute inset-0 z-50 flex flex-col bg-canvas/95 p-4 backdrop-blur"
     >
       <div className="flex items-center justify-between pb-3">
         <div className="font-display text-2xl text-white">Called numbers · {bingo.drawn.length}/75</div>
         <button
           onClick={onClose}
-          className="ff-sticker bg-white px-4 py-2 font-display text-lg text-ink"
+          className="ff-sticker bg-surface px-4 py-2 font-display text-lg text-ink"
         >
           ✕ Close
         </button>
@@ -161,9 +161,9 @@ function AllNumbers({
                     key={b.id}
                     className={`grid aspect-square place-items-center rounded text-[11px] font-bold ${
                       isCurrent
-                        ? "scale-110 bg-sun text-ink ring-2 ring-white"
+                        ? "scale-110 bg-sun text-canvas ring-2 ring-white"
                         : isDrawn
-                          ? "bg-white text-ink"
+                          ? "bg-ink text-canvas"
                           : "bg-white/10 text-white/30"
                     }`}
                   >
