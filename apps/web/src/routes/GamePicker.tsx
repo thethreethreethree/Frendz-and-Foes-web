@@ -61,7 +61,7 @@ export function GamePicker({
 
         {/* A wall of vivid gradient tiles — every game visible at once, wrapping onto more rows. */}
         <div className="mt-7 grid w-full grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {games.map((g) => {
+          {games.map((g, idx) => {
             const meta = brand.games[g] ?? DEFAULT_GAME_META[g];
             if (!meta) return null;
             const [from, to] = GAME_GRADIENT[g] ?? FALLBACK;
@@ -69,17 +69,20 @@ export function GamePicker({
               <button
                 key={g}
                 onClick={() => onPick(g)}
-                className="group relative flex flex-col items-start overflow-hidden rounded-2xl p-4 text-left text-white transition duration-150 hover:-translate-y-1 hover:brightness-105"
+                className="ff-rise group relative flex flex-col items-start overflow-hidden rounded-2xl p-4 text-left text-white transition duration-150 hover:-translate-y-1 hover:brightness-110 active:translate-y-0 active:scale-[0.97]"
                 style={{
                   background: `linear-gradient(135deg, ${from} 0%, ${to} 100%)`,
                   boxShadow: "0 1px 2px rgb(0 0 0 / 0.3), 0 16px 34px -18px rgb(0 0 0 / 0.7)",
+                  animationDelay: `${Math.min(idx * 40, 400)}ms`,
                 }}
               >
-                <span className="text-3xl drop-shadow-sm">{meta.icon ?? "🎲"}</span>
-                <span className="mt-2 font-display text-xl font-extrabold leading-tight tracking-tight drop-shadow-sm" style={{ textWrap: "balance" }}>
+                {/* diagonal shine that sweeps across on hover */}
+                <span className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 skew-x-12 bg-white/20 blur-md transition-transform duration-500 ease-out group-hover:translate-x-[400%]" />
+                <span className="relative text-3xl drop-shadow-sm">{meta.icon ?? "🎲"}</span>
+                <span className="relative mt-2 font-display text-xl font-extrabold leading-tight tracking-tight drop-shadow-sm" style={{ textWrap: "balance" }}>
                   {meta.label}
                 </span>
-                <span className="mt-0.5 text-xs font-medium text-white/85">{meta.tagline}</span>
+                <span className="relative mt-0.5 text-xs font-medium text-white/85">{meta.tagline}</span>
               </button>
             );
           })}

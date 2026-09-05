@@ -131,4 +131,31 @@ body {
       0 1px 2px rgb(0 0 0 / 0.3),
       0 18px 40px -20px rgb(0 0 0 / 0.6);
   }
+
+  /* Gentle entrance: fade + rise. Used with an inline animation-delay to stagger a grid. */
+  .ff-rise {
+    animation: ff-rise 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+@keyframes ff-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Respect users who prefer less motion: no entrance animations, instant transitions. */
+@media (prefers-reduced-motion: reduce) {
+  .ff-rise {
+    animation: none;
+  }
+  * {
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+  }
 }

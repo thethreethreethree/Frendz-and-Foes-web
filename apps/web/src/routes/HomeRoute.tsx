@@ -8,7 +8,7 @@ export function HomeRoute() {
   return (
     <div className="ff-backdrop relative grid h-full place-items-center p-6">
       <FloatingAccents />
-      <div className="relative flex flex-col items-center text-center">
+      <div className="ff-rise relative flex flex-col items-center text-center">
         <Logo className="text-6xl" />
         <p className="mt-3 font-display text-2xl tracking-wide text-muted">{brand.tagline}</p>
         <div className="mt-10 flex flex-col items-center gap-3">
