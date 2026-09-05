@@ -9,7 +9,7 @@ import type { SfxName } from "../audio/sfx";
 // "answerer"/"viewer" are per-team phone roles for Frendz and Foes: one answerer submits the
 // team's guess (upstream, host-judged), the rest are view-only. Both carry a teamId on join.
 export type Role = "host" | "display" | "spectator" | "answerer" | "viewer";
-export type GameType = "feud" | "bingo" | "murder" | "trivia" | "taboo" | "headsup" | "reverse" | "monikers" | "codenames" | "justone" | "ballpark";
+export type GameType = "feud" | "bingo" | "murder" | "trivia" | "taboo" | "headsup" | "reverse" | "monikers" | "codenames" | "justone" | "ballpark" | "pictionary";
 
 /** The authoritative Feud snapshot the host broadcasts. */
 export interface Snapshot {
@@ -44,6 +44,12 @@ export interface HeadsUpSnapshot {
   joinQrVisible?: boolean;
 }
 
+/** The authoritative "Quick Draw" (Pictionary) snapshot — public projection; strokes ride pulses. */
+export interface PictionarySnapshot {
+  pictionary: WordGamePublic;
+  joinQrVisible?: boolean;
+}
+
 /** The authoritative "Full Cast" (Reverse Charades) snapshot — public projection only. */
 export interface FullCastSnapshot {
   fullcast: WordGamePublic;
@@ -69,7 +75,12 @@ export type Pulse =
   | { kind: "sfx"; name: SfxName; variant: number }
   | { kind: "announce"; announcement: Announcement }
   | { kind: "timer-start"; seconds: number }
-  | { kind: "timer-stop" };
+  | { kind: "timer-stop" }
+  // Quick Draw (Pictionary): live strokes streamed host(drawer)→display. Points are a flattened
+  // [x0,y0,x1,y1,…] in 0..1 canvas-normalized coords. live=true is the in-progress preview;
+  // live=false commits the finished stroke. "clear" wipes the board (new turn / clear button).
+  | { kind: "draw"; points: number[]; color: string; width: number; live: boolean }
+  | { kind: "clear" };
 
 export interface Presence {
   total: number;
@@ -161,7 +172,8 @@ export function emitSync(
     | OffLimitsSnapshot
     | HeadsUpSnapshot
     | FullCastSnapshot
-    | MonikersSnapshot,
+    | MonikersSnapshot
+    | PictionarySnapshot,
 ): void {
   getSocket().emit("sync", snapshot);
   // room is implied server-side by the socket's joined room, but kept in the API for clarity.

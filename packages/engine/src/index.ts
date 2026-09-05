@@ -11,3 +11,4 @@ export * from "./offlimits.js";
 export * from "./headsup.js";
 export * from "./fullcast.js";
 export * from "./monikers.js";
+export * from "./pictionary.js";

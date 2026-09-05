@@ -17,6 +17,8 @@ import { Murder2Display } from "../murder2/Murder2Display";
 import { CodenamesDisplay } from "../codenames/CodenamesDisplay";
 import { JustOneDisplay } from "../justone/JustOneDisplay";
 import { BallparkDisplay } from "../ballpark/BallparkDisplay";
+import { PictionaryFollowerProvider } from "../store/pictionaryStore";
+import { PictionaryDisplay } from "../pictionary/PictionaryDisplay";
 import { DisplayPairing } from "../net/pairing";
 import { GamePicker } from "./GamePicker";
 import { BINGO_ROOM, getGameFromUrl, generateRoomCode, getRoomFromUrl, setUrlGame, setUrlRoom } from "../net/room";
@@ -63,6 +65,15 @@ export function DisplayRoute() {
 
   if (game === "ballpark") {
     return <BallparkDisplay room={room} />;
+  }
+
+  if (game === "pictionary") {
+    return (
+      <PictionaryFollowerProvider room={room} role="display">
+        <PictionaryDisplay />
+        <DisplayPairing />
+      </PictionaryFollowerProvider>
+    );
   }
 
   if (game === "bingo") {

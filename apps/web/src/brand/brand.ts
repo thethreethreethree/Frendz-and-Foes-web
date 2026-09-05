@@ -113,5 +113,6 @@ export const defaultBrand: Brand = {
     codenames: { label: "Cover Ops", tagline: "Crack the secret grid", icon: "🕵️" },
     justone: { label: "Solo Clue", tagline: "One word — but not the same one", icon: "💡" },
     ballpark: { label: "Ballpark", tagline: "Guess the number, bet on the best", icon: "🎯" },
+    pictionary: { label: "Quick Draw", tagline: "Sketch it, they guess", icon: "✏️" },
   },
 };

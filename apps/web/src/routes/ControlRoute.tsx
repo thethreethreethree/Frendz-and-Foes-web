@@ -17,6 +17,8 @@ import { Murder2Host } from "../murder2/Murder2Host";
 import { CodenamesHost } from "../codenames/CodenamesHost";
 import { JustOneHost } from "../justone/JustOneHost";
 import { BallparkHost } from "../ballpark/BallparkHost";
+import { PictionaryProvider } from "../store/pictionaryStore";
+import { PictionaryControl } from "../pictionary/PictionaryControl";
 import { GamePicker } from "./GamePicker";
 import { BINGO_ROOM, generateRoomCode, getGameFromUrl, getRoomFromUrl, setUrlGame, setUrlRoom } from "../net/room";
 import type { GameType } from "../net/socket";
@@ -94,6 +96,20 @@ export function ControlRoute() {
         </div>
       );
     return <BallparkHost room={room} />;
+  }
+
+  if (game === "pictionary") {
+    if (!room)
+      return (
+        <div className="ff-backdrop grid h-full place-items-center p-6 text-center font-bold text-ink/60">
+          Open the host link from the Quick Draw display QR.
+        </div>
+      );
+    return (
+      <PictionaryProvider room={room}>
+        <PictionaryControl room={room} />
+      </PictionaryProvider>
+    );
   }
 
   if (game === "bingo") {
