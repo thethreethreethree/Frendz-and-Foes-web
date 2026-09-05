@@ -22,6 +22,7 @@ import { registerMurder2Handlers } from "./murder2.js";
 import { registerCodenamesHandlers } from "./codenames.js";
 import { registerJustOneHandlers } from "./justone.js";
 import { registerBallparkHandlers } from "./ballpark.js";
+import { registerTelestrationsHandlers } from "./telestrations.js";
 import { getBrand, listBrandSlugs, upsertBrand, deleteBrand, dbReady } from "./db.js";
 
 const PORT = process.env.PORT || 8787;
@@ -164,6 +165,7 @@ io.on("connection", (socket) => {
   registerCodenamesHandlers(io, socket, rooms);
   registerJustOneHandlers(io, socket, rooms);
   registerBallparkHandlers(io, socket, rooms);
+  registerTelestrationsHandlers(io, socket, rooms);
 
   socket.on("join", ({ room, role, teamId }) => {
     if (typeof room !== "string" || !room) return;

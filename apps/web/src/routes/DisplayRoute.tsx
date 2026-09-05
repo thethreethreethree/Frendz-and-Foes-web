@@ -19,6 +19,7 @@ import { JustOneDisplay } from "../justone/JustOneDisplay";
 import { BallparkDisplay } from "../ballpark/BallparkDisplay";
 import { PictionaryFollowerProvider } from "../store/pictionaryStore";
 import { PictionaryDisplay } from "../pictionary/PictionaryDisplay";
+import { TelestrationsDisplay } from "../telestrations/TelestrationsDisplay";
 import { DisplayPairing } from "../net/pairing";
 import { GamePicker } from "./GamePicker";
 import { BINGO_ROOM, getGameFromUrl, generateRoomCode, getRoomFromUrl, setUrlGame, setUrlRoom } from "../net/room";
@@ -74,6 +75,10 @@ export function DisplayRoute() {
         <DisplayPairing />
       </PictionaryFollowerProvider>
     );
+  }
+
+  if (game === "telestrations") {
+    return <TelestrationsDisplay room={room} />;
   }
 
   if (game === "bingo") {

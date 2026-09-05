@@ -79,6 +79,56 @@ export function DrawCanvas({ room, color, width }: { room: string; color: string
   );
 }
 
+export type Stroke = { points: number[]; color: string; width: number };
+
+// CAPTURE canvas (Sketch Relay): draws locally and appends each finished stroke to `strokesRef`
+// (owned by the parent, read on submit). No streaming. Remount (change `key`) to clear.
+export function CaptureCanvas({ strokesRef, color, width }: { strokesRef: React.MutableRefObject<Stroke[]>; color: string; width: number }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  const drawing = useRef(false);
+  const cur = useRef<number[]>([]);
+
+  useEffect(() => {
+    const c = ref.current!;
+    const resize = () => fitCanvas(c);
+    resize();
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+
+  const pos = (e: React.PointerEvent) => {
+    const r = ref.current!.getBoundingClientRect();
+    return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height];
+  };
+  const down = (e: React.PointerEvent) => { e.preventDefault(); ref.current!.setPointerCapture(e.pointerId); drawing.current = true; cur.current = pos(e); };
+  const move = (e: React.PointerEvent) => {
+    if (!drawing.current) return;
+    const p = pos(e); cur.current.push(p[0], p[1]);
+    const c = ref.current!;
+    paintStroke(c.getContext("2d")!, c.width, c.height, cur.current.slice(-4), color, width);
+  };
+  const up = () => { if (!drawing.current) return; drawing.current = false; if (cur.current.length >= 2) strokesRef.current.push({ points: [...cur.current], color, width }); cur.current = []; };
+
+  return (
+    <canvas ref={ref} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
+      className="h-full w-full rounded-xl bg-white" style={{ touchAction: "none", border: "1px solid rgb(var(--c-line))" }} />
+  );
+}
+
+// Static renderer for a stored drawing (guess prompt + reveal).
+export function StrokesView({ strokes, className = "" }: { strokes: Stroke[]; className?: string }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const c = ref.current!;
+    const g = c.getContext("2d")!;
+    const redraw = () => { fitCanvas(c); g.clearRect(0, 0, c.width, c.height); for (const s of strokes) paintStroke(g, c.width, c.height, s.points, s.color, s.width); };
+    redraw();
+    window.addEventListener("resize", redraw);
+    return () => window.removeEventListener("resize", redraw);
+  }, [strokes]);
+  return <canvas ref={ref} className={`h-full w-full rounded-xl bg-white ${className}`} style={{ border: "1px solid rgb(var(--c-line))" }} />;
+}
+
 // VIEWER canvas (display): renders strokes streamed over pulses, imperatively (no React re-render
 // per point). Keeps committed strokes + the in-progress live preview.
 export function ViewCanvas() {
