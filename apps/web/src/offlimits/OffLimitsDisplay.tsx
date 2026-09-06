@@ -18,6 +18,13 @@ export function OffLimitsDisplay() {
   const rex = useRef({ started: false, lastTurn: "", won: false });
   useEffect(() => {
     const st = rex.current;
+    // Back at the lobby (reset/rematch, same room, no reload): clear the dedupe so Rex re-intros next game.
+    if (pub.phase === "setup") {
+      st.started = false;
+      st.lastTurn = "";
+      st.won = false;
+      return;
+    }
     if ((pub.phase === "ready" || pub.phase === "playing") && !st.started) {
       st.started = true;
       say("game_start");

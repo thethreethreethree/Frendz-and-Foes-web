@@ -26,6 +26,11 @@ export function BingoDisplay() {
   const rex = useRef({ introduced: false, lastBallId: "", callCount: 0, won: false });
   useEffect(() => {
     const st = rex.current;
+    // Fresh/cleared board (new bingo session in the same room): reset so Rex re-greets.
+    if (bingo.drawn.length === 0) {
+      rex.current = { introduced: false, lastBallId: "", callCount: 0, won: false };
+      return;
+    }
     if (bingo.currentId && bingo.currentId !== st.lastBallId) {
       st.lastBallId = bingo.currentId;
       const ball = ballById(bingo.currentId);

@@ -19,6 +19,11 @@ export function TelestrationsDisplay({ room }: { room: string }) {
   useEffect(() => {
     if (!state) return;
     const st = rex.current;
+    if (state.phase === "lobby") {
+      // Back in the lobby (reset/rematch, same room) — clear dedupe so Rex re-intros next game.
+      rex.current = { started: false, revealed: false, lastBook: -1, ended: false };
+      return;
+    }
     if (state.phase === "playing" && !st.started) {
       st.started = true;
       say("intro");

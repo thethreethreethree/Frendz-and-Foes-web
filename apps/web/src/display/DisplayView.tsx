@@ -20,6 +20,11 @@ export function DisplayView() {
   const rex = useRef({ introduced: false, announced: new Set<string>(), won: false });
   useEffect(() => {
     const st = rex.current;
+    // Back at the lobby (new game / rematch in the same room): reset so Rex re-intros.
+    if (state.phase === "setup") {
+      rex.current = { introduced: false, announced: new Set<string>(), won: false };
+      return;
+    }
     if (state.phase === "playing" && !st.introduced) {
       st.introduced = true;
       say("intro");

@@ -19,6 +19,11 @@ export function AfterDarkDisplay({ room }: { room: string }) {
   useEffect(() => {
     if (!state) return;
     const st = rex.current;
+    if (state.phase === "lobby") {
+      // Back in the lobby (reset/rematch, same room) — clear dedupe so Rex re-intros next game.
+      rex.current = { started: false, judgeRound: -1, revealRound: -1, ended: false };
+      return;
+    }
     const judgeName = state.players.find((p) => p.id === state.judgeId)?.name;
     if (state.phase !== "lobby" && !st.started) {
       st.started = true;

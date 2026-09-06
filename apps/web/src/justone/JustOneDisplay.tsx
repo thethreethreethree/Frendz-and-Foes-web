@@ -20,6 +20,11 @@ export function JustOneDisplay({ room }: { room: string }) {
   useEffect(() => {
     if (!state) return;
     const st = rex.current;
+    if (state.phase === "lobby") {
+      // Back in the lobby (reset/rematch, same room) — clear dedupe so Rex re-intros next game.
+      rex.current = { started: false, revealRound: -1, overRound: -1, ended: false };
+      return;
+    }
     if (state.phase !== "lobby" && !st.started) {
       st.started = true;
       say("intro");

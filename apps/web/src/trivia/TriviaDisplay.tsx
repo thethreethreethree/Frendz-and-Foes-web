@@ -30,6 +30,11 @@ export function TriviaDisplay() {
   const rex = useRef({ introduced: false, round: -1, lastRevealId: "", won: false });
   useEffect(() => {
     const st = rex.current;
+    // Back at the lobby (new game / rematch in the same room): reset so Rex re-intros.
+    if (trivia.phase === "setup") {
+      rex.current = { introduced: false, round: -1, lastRevealId: "", won: false };
+      return;
+    }
     if (playing && !st.introduced) {
       st.introduced = true;
       st.round = q ? q.round : 0;

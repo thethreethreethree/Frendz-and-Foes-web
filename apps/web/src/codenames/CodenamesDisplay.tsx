@@ -21,6 +21,14 @@ export function CodenamesDisplay({ room }: { room: string }) {
   useEffect(() => {
     if (!state) return;
     const st = rex.current;
+    // Rematch in the same room returns to the lobby; clear the dedupe so the next game re-greets
+    // (the ref persists across games, otherwise `started`/`ended` would block a second run).
+    if (state.phase === "lobby") {
+      st.started = false;
+      st.lastClue = "";
+      st.ended = false;
+      return;
+    }
     if (state.phase === "playing" && !st.started) {
       st.started = true;
       say("start");
