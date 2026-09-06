@@ -1,6 +1,8 @@
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { TRIVIA_DECKS, TRIVIA_LETTERS, TRIVIA_ROUNDS, triviaQuestionInRound } from "@ff/engine";
 import { useTrivia } from "../store/triviaStore";
+import { useRexHost, RexBanner } from "../host/RexHost";
 import { QR } from "../net/pairing";
 import { triviaViewJoinUrl } from "../net/room";
 import {
@@ -22,6 +24,31 @@ export function TriviaDisplay() {
   const revealed = q ? trivia.revealedQuestions.includes(q.id) : false;
   const playing = trivia.phase === "playing" || trivia.phase === "reveal";
   const ranked = [...trivia.teams].sort((a, b) => b.score - a.score);
+
+  // Rex, the AI host, reacts to trivia moments (display only — one voice per room).
+  const { line, say } = useRexHost(connection.room, "Trivia");
+  const rex = useRef({ introduced: false, round: -1, lastRevealId: "", won: false });
+  useEffect(() => {
+    const st = rex.current;
+    if (playing && !st.introduced) {
+      st.introduced = true;
+      st.round = q ? q.round : 0;
+      say("intro");
+    } else if (q && st.introduced && q.round !== st.round) {
+      st.round = q.round;
+      say("round_start", { round: q.round + 1, category: TRIVIA_ROUNDS[q.round]?.label });
+    }
+    if (revealed && q && st.lastRevealId !== q.id) {
+      st.lastRevealId = q.id;
+      say("reveal", { answer: q.choices[TRIVIA_LETTERS.indexOf(q.correct)] });
+    }
+    if (trivia.phase === "finished" && !st.won) {
+      st.won = true;
+      const w = [...trivia.teams].sort((a, b) => b.score - a.score)[0];
+      if (w) say("winner", { name: w.name, score: w.score });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trivia.phase, trivia.currentIndex, revealed, say]);
 
   return (
     <div
@@ -125,6 +152,8 @@ export function TriviaDisplay() {
           ))}
         </footer>
       )}
+
+      <RexBanner line={line} />
     </div>
   );
 }

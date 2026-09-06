@@ -24,6 +24,7 @@ import { registerJustOneHandlers } from "./justone.js";
 import { registerBallparkHandlers } from "./ballpark.js";
 import { registerTelestrationsHandlers } from "./telestrations.js";
 import { registerAfterDarkHandlers } from "./afterdark.js";
+import { hostLine, hostReady } from "./host.js";
 import { getBrand, listBrandSlugs, upsertBrand, deleteBrand, dbReady } from "./db.js";
 import {
   authReady, createUser, authenticate, getUser, makeSession, readSession,
@@ -38,6 +39,15 @@ const app = express();
 app.set("trust proxy", 1); // behind nginx — so req.secure reflects X-Forwarded-Proto (Secure cookies)
 app.use(express.json({ limit: "256kb" }));
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
+
+// --- Rex, the AI host --------------------------------------------------------------------------
+// The display posts a game "moment"; Rex returns one line of MC banter (Claude, or a canned line
+// if no key). Public + best-effort — never blocks a game.
+app.post("/api/host", async (req, res) => {
+  const { room, game, moment, detail } = req.body || {};
+  const out = await hostLine({ room, game, moment, detail });
+  res.json({ ...out, ready: hostReady() });
+});
 
 // --- Accounts (Phase 2b) --------------------------------------------------------------------
 // Open self-serve signup; scrypt passwords + stateless HMAC cookie sessions (see auth.js). The
