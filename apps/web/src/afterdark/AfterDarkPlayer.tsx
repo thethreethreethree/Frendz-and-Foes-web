@@ -2,11 +2,13 @@ import { useState } from "react";
 import { useAfterDark } from "./useAfterDark";
 import { caSubmit, caPick, caNext, fillPrompt, type CaState, type CaYou } from "../net/afterdark";
 import { getBrand } from "../brand/theme";
+import { AvatarNameForm, AvatarBadge } from "../net/avatars";
+import { HowToPlay } from "../net/howtoplay";
 
 export function AfterDarkPlayer({ room }: { room: string }) {
   const { state, you, error, join } = useAfterDark(room, "player");
   const label = getBrand().games.afterdark?.label ?? "After Dark";
-  if (!you) return <NameForm label={label} onJoin={join} error={error} />;
+  if (!you) return <Wrap><AvatarNameForm label={label} onJoin={join} error={error} /></Wrap>;
   if (!state) return <Wrap><p className="text-muted">Connecting…</p></Wrap>;
   const me = state.players.find((p) => p.id === you.id);
   const iAmJudge = state.judgeId === you.id;
@@ -14,9 +16,9 @@ export function AfterDarkPlayer({ room }: { room: string }) {
   return (
     <Wrap>
       {error && <div className="mb-2 rounded-lg bg-danger px-3 py-2 text-sm font-semibold text-white">{error}</div>}
-      <div className="mb-2 flex items-center justify-between text-sm text-muted"><span>{you.name}{iAmJudge ? " · JUDGE" : ""}</span>{state.phase !== "lobby" && <span>{me?.score ?? 0} pts</span>}</div>
+      <div className="mb-2 flex items-center justify-between text-sm text-muted"><span className="flex items-center gap-1.5"><AvatarBadge avatar={you.avatar} name={you.name} size={22} />{you.name}{iAmJudge ? " · JUDGE" : ""}</span>{state.phase !== "lobby" && <span>{me?.score ?? 0} pts</span>}</div>
 
-      {state.phase === "lobby" && <Center><div className="ff-title text-2xl">{label} <span className="text-danger text-sm">18+</span></div><p className="mt-2 text-sm text-muted">{state.players.length} in. Waiting for the host…</p></Center>}
+      {state.phase === "lobby" && <Center><div className="ff-title text-2xl">{label} <span className="text-danger text-sm">18+</span></div><p className="mb-4 mt-2 text-sm text-muted">{state.players.length} in. Waiting for the host…</p><HowToPlay game="afterdark" /></Center>}
       {state.phase === "submitting" && (iAmJudge
         ? <Center><div className="ff-title text-xl">{state.prompt?.text}</div><p className="mt-3 text-muted">You're the judge — sit tight while everyone plays a card.</p></Center>
         : <Submit you={you} state={state} submitted={!!me?.submitted} />)}
@@ -79,20 +81,6 @@ function RevealView({ state, canAdvance }: { state: CaState; canAdvance: boolean
 function Standings({ state }: { state: CaState }) {
   const rows = [...state.players].sort((a, b) => b.score - a.score);
   return <div className="flex flex-wrap justify-center gap-2">{rows.map((p, i) => <span key={p.id} className={`rounded-lg px-3 py-1 text-sm font-bold ${i === 0 ? "bg-primary text-primary-ink" : "bg-surface text-ink"}`} style={i === 0 ? {} : { border: "1px solid rgb(var(--c-line))" }}>{p.name} {p.score}</span>)}</div>;
-}
-
-function NameForm({ label, onJoin, error }: { label: string; onJoin: (n: string) => void; error: string | null }) {
-  const [name, setName] = useState("");
-  return (
-    <Wrap>
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-        <div className="ff-title text-3xl">{label} <span className="text-danger text-base">18+</span></div>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" maxLength={16} className="w-56 rounded-lg border border-line px-4 py-3 text-center text-lg" />
-        <button disabled={!name.trim()} onClick={() => onJoin(name.trim())} className="ff-sticker bg-primary px-8 py-3 font-display text-xl text-primary-ink disabled:opacity-40">JOIN</button>
-        {error && <p className="text-sm text-danger">{error}</p>}
-      </div>
-    </Wrap>
-  );
 }
 
 function Center({ children }: { children: React.ReactNode }) { return <div className="flex flex-1 flex-col items-center justify-center text-center">{children}</div>; }

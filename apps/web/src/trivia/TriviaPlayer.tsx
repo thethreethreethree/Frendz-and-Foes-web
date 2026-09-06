@@ -11,6 +11,7 @@ import { TriviaFollowerProvider, useTrivia } from "../store/triviaStore";
 import { emitIntent } from "../net/socket";
 import { QR } from "../net/pairing";
 import { triviaTeamJoinUrl } from "../net/room";
+import { HowToPlay } from "../net/howtoplay";
 import { TRIVIA_BG_PLAYER, TRIVIA_CHAMPIONS, letterTile, roundBadge } from "./assets";
 
 // A Trivia player's phone. Team mode: `answerer` taps A/B/C/D (locked in, sent to the host) and can
@@ -86,8 +87,11 @@ function TriviaPlayerView({
 
       <div className="flex flex-col gap-3 p-3">
         {trivia.phase === "setup" && (
-          <div className="rounded-lg bg-surface px-3 py-6 text-center text-sm font-black text-ink">
-            Waiting for the host to start…
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-full rounded-lg bg-surface px-3 py-6 text-center text-sm font-black text-ink">
+              Waiting for the host to start…
+            </div>
+            <HowToPlay game="trivia" />
           </div>
         )}
 

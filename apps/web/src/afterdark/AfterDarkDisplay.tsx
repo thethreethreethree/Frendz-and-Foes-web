@@ -6,6 +6,7 @@ import { QR } from "../net/pairing";
 import { afterdarkJoinUrl, controllerUrl } from "../net/room";
 import { fillPrompt, type CaState } from "../net/afterdark";
 import { getBrand } from "../brand/theme";
+import { AvatarBadge } from "../net/avatars";
 
 // Display (TV) for "After Dark". Prompt + anonymous submissions + the winning combo. Hands stay
 // private on phones. Marked 18+.
@@ -56,7 +57,7 @@ export function AfterDarkDisplay({ room }: { room: string }) {
         <p className="mt-1 text-lg text-muted">Adult humor. Scan to join (3+ players).</p>
         <div className="mt-5 flex items-center gap-8">
           <div className="text-center"><QR text={afterdarkJoinUrl(room)} size={200} /><div className="ff-title mt-2 text-4xl tracking-[0.3em] text-ink">{room}</div></div>
-          <div className="rounded-xl border border-line p-3 text-left" style={{ minWidth: 160 }}><div className="ff-title text-xl">Players ({state.players.length})</div><div className="mt-1 text-sm">{state.players.map((p) => p.name).join(", ") || "—"}</div></div>
+          <div className="rounded-xl border border-line p-3 text-left" style={{ minWidth: 160 }}><div className="ff-title text-xl">Players ({state.players.length})</div><div className="mt-2 flex flex-col gap-1.5 text-sm">{state.players.length === 0 ? "—" : state.players.map((p) => (<span key={p.id} className="flex items-center gap-2"><AvatarBadge avatar={p.avatar} name={p.name} size={24} />{p.name}</span>))}</div></div>
         </div>
         <p className="mt-4 text-sm text-muted">Host: <span className="font-mono">{controllerUrl(room)}</span></p>
       </Center>
@@ -71,7 +72,7 @@ export function AfterDarkDisplay({ room }: { room: string }) {
       {state.phase === "submitting" && (
         <div className="flex flex-wrap justify-center gap-2">
           {state.players.filter((p) => !p.isJudge).map((p) => (
-            <span key={p.id} className={`rounded-full px-3 py-1 text-sm font-semibold ${p.submitted ? "bg-success text-white" : "bg-surface text-muted"}`} style={p.submitted ? {} : { border: "1px solid rgb(var(--c-line))" }}>{p.name}{p.submitted ? " ✓" : " …"}</span>
+            <span key={p.id} className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold ${p.submitted ? "bg-success text-white" : "bg-surface text-muted"}`} style={p.submitted ? {} : { border: "1px solid rgb(var(--c-line))" }}><AvatarBadge avatar={p.avatar} name={p.name} size={20} />{p.name}{p.submitted ? " ✓" : " …"}</span>
           ))}
         </div>
       )}
@@ -107,7 +108,7 @@ function Standings({ state }: { state: CaState }) {
   return (
     <div className="mt-2 flex flex-wrap justify-center gap-2">
       {rows.map((p, i) => (
-        <span key={p.id} className={`rounded-xl px-4 py-2 font-display text-xl ${i === 0 ? "bg-primary text-primary-ink" : "bg-surface text-ink"}`} style={i === 0 ? {} : { border: "1px solid rgb(var(--c-line))" }}>{p.name} <span className="tabular-nums">{p.score}</span>{i === 0 ? " 👑" : ""}</span>
+        <span key={p.id} className={`flex items-center gap-2 rounded-xl px-4 py-2 font-display text-xl ${i === 0 ? "bg-primary text-primary-ink" : "bg-surface text-ink"}`} style={i === 0 ? {} : { border: "1px solid rgb(var(--c-line))" }}><AvatarBadge avatar={p.avatar} name={p.name} size={20} />{p.name} <span className="tabular-nums">{p.score}</span>{i === 0 ? " 👑" : ""}</span>
       ))}
     </div>
   );

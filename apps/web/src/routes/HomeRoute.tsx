@@ -90,7 +90,7 @@ export function HomeRoute() {
       <section className="relative mx-auto max-w-5xl px-6 py-10">
         <div className="text-center">
           <h2 className="ff-title text-3xl font-extrabold sm:text-4xl">Meet the animals</h2>
-          <p className="mt-2 text-muted">Rex's regulars. You'll be one of them soon enough.</p>
+          <p className="mt-2 text-muted">You'll join one of these goons and be part of their team soon enough.</p>
         </div>
         <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           {CAST.map((c) => (

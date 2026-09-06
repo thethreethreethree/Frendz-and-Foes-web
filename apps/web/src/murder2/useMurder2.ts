@@ -21,7 +21,7 @@ export function useMurder2(room: string, role: "host" | "display" | "player") {
       setConnected(true);
       if (role === "player") {
         const st = loadPlayer2(room);
-        if (st.name) m2Join(room, st.name, st.id, st.rejoinToken);
+        if (st.name) m2Join(room, st.name, st.avatar, st.id, st.rejoinToken);
       } else {
         s.emit("join", { room, role });
       }
@@ -58,10 +58,10 @@ export function useMurder2(room: string, role: "host" | "display" | "player") {
     if (you?.id) savePlayer2(room, { id: you.id, ...(you.rejoinToken ? { rejoinToken: you.rejoinToken } : {}) });
   }, [you?.id, you?.rejoinToken, room]);
 
-  const join = (name: string) => {
-    savePlayer2(room, { name });
+  const join = (name: string, avatar?: string) => {
+    savePlayer2(room, { name, ...(avatar ? { avatar } : {}) });
     const st = loadPlayer2(room);
-    m2Join(room, name, st.id, st.rejoinToken);
+    m2Join(room, name, st.avatar, st.id, st.rejoinToken);
   };
   return { state, you, announce, error, connected, join };
 }

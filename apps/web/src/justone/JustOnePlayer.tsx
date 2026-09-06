@@ -2,12 +2,14 @@ import { useState } from "react";
 import { useJustOne } from "./useJustOne";
 import { joClue, joJudge, joNext, type JoState } from "../net/justone";
 import { getBrand } from "../brand/theme";
+import { AvatarNameForm, AvatarBadge } from "../net/avatars";
+import { HowToPlay } from "../net/howtoplay";
 
 export function JustOnePlayer({ room }: { room: string }) {
   const { state, you, word, error, join } = useJustOne(room, "player");
   const label = getBrand().games.justone?.label ?? "Solo Clue";
 
-  if (!you) return <NameForm label={label} onJoin={join} error={error} />;
+  if (!you) return <Wrap><AvatarNameForm label={label} onJoin={join} error={error} /></Wrap>;
   if (!state) return <Wrap><p className="text-muted">Connecting…</p></Wrap>;
 
   const meGuesser = state.guesserId === you.id;
@@ -17,12 +19,12 @@ export function JustOnePlayer({ room }: { room: string }) {
     <Wrap>
       {error && <div className="mb-2 rounded-lg bg-danger px-3 py-2 text-sm font-semibold text-white">{error}</div>}
       <div className="mb-2 flex items-center justify-between text-sm text-muted">
-        <span>{you.name}</span>
+        <span className="flex items-center gap-1.5"><AvatarBadge avatar={you.avatar} name={you.name} size={22} />{you.name}</span>
         {state.phase !== "lobby" && <span>Round {state.round}/{state.totalRounds} · {state.score} pts</span>}
       </div>
 
       {state.phase === "lobby" && (
-        <Center><div className="ff-title text-2xl">{label}</div><p className="mt-2 text-sm text-muted">{state.players.length} in. Waiting for the host to start…</p></Center>
+        <Center><div className="ff-title text-2xl">{label}</div><p className="mb-4 mt-2 text-sm text-muted">{state.players.length} in. Waiting for the host to start…</p><HowToPlay game="justone" /></Center>
       )}
 
       {state.phase === "writing" && (meGuesser

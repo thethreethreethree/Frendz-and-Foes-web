@@ -5,6 +5,7 @@ import { useMurder2 } from "./useMurder2";
 import { useRexHost, RexBanner } from "../host/RexHost";
 import { playSfx } from "../audio/sfx";
 import type { V2Announce, V2Character, V2Clue, V2Player, V2State } from "../net/murder2";
+import { AvatarBadge } from "../net/avatars";
 
 // Big-screen display for Murder v2.
 export function Murder2Display({ room }: { room: string }) {
@@ -68,7 +69,7 @@ function Lobby({ room, state }: { room: string; state: V2State | null }) {
           <div className="mt-2 grid grid-cols-2 gap-1">
             {picked.map((p) => (
               <div key={p.id} className="rounded bg-surface px-2 py-1 text-sm">
-                {charEmoji(state, p.characterId)} <b>{p.name}</b> · <span className="text-ink/60">{charName(state, p.characterId)}</span>
+                {charEmoji(state, p.characterId)} <AvatarBadge avatar={p.avatar} name={p.name} size={20} /> <b>{p.name}</b> · <span className="text-ink/60">{charName(state, p.characterId)}</span>
               </div>
             ))}
           </div>
@@ -144,7 +145,7 @@ function RosterGrid({ state }: { state: V2State }) {
             <div key={p.id} className={`rounded px-2 py-1 ${!p.alive ? "bg-ink/10 opacity-70" : hot ? "bg-pink/15" : "bg-canvas"}`}>
               <div>
                 {!p.alive && <Icon name="icon-dead" className="inline h-4 w-4 align-[-2px]" />}{" "}
-                <span className={!p.alive ? "line-through" : ""}>{charEmoji(state, p.characterId)} <b>{p.name}</b> · {charName(state, p.characterId)}</span>
+                <span className={!p.alive ? "line-through" : ""}>{charEmoji(state, p.characterId)} <AvatarBadge avatar={p.avatar} name={p.name} size={20} /> <b>{p.name}</b> · {charName(state, p.characterId)}</span>
                 {p.cleared && <span className="text-teal"> ✓cleared</span>}
                 {n > 0 && <span className={`ml-1 ${hot ? "font-bold text-pink" : "text-ink/60"}`}>🔎 framed ×{n}</span>}
               </div>

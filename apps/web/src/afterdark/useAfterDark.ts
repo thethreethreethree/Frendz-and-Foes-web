@@ -12,7 +12,7 @@ export function useAfterDark(room: string, role: "host" | "display" | "player") 
   useEffect(() => {
     const s = getSocket();
     const enter = () => {
-      if (role === "player") { const st = loadCaPlayer(room); if (st.name) caJoin(room, st.name, st.id, st.rejoinToken); }
+      if (role === "player") { const st = loadCaPlayer(room); if (st.name) caJoin(room, st.name, st.avatar, st.id, st.rejoinToken); }
       else { s.emit("join", { room, role }); caSync(room); }
     };
     const onState = (st: CaState) => setState(st);
@@ -32,6 +32,6 @@ export function useAfterDark(room: string, role: "host" | "display" | "player") 
     if (you?.id && you.id !== idRef.current) { idRef.current = you.id; saveCaPlayer(room, { id: you.id, ...(you.rejoinToken ? { rejoinToken: you.rejoinToken } : {}) }); }
   }, [you?.id, you?.rejoinToken, room]);
 
-  const join = (name: string) => { saveCaPlayer(room, { name }); const st = loadCaPlayer(room); caJoin(room, name, st.id, st.rejoinToken); };
+  const join = (name: string, avatar?: string) => { saveCaPlayer(room, { name, ...(avatar ? { avatar } : {}) }); const st = loadCaPlayer(room); caJoin(room, name, st.avatar, st.id, st.rejoinToken); };
   return { state, you, error, join };
 }

@@ -1,6 +1,7 @@
 import { useCodenames } from "./useCodenames";
 import { cnStart, cnReset, type CnTeam } from "../net/codenames";
 import { StatusPill } from "../net/pairing";
+import { AvatarBadge } from "../net/avatars";
 import { getBrand } from "../brand/theme";
 
 // Host controller for "Cover Ops". Roster + Start/Reset. The board itself lives on the display and
@@ -10,7 +11,7 @@ export function CodenamesHost({ room }: { room: string }) {
   const label = getBrand().games.codenames?.label ?? "Cover Ops";
   if (!state) return <Wrap><p className="text-muted">Connecting…</p></Wrap>;
 
-  const roster = (team: CnTeam, role: string) => state.players.filter((p) => p.team === team && p.role === role).map((p) => p.name);
+  const roster = (team: CnTeam, role: string) => state.players.filter((p) => p.team === team && p.role === role);
 
   return (
     <Wrap>
@@ -21,13 +22,31 @@ export function CodenamesHost({ room }: { room: string }) {
       {error && <div className="mb-2 rounded-lg bg-danger px-3 py-2 text-sm font-semibold text-white">{error}</div>}
 
       <div className="grid grid-cols-2 gap-3">
-        {(["red", "blue"] as CnTeam[]).map((team) => (
-          <div key={team} className="rounded-2xl border border-line bg-surface p-3">
-            <div className="ff-title text-xl" style={{ color: team === "red" ? "#d64550" : "#3b7dd8" }}>{team === "red" ? "Red" : "Blue"}</div>
-            <div className="mt-1 text-sm"><b>Spymaster:</b> {roster(team, "spymaster")[0] ?? "—"}</div>
-            <div className="text-sm"><b>Agents:</b> {roster(team, "operative").join(", ") || "—"}</div>
-          </div>
-        ))}
+        {(["red", "blue"] as CnTeam[]).map((team) => {
+          const sm = roster(team, "spymaster")[0];
+          const agents = roster(team, "operative");
+          return (
+            <div key={team} className="rounded-2xl border border-line bg-surface p-3">
+              <div className="ff-title text-xl" style={{ color: team === "red" ? "#d64550" : "#3b7dd8" }}>{team === "red" ? "Red" : "Blue"}</div>
+              <div className="mt-1 flex items-center gap-1 text-sm">
+                <b>Spymaster:</b>{" "}
+                {sm ? (
+                  <span className="inline-flex items-center gap-1"><AvatarBadge avatar={sm.avatar} name={sm.name} size={20} />{sm.name}</span>
+                ) : "—"}
+              </div>
+              <div className="text-sm">
+                <b>Agents:</b>{" "}
+                {agents.length ? (
+                  <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1 align-middle">
+                    {agents.map((p) => (
+                      <span key={p.id} className="inline-flex items-center gap-1"><AvatarBadge avatar={p.avatar} name={p.name} size={20} />{p.name}</span>
+                    ))}
+                  </span>
+                ) : "—"}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <div className="mt-4 space-y-2">

@@ -15,7 +15,7 @@ export function useBallpark(room: string, role: "host" | "display" | "player") {
     const enter = () => {
       if (role === "player") {
         const st = loadBpPlayer(room);
-        if (st.name) bpJoin(room, st.name, st.id, st.rejoinToken);
+        if (st.name) bpJoin(room, st.name, st.avatar, st.id, st.rejoinToken);
       } else {
         s.emit("join", { room, role });
         bpSync(room);
@@ -47,10 +47,10 @@ export function useBallpark(room: string, role: "host" | "display" | "player") {
     }
   }, [you?.id, you?.rejoinToken, room]);
 
-  const join = (name: string) => {
-    saveBpPlayer(room, { name });
+  const join = (name: string, avatar?: string) => {
+    saveBpPlayer(room, { name, ...(avatar ? { avatar } : {}) });
     const st = loadBpPlayer(room);
-    bpJoin(room, name, st.id, st.rejoinToken);
+    bpJoin(room, name, st.avatar, st.id, st.rejoinToken);
   };
 
   return { state, you, error, join };

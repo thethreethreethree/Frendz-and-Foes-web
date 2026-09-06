@@ -6,6 +6,7 @@ import { Logo } from "../display/Logo";
 import { QR } from "../net/pairing";
 import { codenamesJoinUrl, controllerUrl } from "../net/room";
 import { getBrand } from "../brand/theme";
+import { AvatarBadge } from "../net/avatars";
 import type { CnState, CnTeam } from "../net/codenames";
 
 // Display (TV) for "Cover Ops". Public board only — the secret key never reaches this screen.
@@ -116,16 +117,34 @@ function TeamCount({ label, n, color, active }: { label: string; n: number; colo
 }
 
 function Roster({ state }: { state: CnState }) {
-  const by = (team: CnTeam, role: string) => state.players.filter((p) => p.team === team && p.role === role).map((p) => p.name);
+  const by = (team: CnTeam, role: string) => state.players.filter((p) => p.team === team && p.role === role);
   return (
     <div className="grid grid-cols-2 gap-4 text-left">
-      {(["red", "blue"] as CnTeam[]).map((team) => (
-        <div key={team} className="rounded-xl border border-line p-3" style={{ minWidth: 140 }}>
-          <div className="ff-title text-xl" style={{ color: team === "red" ? "#d64550" : "#3b7dd8" }}>{team === "red" ? "Red" : "Blue"}</div>
-          <div className="mt-1 text-sm"><b>Spymaster:</b> {by(team, "spymaster")[0] ?? "—"}</div>
-          <div className="text-sm"><b>Agents:</b> {by(team, "operative").join(", ") || "—"}</div>
-        </div>
-      ))}
+      {(["red", "blue"] as CnTeam[]).map((team) => {
+        const sm = by(team, "spymaster")[0];
+        const agents = by(team, "operative");
+        return (
+          <div key={team} className="rounded-xl border border-line p-3" style={{ minWidth: 140 }}>
+            <div className="ff-title text-xl" style={{ color: team === "red" ? "#d64550" : "#3b7dd8" }}>{team === "red" ? "Red" : "Blue"}</div>
+            <div className="mt-1 flex items-center gap-1 text-sm">
+              <b>Spymaster:</b>{" "}
+              {sm ? (
+                <span className="inline-flex items-center gap-1"><AvatarBadge avatar={sm.avatar} name={sm.name} size={20} />{sm.name}</span>
+              ) : "—"}
+            </div>
+            <div className="text-sm">
+              <b>Agents:</b>{" "}
+              {agents.length ? (
+                <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1 align-middle">
+                  {agents.map((p) => (
+                    <span key={p.id} className="inline-flex items-center gap-1"><AvatarBadge avatar={p.avatar} name={p.name} size={20} />{p.name}</span>
+                  ))}
+                </span>
+              ) : "—"}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

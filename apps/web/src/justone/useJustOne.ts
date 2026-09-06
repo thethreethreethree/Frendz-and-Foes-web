@@ -16,7 +16,7 @@ export function useJustOne(room: string, role: "host" | "display" | "player") {
     const enter = () => {
       if (role === "player") {
         const st = loadJoPlayer(room);
-        if (st.name) joJoin(room, st.name, st.id, st.rejoinToken);
+        if (st.name) joJoin(room, st.name, st.avatar, st.id, st.rejoinToken);
       } else {
         s.emit("join", { room, role });
         joSync(room);
@@ -51,10 +51,10 @@ export function useJustOne(room: string, role: "host" | "display" | "player") {
     }
   }, [you?.id, you?.rejoinToken, room]);
 
-  const join = (name: string) => {
-    saveJoPlayer(room, { name });
+  const join = (name: string, avatar?: string) => {
+    saveJoPlayer(room, { name, ...(avatar ? { avatar } : {}) });
     const st = loadJoPlayer(room);
-    joJoin(room, name, st.id, st.rejoinToken);
+    joJoin(room, name, st.avatar, st.id, st.rejoinToken);
   };
 
   return { state, you, word, error, join };

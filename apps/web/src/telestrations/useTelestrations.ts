@@ -12,7 +12,7 @@ export function useTelestrations(room: string, role: "host" | "display" | "playe
   useEffect(() => {
     const s = getSocket();
     const enter = () => {
-      if (role === "player") { const st = loadTePlayer(room); if (st.name) teJoin(room, st.name, st.id, st.rejoinToken); }
+      if (role === "player") { const st = loadTePlayer(room); if (st.name) teJoin(room, st.name, st.avatar, st.id, st.rejoinToken); }
       else { s.emit("join", { room, role }); teSync(room); }
     };
     const onState = (st: TeState) => setState(st);
@@ -32,6 +32,6 @@ export function useTelestrations(room: string, role: "host" | "display" | "playe
     if (you?.id && you.id !== idRef.current) { idRef.current = you.id; saveTePlayer(room, { id: you.id, ...(you.rejoinToken ? { rejoinToken: you.rejoinToken } : {}) }); }
   }, [you?.id, you?.rejoinToken, room]);
 
-  const join = (name: string) => { saveTePlayer(room, { name }); const st = loadTePlayer(room); teJoin(room, name, st.id, st.rejoinToken); };
+  const join = (name: string, avatar?: string) => { saveTePlayer(room, { name, ...(avatar ? { avatar } : {}) }); const st = loadTePlayer(room); teJoin(room, name, st.avatar, st.id, st.rejoinToken); };
   return { state, you, error, join };
 }

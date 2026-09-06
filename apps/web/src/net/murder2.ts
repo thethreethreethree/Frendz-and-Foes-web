@@ -13,7 +13,7 @@ export interface V2Character {
   weapon: V2Weapon;
 }
 export interface V2Player {
-  id: string; name: string; characterId: string | null;
+  id: string; name: string; avatar?: string; characterId: string | null;
   alive: boolean; connected: boolean; cleared: boolean; role?: "murderer" | "villager" | "detective" | "doctor";
   lastWords?: string | null; // a killed player's public parting message
 }
@@ -38,6 +38,7 @@ export interface V2AvailWeapon extends V2Weapon {
 export interface V2Finding { suspectId: string; name: string; profession: string; isMurderer: boolean }
 export interface V2You {
   id: string; role: "murderer" | "villager" | "detective" | "doctor" | null; alive: boolean; characterId: string | null;
+  avatar?: string;
   // Secret proof of identity, issued once and delivered only on this private channel. Stored
   // locally and replayed on rejoin; without it the server will not hand back this player.
   rejoinToken?: string;
@@ -60,8 +61,8 @@ export type V2Announce =
   | { type: "saved"; victim: string }
   | { type: "end"; winner: "murderers" | "town"; caught?: string };
 
-export const m2Join = (room: string, name: string, playerId?: string, rejoinToken?: string) =>
-  getSocket().emit("m2:join", { room, name, playerId, rejoinToken });
+export const m2Join = (room: string, name: string, avatar?: string, playerId?: string, rejoinToken?: string) =>
+  getSocket().emit("m2:join", { room, name, avatar, playerId, rejoinToken });
 export const m2Pick = (characterId: string) => getSocket().emit("m2:pick", { characterId });
 export const m2Config = (cfg: { killTarget?: number; cooldownSec?: number }) => getSocket().emit("m2:config", cfg);
 export const m2Start = () => getSocket().emit("m2:start");
@@ -77,9 +78,9 @@ export const m2CloseVote = () => getSocket().emit("m2:closeVote");
 export const m2Reset = (full = false) => getSocket().emit("m2:reset", { full });
 
 const key = (room: string) => `ff:murder2:${room}`;
-export function loadPlayer2(room: string): { id?: string; name?: string; rejoinToken?: string } {
+export function loadPlayer2(room: string): { id?: string; name?: string; avatar?: string; rejoinToken?: string } {
   try { return JSON.parse(localStorage.getItem(key(room)) || "{}"); } catch { return {}; }
 }
-export function savePlayer2(room: string, v: { id?: string; name?: string; rejoinToken?: string }) {
+export function savePlayer2(room: string, v: { id?: string; name?: string; avatar?: string; rejoinToken?: string }) {
   try { localStorage.setItem(key(room), JSON.stringify({ ...loadPlayer2(room), ...v })); } catch { /* ignore */ }
 }

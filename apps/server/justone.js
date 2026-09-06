@@ -58,6 +58,7 @@ function publicState(m) {
     players: [...m.players.values()].map((p) => ({
       id: p.id,
       name: p.name,
+      avatar: p.avatar,
       connected: !!p.socketId,
       submitted: m.clues.has(p.id), // during writing, show WHO has written (not the words)
     })),
@@ -100,7 +101,7 @@ export function registerJustOneHandlers(io, socket, rooms, roomKey = (r) => Stri
     pushWord(m, code);
   });
 
-  socket.on("jo:join", ({ room, name, playerId, rejoinToken }) => {
+  socket.on("jo:join", ({ room, name, avatar, playerId, rejoinToken }) => {
     if (!room || !name) return;
     const code = roomKey(room);
     socket.join(code);
@@ -111,13 +112,14 @@ export function registerJustOneHandlers(io, socket, rooms, roomKey = (r) => Stri
       if (!p.rejoinToken || rejoinToken !== p.rejoinToken) return err("Could not restore that player.");
       p.socketId = socket.id;
       p.name = name;
+      if (avatar) p.avatar = avatar;
     } else {
       const id = "j" + Math.random().toString(36).slice(2, 8);
-      p = { id, name, socketId: socket.id, rejoinToken: randomBytes(24).toString("hex") };
+      p = { id, name, avatar, socketId: socket.id, rejoinToken: randomBytes(24).toString("hex") };
       m.players.set(id, p);
     }
     socket.data.joPlayerId = p.id;
-    socket.emit("jo:you", { id: p.id, name: p.name, rejoinToken: p.rejoinToken });
+    socket.emit("jo:you", { id: p.id, name: p.name, avatar: p.avatar, rejoinToken: p.rejoinToken });
     push(code);
   });
 

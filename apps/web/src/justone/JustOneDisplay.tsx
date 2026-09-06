@@ -3,6 +3,7 @@ import { useJustOne } from "./useJustOne";
 import { useRexHost, RexBanner } from "../host/RexHost";
 import { Logo } from "../display/Logo";
 import { QR } from "../net/pairing";
+import { AvatarBadge } from "../net/avatars";
 import { justoneJoinUrl, controllerUrl } from "../net/room";
 import { getBrand } from "../brand/theme";
 import type { JoState } from "../net/justone";
@@ -78,8 +79,8 @@ export function JustOneDisplay({ room }: { room: string }) {
           <div className="ff-title text-7xl">{word ?? "…"}</div>
           <div className="mt-2 flex flex-wrap justify-center gap-2">
             {state.players.filter((p) => p.id !== state.guesserId).map((p) => (
-              <span key={p.id} className={`rounded-full px-3 py-1 text-sm font-semibold ${p.submitted ? "bg-success text-white" : "bg-surface text-muted"}`} style={p.submitted ? {} : { border: "1px solid rgb(var(--c-line))" }}>
-                {p.name}{p.submitted ? " ✓" : " …"}
+              <span key={p.id} className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold ${p.submitted ? "bg-success text-white" : "bg-surface text-muted"}`} style={p.submitted ? {} : { border: "1px solid rgb(var(--c-line))" }}>
+                <AvatarBadge avatar={p.avatar} name={p.name} size={20} />{p.name}{p.submitted ? " ✓" : " …"}
               </span>
             ))}
           </div>
@@ -130,7 +131,11 @@ function Roster({ state }: { state: JoState }) {
   return (
     <div className="rounded-xl border border-line p-3 text-left" style={{ minWidth: 160 }}>
       <div className="ff-title text-xl">Players ({state.players.length})</div>
-      <div className="mt-1 text-sm">{state.players.map((p) => p.name).join(", ") || "—"}</div>
+      <div className="mt-2 flex flex-col gap-1.5 text-sm">
+        {state.players.length === 0 ? "—" : state.players.map((p) => (
+          <span key={p.id} className="flex items-center gap-2"><AvatarBadge avatar={p.avatar} name={p.name} size={24} />{p.name}</span>
+        ))}
+      </div>
     </div>
   );
 }

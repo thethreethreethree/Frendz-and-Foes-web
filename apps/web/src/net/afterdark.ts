@@ -1,7 +1,7 @@
 // Client types + emit helpers for "After Dark" (adult fill-in-the-blank). Server: apps/server/afterdark.js.
 import { getSocket } from "./socket";
 
-export interface CaPlayer { id: string; name: string; connected: boolean; score: number; handCount: number; submitted: boolean; isJudge: boolean }
+export interface CaPlayer { id: string; name: string; avatar?: string; connected: boolean; score: number; handCount: number; submitted: boolean; isJudge: boolean }
 export interface CaRevealed { i: number; cards: string[]; by: string | null }
 export interface CaState {
   phase: "lobby" | "submitting" | "judging" | "reveal" | "ended";
@@ -13,11 +13,11 @@ export interface CaState {
   revealed: CaRevealed[];
   winner: { name: string; cards: string[] } | null;
 }
-export interface CaYou { id: string; name: string; rejoinToken?: string; hand: string[]; isJudge: boolean }
+export interface CaYou { id: string; name: string; avatar?: string; rejoinToken?: string; hand: string[]; isJudge: boolean }
 
 export const caSync = (room: string) => getSocket().emit("ca:sync", { room });
-export const caJoin = (room: string, name: string, playerId?: string, rejoinToken?: string) =>
-  getSocket().emit("ca:join", { room, name, playerId, rejoinToken });
+export const caJoin = (room: string, name: string, avatar?: string, playerId?: string, rejoinToken?: string) =>
+  getSocket().emit("ca:join", { room, name, avatar, playerId, rejoinToken });
 export const caStart = () => getSocket().emit("ca:start");
 export const caSubmit = (cards: string[]) => getSocket().emit("ca:submit", { cards });
 export const caPick = (i: number) => getSocket().emit("ca:pick", { i });
@@ -25,10 +25,10 @@ export const caNext = () => getSocket().emit("ca:next");
 export const caReset = () => getSocket().emit("ca:reset");
 
 const key = (room: string) => `ff:afterdark:${room}`;
-export function loadCaPlayer(room: string): { id?: string; name?: string; rejoinToken?: string } {
+export function loadCaPlayer(room: string): { id?: string; name?: string; avatar?: string; rejoinToken?: string } {
   try { return JSON.parse(localStorage.getItem(key(room)) || "{}"); } catch { return {}; }
 }
-export function saveCaPlayer(room: string, v: { id?: string; name?: string; rejoinToken?: string }) {
+export function saveCaPlayer(room: string, v: { id?: string; name?: string; avatar?: string; rejoinToken?: string }) {
   try { localStorage.setItem(key(room), JSON.stringify({ ...loadCaPlayer(room), ...v })); } catch { /* ignore */ }
 }
 

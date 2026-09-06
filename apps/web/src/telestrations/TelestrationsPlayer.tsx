@@ -3,19 +3,21 @@ import { useTelestrations } from "./useTelestrations";
 import { CaptureCanvas, StrokesView, type Stroke } from "../pictionary/PictionaryCanvas";
 import { teSubmitDraw, teSubmitText } from "../net/telestrations";
 import { getBrand } from "../brand/theme";
+import { AvatarNameForm } from "../net/avatars";
+import { HowToPlay } from "../net/howtoplay";
 
 const PEN_COLORS = ["#111827", "#dc2626", "#2563eb", "#16a34a", "#f59e0b", "#ffffff"];
 
 export function TelestrationsPlayer({ room }: { room: string }) {
   const { state, you, error, join } = useTelestrations(room, "player");
   const label = getBrand().games.telestrations?.label ?? "Sketch Relay";
-  if (!you) return <NameForm label={label} onJoin={join} error={error} />;
+  if (!you) return <Wrap><AvatarNameForm label={label} onJoin={join} error={error} /></Wrap>;
   if (!state) return <Wrap><p className="text-muted">Connecting…</p></Wrap>;
 
   return (
     <Wrap>
       {error && <div className="mb-2 rounded-lg bg-danger px-3 py-2 text-sm font-semibold text-white">{error}</div>}
-      {state.phase === "lobby" && <Center><div className="ff-title text-2xl">{label}</div><p className="mt-2 text-sm text-muted">{state.players.length} in. Waiting for the host…</p></Center>}
+      {state.phase === "lobby" && <Center><div className="ff-title text-2xl">{label}</div><p className="mb-4 mt-2 text-sm text-muted">{state.players.length} in. Waiting for the host…</p><HowToPlay game="telestrations" /></Center>}
       {state.phase === "playing" && (you.submitted
         ? <Center><div className="ff-title text-2xl text-success">Done ✓</div><p className="mt-2 text-sm text-muted">Waiting for everyone else…</p></Center>
         : you.type === "draw" ? <DrawTurn you={you} /> : <GuessTurn you={you} />)}
@@ -54,20 +56,6 @@ function GuessTurn({ you }: { you: { prompt?: { drawing?: Stroke[] } | null } })
         className="w-full rounded-lg border border-line px-4 py-3 text-center text-lg" />
       <button disabled={!guess.trim()} onClick={() => teSubmitText(guess.trim())} className="ff-sticker w-full bg-primary px-4 py-3 font-display text-xl text-primary-ink disabled:opacity-40">SUBMIT GUESS</button>
     </div>
-  );
-}
-
-function NameForm({ label, onJoin, error }: { label: string; onJoin: (n: string) => void; error: string | null }) {
-  const [name, setName] = useState("");
-  return (
-    <Wrap>
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-        <div className="ff-title text-3xl">{label}</div>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" maxLength={16} className="w-56 rounded-lg border border-line px-4 py-3 text-center text-lg" />
-        <button disabled={!name.trim()} onClick={() => onJoin(name.trim())} className="ff-sticker bg-primary px-8 py-3 font-display text-xl text-primary-ink disabled:opacity-40">JOIN</button>
-        {error && <p className="text-sm text-danger">{error}</p>}
-      </div>
-    </Wrap>
   );
 }
 

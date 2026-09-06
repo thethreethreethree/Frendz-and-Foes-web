@@ -6,6 +6,7 @@ import { Logo } from "../display/Logo";
 import { QR } from "../net/pairing";
 import { telestrationsJoinUrl, controllerUrl } from "../net/room";
 import { getBrand } from "../brand/theme";
+import { AvatarBadge } from "../net/avatars";
 
 // Display (TV) for "Sketch Relay". Lobby QR, a live "who's done" board while everyone draws/guesses,
 // then the big reveal — each book's chain shown one step at a time.
@@ -53,7 +54,7 @@ export function TelestrationsDisplay({ room }: { room: string }) {
         <p className="mt-1 text-lg text-muted">Draw, pass, guess, repeat. Scan to join (3+ players).</p>
         <div className="mt-5 flex items-center gap-8">
           <div className="text-center"><QR text={telestrationsJoinUrl(room)} size={200} /><div className="ff-title mt-2 text-4xl tracking-[0.3em] text-ink">{room}</div></div>
-          <div className="rounded-xl border border-line p-3 text-left" style={{ minWidth: 160 }}><div className="ff-title text-xl">Players ({state.players.length})</div><div className="mt-1 text-sm">{state.players.map((p) => p.name).join(", ") || "—"}</div></div>
+          <div className="rounded-xl border border-line p-3 text-left" style={{ minWidth: 160 }}><div className="ff-title text-xl">Players ({state.players.length})</div><div className="mt-2 flex flex-col gap-1.5 text-sm">{state.players.length === 0 ? "—" : state.players.map((p) => (<span key={p.id} className="flex items-center gap-2"><AvatarBadge avatar={p.avatar} name={p.name} size={20} />{p.name}</span>))}</div></div>
         </div>
         <p className="mt-4 text-sm text-muted">Host: <span className="font-mono">{controllerUrl(room)}</span></p>
       </Center>
@@ -70,7 +71,7 @@ export function TelestrationsDisplay({ room }: { room: string }) {
         <p className="mt-2 text-lg text-muted">Everyone's on their phones — pass happens automatically.</p>
         <div className="mt-4 flex flex-wrap justify-center gap-2">
           {state.players.map((p) => (
-            <span key={p.id} className={`rounded-full px-3 py-1 text-sm font-semibold ${p.submitted ? "bg-success text-white" : "bg-surface text-muted"}`} style={p.submitted ? {} : { border: "1px solid rgb(var(--c-line))" }}>{p.name}{p.submitted ? " ✓" : " …"}</span>
+            <span key={p.id} className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold ${p.submitted ? "bg-success text-white" : "bg-surface text-muted"}`} style={p.submitted ? {} : { border: "1px solid rgb(var(--c-line))" }}><AvatarBadge avatar={p.avatar} name={p.name} size={20} />{p.name}{p.submitted ? " ✓" : " …"}</span>
           ))}
         </div>
         <div className="mt-3 text-2xl font-semibold text-primary">{done}/{state.players.length} done</div>

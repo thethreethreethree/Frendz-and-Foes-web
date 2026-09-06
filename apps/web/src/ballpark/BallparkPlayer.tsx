@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useBallpark } from "./useBallpark";
 import { bpGuess, bpBet, type BpState } from "../net/ballpark";
+import { AvatarNameForm, AvatarBadge } from "../net/avatars";
+import { HowToPlay } from "../net/howtoplay";
 import { getBrand } from "../brand/theme";
 
 export function BallparkPlayer({ room }: { room: string }) {
   const { state, you, error, join } = useBallpark(room, "player");
   const label = getBrand().games.ballpark?.label ?? "Ballpark";
-  if (!you) return <NameForm label={label} onJoin={join} error={error} />;
+  if (!you) return <Wrap><AvatarNameForm label={label} onJoin={join} error={error} /></Wrap>;
   if (!state) return <Wrap><p className="text-muted">Connecting…</p></Wrap>;
   const me = state.players.find((p) => p.id === you.id);
 
@@ -14,11 +16,11 @@ export function BallparkPlayer({ room }: { room: string }) {
     <Wrap>
       {error && <div className="mb-2 rounded-lg bg-danger px-3 py-2 text-sm font-semibold text-white">{error}</div>}
       <div className="mb-2 flex items-center justify-between text-sm text-muted">
-        <span>{you.name}</span>
+        <span className="flex items-center gap-1.5"><AvatarBadge avatar={you.avatar} name={you.name} size={22} />{you.name}</span>
         {state.phase !== "lobby" && <span>Round {state.round}/{state.totalRounds} · {me?.score ?? 0} pts</span>}
       </div>
 
-      {state.phase === "lobby" && <Center><div className="ff-title text-2xl">{label}</div><p className="mt-2 text-sm text-muted">{state.players.length} in. Waiting for the host…</p></Center>}
+      {state.phase === "lobby" && <Center><div className="ff-title text-2xl">{label}</div><p className="mb-4 mt-2 text-sm text-muted">{state.players.length} in. Waiting for the host…</p><HowToPlay game="ballpark" /></Center>}
       {state.phase === "guessing" && <Guessing state={state} guessed={!!me?.guessed} />}
       {state.phase === "betting" && <Betting state={state} bet={!!me?.bet} />}
       {state.phase === "reveal" && <Reveal state={state} />}
@@ -84,22 +86,6 @@ function Standings({ state }: { state: BpState }) {
         <span key={p.id} className={`rounded-lg px-3 py-1 text-sm font-bold ${i === 0 ? "bg-primary text-primary-ink" : "bg-surface text-ink"}`} style={i === 0 ? {} : { border: "1px solid rgb(var(--c-line))" }}>{p.name} {p.score}</span>
       ))}
     </div>
-  );
-}
-
-function NameForm({ label, onJoin, error }: { label: string; onJoin: (n: string) => void; error: string | null }) {
-  const [name, setName] = useState("");
-  return (
-    <Wrap>
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-        <div className="ff-title text-3xl">{label}</div>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" maxLength={16}
-          className="w-56 rounded-lg border border-line px-4 py-3 text-center text-lg" />
-        <button disabled={!name.trim()} onClick={() => onJoin(name.trim())}
-          className="ff-sticker bg-primary px-8 py-3 font-display text-xl text-primary-ink disabled:opacity-40">JOIN</button>
-        {error && <p className="text-sm text-danger">{error}</p>}
-      </div>
-    </Wrap>
   );
 }
 

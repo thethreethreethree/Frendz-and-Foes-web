@@ -49,14 +49,14 @@ function publicState(m) {
   if (m.phase === "playing") {
     return {
       ...base,
-      players: [...m.players.values()].map((p) => ({ id: p.id, name: p.name, connected: !!p.socketId, submitted: m.submitted.has(p.id) })),
+      players: [...m.players.values()].map((p) => ({ id: p.id, name: p.name, avatar: p.avatar, connected: !!p.socketId, submitted: m.submitted.has(p.id) })),
     };
   }
   if (m.phase === "reveal" || m.phase === "ended") {
     const book = m.books[m.revealBook];
     return {
       ...base,
-      players: [...m.players.values()].map((p) => ({ id: p.id, name: p.name, connected: !!p.socketId })),
+      players: [...m.players.values()].map((p) => ({ id: p.id, name: p.name, avatar: p.avatar, connected: !!p.socketId })),
       totalBooks: m.books.length,
       reveal: book
         ? {
@@ -69,7 +69,7 @@ function publicState(m) {
         : null,
     };
   }
-  return { ...base, players: [...m.players.values()].map((p) => ({ id: p.id, name: p.name, connected: !!p.socketId })) };
+  return { ...base, players: [...m.players.values()].map((p) => ({ id: p.id, name: p.name, avatar: p.avatar, connected: !!p.socketId })) };
 }
 
 export function telestrationsPublicState(rooms, code) {
@@ -84,7 +84,7 @@ export function registerTelestrationsHandlers(io, socket, rooms, roomKey = (r) =
   // Private per-player prompt for the CURRENT turn: what to draw, or which drawing to guess.
   const sendYou = (m, p) => {
     if (!p.socketId) return;
-    if (m.phase !== "playing") { io.to(p.socketId).emit("te:you", { id: p.id, name: p.name, rejoinToken: p.rejoinToken, phase: m.phase }); return; }
+    if (m.phase !== "playing") { io.to(p.socketId).emit("te:you", { id: p.id, name: p.name, avatar: p.avatar, rejoinToken: p.rejoinToken, phase: m.phase }); return; }
     const b = heldBookIndex(m, p.id);
     const book = m.books[b];
     const type = turnType(m.turn);
@@ -93,7 +93,7 @@ export function registerTelestrationsHandlers(io, socket, rooms, roomKey = (r) =
     if (m.turn === 0) prompt = { word: book.seed };
     else if (type === "draw") prompt = { word: book.entries[m.turn - 1]?.value ?? "(?)" };
     else prompt = { drawing: book.entries[m.turn - 1]?.value ?? [] };
-    io.to(p.socketId).emit("te:you", { id: p.id, name: p.name, rejoinToken: p.rejoinToken, phase: m.phase, turn: m.turn, type, prompt, submitted });
+    io.to(p.socketId).emit("te:you", { id: p.id, name: p.name, avatar: p.avatar, rejoinToken: p.rejoinToken, phase: m.phase, turn: m.turn, type, prompt, submitted });
   };
   const sendYouAll = (m) => { for (const p of m.players.values()) sendYou(m, p); };
   const push = (code) => { const m = rooms.get(code).telestrations; broadcast(code); sendYouAll(m); };
@@ -106,7 +106,7 @@ export function registerTelestrationsHandlers(io, socket, rooms, roomKey = (r) =
     socket.emit("te:state", publicState(ensure(rooms, code)));
   });
 
-  socket.on("te:join", ({ room, name, playerId, rejoinToken }) => {
+  socket.on("te:join", ({ room, name, avatar, playerId, rejoinToken }) => {
     if (!room || !name) return;
     const code = roomKey(room);
     socket.join(code);
@@ -117,10 +117,11 @@ export function registerTelestrationsHandlers(io, socket, rooms, roomKey = (r) =
       if (!p.rejoinToken || rejoinToken !== p.rejoinToken) return err("Could not restore that player.");
       p.socketId = socket.id;
       p.name = name;
+      if (avatar) p.avatar = avatar;
     } else {
       if (m.phase !== "lobby") return err("Game already started.");
       const id = "t" + Math.random().toString(36).slice(2, 8);
-      p = { id, name, socketId: socket.id, rejoinToken: randomBytes(24).toString("hex") };
+      p = { id, name, avatar, socketId: socket.id, rejoinToken: randomBytes(24).toString("hex") };
       m.players.set(id, p);
     }
     socket.data.tePlayerId = p.id;

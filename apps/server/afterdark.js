@@ -124,7 +124,7 @@ function publicState(m) {
     prompt: m.phase === "lobby" ? null : m.prompt,
     config: m.config,
     players: [...m.players.values()].map((p) => ({
-      id: p.id, name: p.name, connected: !!p.socketId, score: p.score,
+      id: p.id, name: p.name, avatar: p.avatar, connected: !!p.socketId, score: p.score,
       handCount: p.hand.length, submitted: m.submissions.has(p.id), isJudge: p.id === judgeId(m),
     })),
     revealed: showCards ? m.revealed.map((r) => ({ i: r.i, cards: r.cards, by: m.phase === "reveal" ? (m.players.get(r.pid)?.name || "?") : null })) : [],
@@ -137,19 +137,19 @@ export function afterdarkPublicState(rooms, code) { const m = rooms.get(code)?.a
 export function registerAfterDarkHandlers(io, socket, rooms, roomKey = (r) => String(r).toUpperCase()) {
   const broadcast = (code) => io.to(code).emit("ca:state", publicState(rooms.get(code).afterdark));
   const err = (msg) => socket.emit("ca:error", msg);
-  const sendYou = (m, p) => { if (p.socketId) io.to(p.socketId).emit("ca:you", { id: p.id, name: p.name, rejoinToken: p.rejoinToken, hand: p.hand, isJudge: p.id === judgeId(m) }); };
+  const sendYou = (m, p) => { if (p.socketId) io.to(p.socketId).emit("ca:you", { id: p.id, name: p.name, avatar: p.avatar, rejoinToken: p.rejoinToken, hand: p.hand, isJudge: p.id === judgeId(m) }); };
   const sendYouAll = (m) => { for (const p of m.players.values()) sendYou(m, p); };
   const push = (code) => { const m = rooms.get(code).afterdark; broadcast(code); sendYouAll(m); };
 
   socket.on("ca:sync", ({ room }) => { if (!room) return; const code = roomKey(room); socket.join(code); socket.data.caCode = code; socket.emit("ca:state", publicState(ensure(rooms, code))); });
 
-  socket.on("ca:join", ({ room, name, playerId, rejoinToken }) => {
+  socket.on("ca:join", ({ room, name, avatar, playerId, rejoinToken }) => {
     if (!room || !name) return;
     const code = roomKey(room); socket.join(code); socket.data.caCode = code;
     const m = ensure(rooms, code);
     let p = playerId && m.players.get(playerId);
-    if (p) { if (!p.rejoinToken || rejoinToken !== p.rejoinToken) return err("Could not restore that player."); p.socketId = socket.id; p.name = name; }
-    else { const id = "a" + Math.random().toString(36).slice(2, 8); p = { id, name, socketId: socket.id, rejoinToken: randomBytes(24).toString("hex"), hand: [], score: 0 }; m.players.set(id, p); }
+    if (p) { if (!p.rejoinToken || rejoinToken !== p.rejoinToken) return err("Could not restore that player."); p.socketId = socket.id; p.name = name; if (avatar) p.avatar = avatar; }
+    else { const id = "a" + Math.random().toString(36).slice(2, 8); p = { id, name, avatar, socketId: socket.id, rejoinToken: randomBytes(24).toString("hex"), hand: [], score: 0 }; m.players.set(id, p); }
     socket.data.caPlayerId = p.id;
     sendYou(m, p); broadcast(code);
   });

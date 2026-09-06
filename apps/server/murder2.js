@@ -112,6 +112,7 @@ function publicState(m) {
     players: [...m.players.values()].map((p) => ({
       id: p.id,
       name: p.name,
+      avatar: p.avatar, // public: cosmetic animal chip, same tier as name — never a secret-role field
       characterId: p.characterId,
       alive: p.alive,
       connected: !!p.socketId,
@@ -155,7 +156,7 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
   // room. It must never be added to publicState().
   const sendYou = (m, p) => {
     if (!p.socketId) return;
-    const base = { id: p.id, role: p.role, alive: p.alive, characterId: p.characterId, rejoinToken: p.rejoinToken };
+    const base = { id: p.id, role: p.role, alive: p.alive, characterId: p.characterId, avatar: p.avatar, rejoinToken: p.rejoinToken };
     if (p.role === "murderer") {
       const own = ownWeaponIdOf(p);
       io.to(p.socketId).emit("m2:you", {
@@ -199,7 +200,7 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
   const sendYouAll = (m) => { for (const p of m.players.values()) sendYou(m, p); };
 
   // --- Lobby: join + pick a character ---------------------------------------------------------
-  socket.on("m2:join", ({ room, name, playerId, rejoinToken }) => {
+  socket.on("m2:join", ({ room, name, avatar, playerId, rejoinToken }) => {
     if (!room || !name) return;
     const code = roomKey(room);
     socket.join(code);
@@ -214,9 +215,10 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
       if (!p.rejoinToken || rejoinToken !== p.rejoinToken) return err("Could not restore that player.");
       p.socketId = socket.id;
       p.name = name;
+      if (avatar) p.avatar = avatar;
     } else {
       const id = "p" + Math.random().toString(36).slice(2, 8);
-      p = { id, name, socketId: socket.id, characterId: null, role: null, alive: true, rejoinToken: randomBytes(24).toString("hex") };
+      p = { id, name, avatar, socketId: socket.id, characterId: null, role: null, alive: true, rejoinToken: randomBytes(24).toString("hex") };
       m.players.set(id, p);
     }
     socket.data.playerId2 = p.id;

@@ -91,6 +91,7 @@ function publicState(m) {
     players: [...m.players.values()].map((p) => ({
       id: p.id,
       name: p.name,
+      avatar: p.avatar,
       connected: !!p.socketId,
       score: p.score,
       guessed: m.guesses.has(p.id),
@@ -119,7 +120,7 @@ export function registerBallparkHandlers(io, socket, rooms, roomKey = (r) => Str
     socket.emit("bp:state", publicState(ensure(rooms, code)));
   });
 
-  socket.on("bp:join", ({ room, name, playerId, rejoinToken }) => {
+  socket.on("bp:join", ({ room, name, avatar, playerId, rejoinToken }) => {
     if (!room || !name) return;
     const code = roomKey(room);
     socket.join(code);
@@ -130,13 +131,14 @@ export function registerBallparkHandlers(io, socket, rooms, roomKey = (r) => Str
       if (!p.rejoinToken || rejoinToken !== p.rejoinToken) return err("Could not restore that player.");
       p.socketId = socket.id;
       p.name = name;
+      if (avatar) p.avatar = avatar;
     } else {
       const id = "w" + Math.random().toString(36).slice(2, 8);
-      p = { id, name, socketId: socket.id, rejoinToken: randomBytes(24).toString("hex"), score: 0 };
+      p = { id, name, avatar, socketId: socket.id, rejoinToken: randomBytes(24).toString("hex"), score: 0 };
       m.players.set(id, p);
     }
     socket.data.bpPlayerId = p.id;
-    socket.emit("bp:you", { id: p.id, name: p.name, rejoinToken: p.rejoinToken });
+    socket.emit("bp:you", { id: p.id, name: p.name, avatar: p.avatar, rejoinToken: p.rejoinToken });
     broadcast(code);
   });
 

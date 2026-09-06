@@ -2,13 +2,15 @@ import { useState } from "react";
 import { useCodenames } from "./useCodenames";
 import { CodenamesBoard } from "./CodenamesBoard";
 import { cnSetTeam, cnClue, cnGuess, cnEndTurn, type CnTeam, type CnRole } from "../net/codenames";
+import { AvatarNameForm, AvatarBadge } from "../net/avatars";
+import { HowToPlay } from "../net/howtoplay";
 import { getBrand } from "../brand/theme";
 
 export function CodenamesPlayer({ room }: { room: string }) {
   const { state, you, error, join } = useCodenames(room, "player");
   const label = getBrand().games.codenames?.label ?? "Cover Ops";
 
-  if (!you) return <NameForm label={label} onJoin={join} error={error} />;
+  if (!you) return <Wrap><AvatarNameForm label={label} onJoin={join} error={error} /></Wrap>;
   if (!state) return <Wrap><p className="text-muted">Connecting…</p></Wrap>;
 
   return (
@@ -16,22 +18,6 @@ export function CodenamesPlayer({ room }: { room: string }) {
       {error && <div className="mb-2 rounded-lg bg-danger px-3 py-2 text-sm font-semibold text-white">{error}</div>}
       {state.phase === "lobby" && <Lobby you={you} state={state} />}
       {state.phase !== "lobby" && (you.role === "spymaster" ? <Spymaster you={you} state={state} /> : <Operative you={you} state={state} />)}
-    </Wrap>
-  );
-}
-
-function NameForm({ label, onJoin, error }: { label: string; onJoin: (n: string) => void; error: string | null }) {
-  const [name, setName] = useState("");
-  return (
-    <Wrap>
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-        <div className="ff-title text-3xl">{label}</div>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" maxLength={16}
-          className="w-56 rounded-lg border border-line px-4 py-3 text-center text-lg" />
-        <button disabled={!name.trim()} onClick={() => onJoin(name.trim())}
-          className="ff-sticker bg-primary px-8 py-3 font-display text-xl text-primary-ink disabled:opacity-40">JOIN</button>
-        {error && <p className="text-sm text-danger">{error}</p>}
-      </div>
     </Wrap>
   );
 }
@@ -61,6 +47,7 @@ function Lobby({ you, state }: { you: { team: CnTeam | null; role: CnRole }; sta
         })}
       </div>
       <p className="text-center text-sm text-muted">Waiting for the host to start…</p>
+      <HowToPlay game="codenames" />
     </div>
   );
 }
@@ -129,8 +116,11 @@ function Header({ you, state }: { you: any; state: any }) {
   const color = you.team === "red" ? "#d64550" : "#3b7dd8";
   return (
     <div className="flex items-center justify-between">
-      <span className="rounded-full px-3 py-1 text-sm font-bold text-white" style={{ background: color }}>
-        {you.team === "red" ? "Red" : "Blue"} {you.role}
+      <span className="flex items-center gap-2">
+        <AvatarBadge avatar={you.avatar} name={you.name} size={22} />
+        <span className="rounded-full px-3 py-1 text-sm font-bold text-white" style={{ background: color }}>
+          {you.team === "red" ? "Red" : "Blue"} {you.role}
+        </span>
       </span>
       <span className="text-sm font-semibold text-muted">Red {state.counts.red} · Blue {state.counts.blue}</span>
     </div>

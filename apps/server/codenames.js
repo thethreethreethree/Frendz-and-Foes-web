@@ -80,6 +80,7 @@ function publicState(m) {
     players: [...m.players.values()].map((p) => ({
       id: p.id,
       name: p.name,
+      avatar: p.avatar,
       team: p.team,
       role: p.role,
       connected: !!p.socketId,
@@ -101,7 +102,7 @@ export function registerCodenamesHandlers(io, socket, rooms, roomKey = (r) => St
   // Private per-player view. The colour key rides ONLY here, and only to spymasters.
   const sendYou = (m, p) => {
     if (!p.socketId) return;
-    const base = { id: p.id, name: p.name, team: p.team, role: p.role, rejoinToken: p.rejoinToken };
+    const base = { id: p.id, name: p.name, avatar: p.avatar, team: p.team, role: p.role, rejoinToken: p.rejoinToken };
     if (p.role === "spymaster" && m.board.length) {
       io.to(p.socketId).emit("cn:you", { ...base, key: m.board.map((c) => c.color) });
     } else {
@@ -120,7 +121,7 @@ export function registerCodenamesHandlers(io, socket, rooms, roomKey = (r) => St
     socket.emit("cn:state", publicState(m));
   });
 
-  socket.on("cn:join", ({ room, name, playerId, rejoinToken }) => {
+  socket.on("cn:join", ({ room, name, avatar, playerId, rejoinToken }) => {
     if (!room || !name) return;
     const code = roomKey(room);
     socket.join(code);
@@ -133,9 +134,10 @@ export function registerCodenamesHandlers(io, socket, rooms, roomKey = (r) => St
       if (!p.rejoinToken || rejoinToken !== p.rejoinToken) return err("Could not restore that player.");
       p.socketId = socket.id;
       p.name = name;
+      if (avatar) p.avatar = avatar;
     } else {
       const id = "c" + Math.random().toString(36).slice(2, 8);
-      p = { id, name, socketId: socket.id, team: null, role: "operative", rejoinToken: randomBytes(24).toString("hex") };
+      p = { id, name, avatar, socketId: socket.id, team: null, role: "operative", rejoinToken: randomBytes(24).toString("hex") };
       m.players.set(id, p);
     }
     socket.data.cnPlayerId = p.id;

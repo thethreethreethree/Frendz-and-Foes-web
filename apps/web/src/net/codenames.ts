@@ -14,6 +14,7 @@ export interface CnCard {
 export interface CnPlayer {
   id: string;
   name: string;
+  avatar?: string;
   team: CnTeam | null;
   role: CnRole;
   connected: boolean;
@@ -32,6 +33,7 @@ export interface CnState {
 export interface CnYou {
   id: string;
   name: string;
+  avatar?: string;
   team: CnTeam | null;
   role: CnRole;
   rejoinToken?: string;
@@ -39,8 +41,8 @@ export interface CnYou {
 }
 
 export const cnSync = (room: string) => getSocket().emit("cn:sync", { room });
-export const cnJoin = (room: string, name: string, playerId?: string, rejoinToken?: string) =>
-  getSocket().emit("cn:join", { room, name, playerId, rejoinToken });
+export const cnJoin = (room: string, name: string, avatar?: string, playerId?: string, rejoinToken?: string) =>
+  getSocket().emit("cn:join", { room, name, avatar, playerId, rejoinToken });
 export const cnSetTeam = (team: CnTeam, role: CnRole) => getSocket().emit("cn:setTeam", { team, role });
 export const cnStart = () => getSocket().emit("cn:start");
 export const cnClue = (word: string, count: number) => getSocket().emit("cn:clue", { word, count });
@@ -49,9 +51,9 @@ export const cnEndTurn = () => getSocket().emit("cn:endTurn");
 export const cnReset = (full = false) => getSocket().emit("cn:reset", { full });
 
 const key = (room: string) => `ff:codenames:${room}`;
-export function loadCnPlayer(room: string): { id?: string; name?: string; rejoinToken?: string } {
+export function loadCnPlayer(room: string): { id?: string; name?: string; avatar?: string; rejoinToken?: string } {
   try { return JSON.parse(localStorage.getItem(key(room)) || "{}"); } catch { return {}; }
 }
-export function saveCnPlayer(room: string, v: { id?: string; name?: string; rejoinToken?: string }) {
+export function saveCnPlayer(room: string, v: { id?: string; name?: string; avatar?: string; rejoinToken?: string }) {
   try { localStorage.setItem(key(room), JSON.stringify({ ...loadCnPlayer(room), ...v })); } catch { /* ignore */ }
 }

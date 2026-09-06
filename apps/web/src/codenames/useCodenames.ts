@@ -17,7 +17,7 @@ export function useCodenames(room: string, role: "host" | "display" | "player") 
       setConnected(true);
       if (role === "player") {
         const st = loadCnPlayer(room);
-        if (st.name) cnJoin(room, st.name, st.id, st.rejoinToken);
+        if (st.name) cnJoin(room, st.name, st.avatar, st.id, st.rejoinToken);
       } else {
         s.emit("join", { room, role }); // sets host/display role + joins the room
         cnSync(room);
@@ -54,10 +54,10 @@ export function useCodenames(room: string, role: "host" | "display" | "player") 
     }
   }, [you?.id, you?.rejoinToken, room]);
 
-  const join = (name: string) => {
-    saveCnPlayer(room, { name });
+  const join = (name: string, avatar?: string) => {
+    saveCnPlayer(room, { name, ...(avatar ? { avatar } : {}) });
     const st = loadCnPlayer(room);
-    cnJoin(room, name, st.id, st.rejoinToken);
+    cnJoin(room, name, st.avatar, st.id, st.rejoinToken);
   };
 
   return { state, you, error, connected, join };

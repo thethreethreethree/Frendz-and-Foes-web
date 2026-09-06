@@ -3,6 +3,7 @@ import { useBallpark } from "./useBallpark";
 import { useRexHost, RexBanner } from "../host/RexHost";
 import { Logo } from "../display/Logo";
 import { QR } from "../net/pairing";
+import { AvatarBadge } from "../net/avatars";
 import { ballparkJoinUrl, controllerUrl } from "../net/room";
 import { getBrand } from "../brand/theme";
 import type { BpState } from "../net/ballpark";
@@ -54,7 +55,11 @@ export function BallparkDisplay({ room }: { room: string }) {
           </div>
           <div className="rounded-xl border border-line p-3 text-left" style={{ minWidth: 160 }}>
             <div className="ff-title text-xl">Players ({state.players.length})</div>
-            <div className="mt-1 text-sm">{state.players.map((p) => p.name).join(", ") || "—"}</div>
+            <div className="mt-1 flex flex-col gap-1 text-sm">
+              {state.players.length === 0 ? "—" : state.players.map((p) => (
+                <span key={p.id} className="flex items-center gap-2"><AvatarBadge avatar={p.avatar} name={p.name} size={24} />{p.name}</span>
+              ))}
+            </div>
           </div>
         </div>
         <p className="mt-4 text-sm text-muted">Host: <span className="font-mono">{controllerUrl(room)}</span></p>
@@ -72,7 +77,7 @@ export function BallparkDisplay({ room }: { room: string }) {
           <p className="text-lg text-muted">Everyone lock in a number…</p>
           <div className="flex flex-wrap justify-center gap-2">
             {state.players.map((p) => (
-              <span key={p.id} className={`rounded-full px-3 py-1 text-sm font-semibold ${p.guessed ? "bg-success text-white" : "bg-surface text-muted"}`} style={p.guessed ? {} : { border: "1px solid rgb(var(--c-line))" }}>{p.name}{p.guessed ? " ✓" : " …"}</span>
+              <span key={p.id} className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold ${p.guessed ? "bg-success text-white" : "bg-surface text-muted"}`} style={p.guessed ? {} : { border: "1px solid rgb(var(--c-line))" }}><AvatarBadge avatar={p.avatar} name={p.name} size={20} />{p.name}{p.guessed ? " ✓" : " …"}</span>
             ))}
           </div>
         </>
@@ -110,8 +115,8 @@ function Standings({ state }: { state: BpState }) {
   return (
     <div className="mt-2 flex flex-wrap justify-center gap-2">
       {rows.map((p, i) => (
-        <span key={p.id} className={`rounded-xl px-4 py-2 font-display text-xl ${i === 0 ? "bg-primary text-primary-ink" : "bg-surface text-ink"}`} style={i === 0 ? {} : { border: "1px solid rgb(var(--c-line))" }}>
-          {p.name} <span className="tabular-nums">{p.score}</span>{i === 0 ? " 👑" : ""}
+        <span key={p.id} className={`flex items-center gap-1.5 rounded-xl px-4 py-2 font-display text-xl ${i === 0 ? "bg-primary text-primary-ink" : "bg-surface text-ink"}`} style={i === 0 ? {} : { border: "1px solid rgb(var(--c-line))" }}>
+          <AvatarBadge avatar={p.avatar} name={p.name} size={20} />{p.name} <span className="tabular-nums">{p.score}</span>{i === 0 ? " 👑" : ""}
         </span>
       ))}
     </div>

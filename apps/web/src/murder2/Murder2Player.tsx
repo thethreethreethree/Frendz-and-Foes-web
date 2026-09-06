@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useMurder2 } from "./useMurder2";
 import { playSfx } from "../audio/sfx";
 import { loadPlayer2, m2Pick, m2Kill, m2Vote, m2Investigate, m2Protect, m2LastWords, type V2Announce, type V2Character, type V2Player } from "../net/murder2";
+import { getBrand } from "../brand/theme";
+import { AvatarNameForm, AvatarBadge } from "../net/avatars";
 
 // location string → allocated scene-plate path (mirrors the allocation slug).
 function locationPlate(location: string) {
@@ -12,8 +14,8 @@ function locationPlate(location: string) {
 // Player phone for Murder v2. Name → pick a character → play by role → vote.
 export function Murder2Player({ room }: { room: string }) {
   const { state, you, announce, error, join, connected } = useMurder2(room, "player");
-  const [name, setName] = useState("");
   const stored = loadPlayer2(room);
+  const label = getBrand().games.murder?.label ?? "Murder Mystery";
 
   // A transient banner for server rejections (pick taken, cooldown, invalid move), shown over any view.
   const banner = error ? (
@@ -22,15 +24,7 @@ export function Murder2Player({ room }: { room: string }) {
 
   const inner = (() => {
     if (!stored.name) {
-      return (
-        <Screen>
-          <div className="ff-title text-3xl text-pink">JOIN THE VILLAGE</div>
-          <input aria-label="Your name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" autoFocus
-            className="mt-4 w-56 rounded-lg border-2 border-ink/20 bg-surface px-4 py-3 text-center text-xl text-ink outline-none focus:border-teal" />
-          <button disabled={!name.trim()} onClick={() => join(name.trim())}
-            className="ff-sticker mt-3 bg-pink px-8 py-3 font-display text-2xl text-white disabled:opacity-40">JOIN</button>
-        </Screen>
-      );
+      return <Screen><AvatarNameForm label={label} onJoin={join} error={error} /></Screen>;
     }
     if (!connected || !state || !you) return <Screen><div className="ff-title text-2xl text-ink/60">Connecting…</div></Screen>;
     if (state.phase === "lobby") return <Lobby state={state} you={you} />;
@@ -408,7 +402,7 @@ function Roster({ state }: { state: any }) {
       <div className="mt-1 grid grid-cols-2 gap-1 text-sm">
         {state.players.filter((p: V2Player) => p.characterId).map((p: V2Player) => (
           <div key={p.id} className={`rounded px-2 py-1 ${p.alive ? "bg-surface" : "bg-ink/10 line-through opacity-60"}`}>
-            {!p.alive && <Icon name="icon-dead" />} {charEmoji(state, p.characterId)} {p.name} · <span className="text-ink/60">{charName(state, p.characterId)}</span>{p.cleared && " ✓"}
+            {!p.alive && <Icon name="icon-dead" />} {charEmoji(state, p.characterId)} <AvatarBadge avatar={p.avatar} name={p.name} size={20} /> {p.name} · <span className="text-ink/60">{charName(state, p.characterId)}</span>{p.cleared && " ✓"}
           </div>
         ))}
       </div>
