@@ -22,9 +22,9 @@ const ORDER: GameType[] = ["trivia", "murder", "codenames", "taboo", "pictionary
 // Rex's animal regulars — the cutouts generated for PlayZoo. Emoji is the graceful fallback
 // if an image is missing, so the strip never shows a broken frame.
 const CAST: { file: string; name: string; role: string; emoji: string }[] = [
-  { file: "vince",  name: "Vince",  role: "The schemer",  emoji: "🦝" },
-  { file: "trixie", name: "Trixie", role: "The diva",     emoji: "🦩" },
-  { file: "boomer", name: "Boomer", role: "The bouncer",  emoji: "🦍" },
+  { file: "vince",  name: "John",   role: "The schemer",   emoji: "🦝" },
+  { file: "trixie", name: "Trixie", role: "The diva",      emoji: "🦩" },
+  { file: "boomer", name: "Boomer", role: "The bouncer",   emoji: "🦍" },
   { file: "pixel",  name: "Pixel",  role: "The loudmouth", emoji: "🦜" },
   { file: "mo",     name: "Mo",     role: "The chill one", emoji: "🦥" },
 ];
@@ -94,12 +94,12 @@ export function HomeRoute() {
         </div>
         <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           {CAST.map((c) => (
-            <div key={c.file} className="group flex flex-col items-center rounded-2xl border border-line bg-surface/50 p-4 text-center backdrop-blur transition duration-150 hover:-translate-y-1 hover:bg-surface/70">
-              <div className="grid h-28 w-28 place-items-center">
+            <div key={c.file} className="group flex flex-col items-center rounded-2xl border border-line bg-surface/50 px-3 pb-4 pt-3 text-center backdrop-blur transition duration-150 hover:-translate-y-1 hover:bg-surface/70">
+              <div className="flex h-28 w-full items-end justify-center overflow-hidden">
                 <CastImg file={c.file} emoji={c.emoji} name={c.name} />
               </div>
-              <div className="ff-title mt-2 text-lg font-bold">{c.name}</div>
-              <div className="text-xs font-medium text-muted">{c.role}</div>
+              <div className="ff-title mt-3 text-lg font-bold leading-tight text-ink">{c.name}</div>
+              <div className="mt-0.5 text-xs font-medium text-muted">{c.role}</div>
             </div>
           ))}
         </div>
@@ -120,13 +120,14 @@ export function HomeRoute() {
               <a
                 key={g}
                 href={`/?game=${g}#/display`}
-                className="group relative flex flex-col items-start overflow-hidden rounded-2xl p-4 text-left text-white transition duration-150 hover:-translate-y-1 hover:brightness-110 active:scale-[0.97]"
+                className="group relative flex aspect-[4/3] flex-col items-start justify-end overflow-hidden rounded-2xl p-4 text-left text-white transition duration-150 hover:-translate-y-1 hover:brightness-110 active:scale-[0.97]"
                 style={{ background: `linear-gradient(135deg, ${from} 0%, ${to} 100%)`, boxShadow: "0 1px 2px rgb(0 0 0 / 0.3), 0 16px 34px -18px rgb(0 0 0 / 0.7)" }}
               >
+                <TileArt game={g} icon={meta.icon} />
+                <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
                 <span className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 skew-x-12 bg-white/20 blur-md transition-transform duration-500 ease-out group-hover:translate-x-[400%]" />
-                <span className="relative text-3xl drop-shadow-sm">{meta.icon ?? "🎲"}</span>
-                <span className="relative mt-2 font-display text-xl font-extrabold leading-tight">{meta.label}</span>
-                <span className="relative mt-0.5 text-xs font-medium text-white/85">{meta.tagline}</span>
+                <span className="relative font-display text-xl font-extrabold leading-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">{meta.label}</span>
+                <span className="relative mt-0.5 text-xs font-medium text-white/90 drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">{meta.tagline}</span>
               </a>
             );
           })}
@@ -177,6 +178,22 @@ function RexAvatar() {
   const [ok, setOk] = useState(true);
   if (!ok) return <span>🦁</span>;
   return <img src="/crew/rex-keeper.png" alt="Rex" className="h-full w-full object-cover" onError={() => setOk(false)} />;
+}
+
+// Per-game scene key art (in /tiles), with an emoji fallback if the art file is missing.
+function TileArt({ game, icon }: { game: string; icon?: string }) {
+  const [ok, setOk] = useState(true);
+  if (!ok) return <span className="pointer-events-none absolute inset-0 grid place-items-center text-5xl opacity-90 drop-shadow-lg">{icon ?? "🎲"}</span>;
+  return (
+    <img
+      src={`/tiles/${game}.jpg`}
+      alt=""
+      aria-hidden
+      loading="lazy"
+      onError={() => setOk(false)}
+      className="pointer-events-none absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+    />
+  );
 }
 
 // A cast portrait that falls back to its emoji if the cutout PNG hasn't been generated.
