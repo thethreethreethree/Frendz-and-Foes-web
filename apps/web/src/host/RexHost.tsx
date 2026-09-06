@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { askHost, type HostPayload } from "../net/host";
+import { playSfx } from "../audio/sfx";
+
+// A little audio sting when Rex speaks (display only): applause when he crowns a winner, else a
+// subtle swoosh as the banner flies in.
+const isWinMoment = (m: string) => /win|end|caught|champ/i.test(m);
 
 // Rex, the PlayZoo AI host, as a display overlay. `say()` fetches a line for a game moment and shows
 // it in a speech bubble for a few seconds. Only the DISPLAY should drive this (one voice per room).
@@ -15,6 +20,7 @@ export function useRexHost(room: string | null | undefined, game: string) {
       const text = await askHost({ room: room ?? undefined, game, moment, detail });
       if (!text) return;
       setLine(text);
+      try { playSfx(isWinMoment(moment) ? "applause" : "swoosh", 0); } catch { /* audio best-effort */ }
       clearTimeout(hideTimer.current);
       // Longer lines linger a little longer.
       hideTimer.current = setTimeout(() => setLine(null), Math.min(9000, 4000 + text.length * 55));
