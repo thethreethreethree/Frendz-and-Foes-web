@@ -1,10 +1,20 @@
+import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Logo } from "../display/Logo";
 import { FloatingAccents } from "../display/Icons";
+import { useRexHost, RexBanner } from "../host/RexHost";
 import { getBrand } from "../brand/theme";
 
 export function HomeRoute() {
   const brand = getBrand();
+  // Rex greets you on the landing page — the AI host, front and center before a game even starts.
+  const { line, say } = useRexHost(null, "PlayZoo");
+  const greeted = useRef(false);
+  useEffect(() => {
+    if (greeted.current) return;
+    greeted.current = true;
+    say("welcome");
+  }, [say]);
   return (
     <div className="ff-backdrop relative grid h-full place-items-center p-6">
       <FloatingAccents />
@@ -26,6 +36,7 @@ export function HomeRoute() {
           </Link>
         </div>
       </div>
+      <RexBanner line={line} />
     </div>
   );
 }

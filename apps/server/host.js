@@ -19,6 +19,7 @@ const REX_PERSONA =
 
 // Canned fallbacks so Rex still has personality with no API key / on error.
 const FALLBACKS = {
+  welcome: ["Welcome to PlayZoo — I'm Rex, your keeper. Pick a game and get in your enclosures!", "Well well, fresh meat. Welcome to the zoo — pick a game, you animals!"],
   intro: ["Welcome to the zoo, you animals — try not to bite the staff!", "Enclosure's open, phones out. Let's see what you've got, critters!"],
   round_start: ["Fresh round, fresh chances to embarrass the whole species. Go!", "Feeding time — I mean, next round. Move it, animals!"],
   quip: ["I've seen sharper instincts in a sleeping panda. Keep going!", "Tick tock — the exhibit's waiting."],

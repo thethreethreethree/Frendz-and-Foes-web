@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { askHost, type HostPayload } from "../net/host";
 
 // Rex, the PlayZoo AI host, as a display overlay. `say()` fetches a line for a game moment and shows
@@ -28,15 +28,16 @@ export function useRexHost(room: string | null | undefined, game: string) {
 
 export function RexBanner({ line }: { line: string | null }) {
   const [imgOk, setImgOk] = useState(true);
+  const reduce = useReducedMotion();
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-4 z-40 flex justify-center px-4">
       <AnimatePresence>
         {line && (
           <motion.div
-            initial={{ y: 40, opacity: 0, scale: 0.96 }}
-            animate={{ y: 0, opacity: 1, scale: 1 }}
-            exit={{ y: 20, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 380, damping: 26 }}
+            initial={reduce ? { opacity: 0 } : { y: 40, opacity: 0, scale: 0.96 }}
+            animate={reduce ? { opacity: 1 } : { y: 0, opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={reduce ? { duration: 0.15 } : { type: "spring", stiffness: 380, damping: 26 }}
             className="flex max-w-2xl items-end gap-3"
           >
             <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-full border-2 border-primary bg-surface text-3xl shadow-lg">
