@@ -1,11 +1,13 @@
-// Rex — the PlayZoo AI host. Turns a game "moment" into one punchy line of MC banter via the
-// Claude Messages API (raw fetch; no SDK dependency to keep the box's zero-dep footprint). Degrades
-// gracefully to canned lines when ANTHROPIC_API_KEY is unset or the call fails, so the host never
-// breaks a game. Cost is contained: short outputs, a cheap default model, and per-room throttling.
+// Rex — the PlayZoo AI host. Turns a game "moment" into one punchy line of MC banter.
+//
+// Provider: DeepSeek by default (cheapest; OpenAI-compatible chat-completions API) via raw fetch —
+// no SDK dependency, keeping the box's zero-dep footprint. Swappable via env if we ever change
+// providers. Degrades gracefully to canned lines when no API key is set or the call fails, so the
+// host never breaks a game. Cost is contained: short outputs + per-room throttling.
 
-const API_KEY = process.env.ANTHROPIC_API_KEY || "";
-// Cheap + fast is the right default for high-volume one-liners; override with HOST_MODEL if desired.
-const MODEL = process.env.HOST_MODEL || "claude-haiku-4-5";
+const KEY = process.env.DEEPSEEK_API_KEY || process.env.HOST_API_KEY || "";
+const API_URL = process.env.HOST_API_URL || "https://api.deepseek.com/chat/completions";
+const MODEL = process.env.HOST_MODEL || "deepseek-chat";
 
 const REX_PERSONA =
   "You are Rex, the loud, washed-up-but-loving-it lion MC of PlayZoo, an adult party-games app. " +
@@ -54,35 +56,39 @@ function userPrompt({ game, moment, detail }) {
   return bits.join(" ");
 }
 
-async function callClaude(payload) {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+// OpenAI-compatible chat completion (DeepSeek). Returns the cleaned single line.
+async function callModel(payload) {
+  const res = await fetch(API_URL, {
     method: "POST",
-    headers: { "content-type": "application/json", "x-api-key": API_KEY, "anthropic-version": "2023-06-01" },
+    headers: { "content-type": "application/json", authorization: `Bearer ${KEY}` },
     body: JSON.stringify({
       model: MODEL,
       max_tokens: 80,
-      system: REX_PERSONA,
-      messages: [{ role: "user", content: userPrompt(payload) }],
+      temperature: 0.9,
+      messages: [
+        { role: "system", content: REX_PERSONA },
+        { role: "user", content: userPrompt(payload) },
+      ],
     }),
   });
-  if (!res.ok) throw new Error(`anthropic ${res.status}`);
+  if (!res.ok) throw new Error(`host provider ${res.status}`);
   const data = await res.json();
-  const text = (data?.content || []).filter((b) => b.type === "text").map((b) => b.text).join(" ").trim();
+  const text = data?.choices?.[0]?.message?.content || "";
   // Strip stray quotes/markdown the model sometimes adds; keep it to one clean line.
-  return text.replace(/^["'“”]+|["'“”]+$/g, "").replace(/\s+/g, " ").trim();
+  return String(text).replace(/^["'“”]+|["'“”]+$/g, "").replace(/\s+/g, " ").trim();
 }
 
 // Returns { line, source: "ai"|"canned" }. Never throws.
 export async function hostLine(payload = {}) {
   const room = String(payload.room || "_");
-  if (!API_KEY) return { line: fallbackFor(payload.moment), source: "canned" };
+  if (!KEY) return { line: fallbackFor(payload.moment), source: "canned" };
   if (!allowed(room)) return { line: fallbackFor(payload.moment), source: "canned" };
   try {
-    const line = await callClaude(payload);
+    const line = await callModel(payload);
     return line ? { line, source: "ai" } : { line: fallbackFor(payload.moment), source: "canned" };
   } catch {
     return { line: fallbackFor(payload.moment), source: "canned" };
   }
 }
 
-export const hostReady = () => !!API_KEY;
+export const hostReady = () => !!KEY;
