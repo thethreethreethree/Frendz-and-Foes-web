@@ -4,7 +4,7 @@ import { askHost, type HostPayload } from "../net/host";
 
 // Rex, the PlayZoo AI host, as a display overlay. `say()` fetches a line for a game moment and shows
 // it in a speech bubble for a few seconds. Only the DISPLAY should drive this (one voice per room).
-// The lion avatar uses /crew/rex-lion.png once that art exists; until then it falls back to an emoji.
+// Rex's avatar uses /crew/rex-keeper.png once that art exists; until then it falls back to an emoji.
 
 export function useRexHost(room: string | null | undefined, game: string) {
   const [line, setLine] = useState<string | null>(null);
@@ -41,7 +41,7 @@ export function RexBanner({ line }: { line: string | null }) {
           >
             <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-full border-2 border-primary bg-surface text-3xl shadow-lg">
               {imgOk ? (
-                <img src="/crew/rex-lion.png" alt="Rex" className="h-full w-full object-cover" onError={() => setImgOk(false)} />
+                <img src="/crew/rex-keeper.png" alt="Rex" className="h-full w-full object-cover" onError={() => setImgOk(false)} />
               ) : (
                 <span>🦁</span>
               )}

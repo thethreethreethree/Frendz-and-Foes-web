@@ -10,22 +10,23 @@ const API_URL = process.env.HOST_API_URL || "https://api.deepseek.com/chat/compl
 const MODEL = process.env.HOST_MODEL || "deepseek-chat";
 
 const REX_PERSONA =
-  "You are Rex, the loud, washed-up-but-loving-it lion MC of PlayZoo, an adult party-games app. " +
-  "Voice: brash, quick, funny, a little roast-y, warm underneath — a late-night game-show host who's had two drinks. " +
-  "ALWAYS reply with exactly ONE short line, 20 words max, that a host would shout to the room. " +
+  "You are Rex, the frazzled, sardonic human ZOOKEEPER who runs PlayZoo — an after-hours zoo where the players ARE the animals. " +
+  "Voice: brash, quick, funny, a little roast-y, warm underneath — a keeper who loves his chaotic animals but is barely holding it together. " +
+  "Lean into the bit: call the players 'you animals', reference the zoo, enclosures, feeding time, the exhibits. " +
+  "ALWAYS reply with exactly ONE short line, 20 words max, that a keeper would shout across the zoo. " +
   "No quotation marks, no stage directions, no markdown, at most one emoji. " +
   "Adult and cheeky is fine; never use slurs, hate, or anything targeting real, protected groups. React to the moment.";
 
 // Canned fallbacks so Rex still has personality with no API key / on error.
 const FALLBACKS = {
-  intro: ["Welcome to PlayZoo, you beautiful disasters — let's make some bad decisions!", "Phones out, dignity away. Here we go!"],
-  round_start: ["New round, fresh chances to embarrass yourselves. Go!", "Round's up — try to look like you've done this before."],
-  quip: ["I've seen sharper thinking from a bag of doorknobs. Keep going!", "Tick tock, geniuses."],
-  reveal: ["Ohhh, that's gonna leave a mark.", "Some of you should be embarrassed. You know who you are."],
-  correct: ["Look at the big brain over here!", "Somebody's been paying attention. Suspicious."],
-  wrong: ["Bold. Wrong, but bold.", "That's a no from me, champ."],
-  winner: ["Winner winner! The rest of you — therapy's that way.", "A champion is crowned. Everyone else, mediocrity awaits!"],
-  generic: ["Keep it moving, party people!", "That's showbiz, baby."],
+  intro: ["Welcome to the zoo, you animals — try not to bite the staff!", "Enclosure's open, phones out. Let's see what you've got, critters!"],
+  round_start: ["Fresh round, fresh chances to embarrass the whole species. Go!", "Feeding time — I mean, next round. Move it, animals!"],
+  quip: ["I've seen sharper instincts in a sleeping panda. Keep going!", "Tick tock — the exhibit's waiting."],
+  reveal: ["Ohhh, that's gonna leave a mark on the whole herd.", "Some of you belong in the reptile house. You know who you are."],
+  correct: ["Look at the big brain in the primate enclosure!", "Somebody's been paying attention. Suspicious for this crowd."],
+  wrong: ["Bold. Wrong, but bold. Back in your pen.", "That's a no from the keeper, champ."],
+  winner: ["Top of the food chain! The rest of you — back in the cages.", "We have an alpha! Everyone else, mediocrity awaits."],
+  generic: ["Settle down, you animals!", "That's the zoo, baby."],
 };
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const fallbackFor = (moment) => pick(FALLBACKS[moment] || FALLBACKS.generic);
