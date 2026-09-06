@@ -94,9 +94,9 @@ export const defaultBrand: Brand = {
     info: "56 189 248", // sky-400
   },
   fonts: {
-    display: '"Inter", system-ui, sans-serif',
+    display: '"Bricolage Grotesque", system-ui, sans-serif',
     body: '"Inter", system-ui, sans-serif',
-    googleUrl: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap",
+    googleUrl: "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap",
   },
   wordmark: [
     { text: "Play", color: "ink" },

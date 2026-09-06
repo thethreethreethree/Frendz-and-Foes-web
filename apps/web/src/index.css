@@ -26,7 +26,7 @@
   --c-danger: 239 68 68;
   --c-warning: 245 158 11;
   --c-info: 56 189 248;
-  --font-display: "Inter", system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", system-ui, sans-serif;
   --font-body: "Inter", system-ui, sans-serif;
 
   color: rgb(var(--c-ink));
@@ -53,11 +53,22 @@ body {
   .ff-backdrop {
     background-color: rgb(var(--c-canvas));
     background-image:
-      radial-gradient(1200px 680px at 12% -10%, rgb(var(--c-primary) / 0.28), transparent 58%),
-      radial-gradient(1000px 620px at 100% 8%, rgb(var(--c-accent) / 0.2), transparent 55%),
-      radial-gradient(900px 560px at 50% 120%, rgb(var(--c-secondary) / 0.18), transparent 55%);
-    background-attachment: fixed;
+      radial-gradient(1200px 680px at 12% -10%, rgb(var(--c-primary) / 0.30), transparent 58%),
+      radial-gradient(1000px 620px at 100% 8%, rgb(var(--c-accent) / 0.22), transparent 55%),
+      radial-gradient(900px 560px at 50% 120%, rgb(var(--c-secondary) / 0.20), transparent 55%);
+    background-size: 200% 200%, 220% 220%, 200% 200%;
+    background-position: 0% 0%, 100% 0%, 50% 100%;
+    animation: ff-drift 26s ease-in-out infinite alternate;
   }
+}
+
+/* Gentle drifting glow so the dark ground feels alive (disabled under reduced-motion below). */
+@keyframes ff-drift {
+  0% { background-position: 0% 0%, 100% 0%, 50% 100%; }
+  100% { background-position: 22% 12%, 78% 22%, 42% 88%; }
+}
+
+@layer components {
 
   /* Bingo display uses its own "Frendz Bingo Night" artwork as the backdrop. */
   .ff-backdrop-bingo {
