@@ -2,6 +2,7 @@ import { useState } from "react";
 import { MONIKERS_ROUNDS, monikersRound } from "@ff/engine";
 import { useMonikersHost } from "../store/monikersStore";
 import { StatusPill } from "../net/pairing";
+import { HowToPlay } from "../net/howtoplay";
 import { getBrand } from "../brand/theme";
 
 // Host controller for "Encore" (Monikers). The describer holds this phone (sees the card + its
@@ -90,6 +91,8 @@ function Setup() {
       </section>
 
       <button onClick={start} className="ff-sticker w-full bg-primary px-4 py-4 font-display text-2xl text-primary-ink">START GAME</button>
+
+      <HowToPlay game="monikers" />
     </div>
   );
 }

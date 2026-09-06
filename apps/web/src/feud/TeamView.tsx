@@ -5,6 +5,7 @@ import { emitIntent } from "../net/socket";
 import { turnInfo } from "../control/turn";
 import { QR } from "../net/pairing";
 import { teamJoinUrl } from "../net/room";
+import { HowToPlay } from "../net/howtoplay";
 
 // The team phone's UI. `answerer` gets the guess box + a view-only QR to share; `viewer` watches.
 export function TeamView({
@@ -56,6 +57,9 @@ export function TeamView({
               ? "Game over"
               : "Waiting for the host to start…"}
         </div>
+
+        {/* Pre-game: while the team waits on their phone for the host to start, show the rules. */}
+        {state.phase !== "playing" && state.phase !== "finished" && <HowToPlay game="feud" />}
 
         {state.phase === "playing" && q && <Board question={q} state={state} />}
 

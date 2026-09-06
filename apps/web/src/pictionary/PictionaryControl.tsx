@@ -2,6 +2,7 @@ import { useState } from "react";
 import { usePictionaryHost } from "../store/pictionaryStore";
 import { DrawCanvas } from "./PictionaryCanvas";
 import { StatusPill } from "../net/pairing";
+import { HowToPlay } from "../net/howtoplay";
 import { emitPulse } from "../net/socket";
 import { getBrand } from "../brand/theme";
 
@@ -70,6 +71,8 @@ function Setup() {
           <input type="range" min={5} max={20} step={1} value={winScore} onChange={(e) => setWinScore(+e.target.value)} className="mt-1 w-full accent-primary" /></label>
       </section>
       <button onClick={start} className="ff-sticker w-full bg-primary px-4 py-4 font-display text-2xl text-primary-ink">START GAME</button>
+
+      <HowToPlay game="pictionary" />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useOffLimitsHost } from "../store/offlimitsStore";
 import { StatusPill } from "../net/pairing";
 import { getBrand } from "../brand/theme";
+import { HowToPlay } from "../net/howtoplay";
 
 // Host controller for "Off Limits" — this phone IS the describer's device. It shows the secret
 // word + taboo list (which never leave this device), the timer, and the got/skip controls. The
@@ -89,6 +90,9 @@ function Setup() {
           Skips cost 1 point
         </label>
       </section>
+
+      {/* Pre-game setup: show the rules on the controller's phone before the game starts. */}
+      <HowToPlay game="taboo" />
 
       <button onClick={start} className="ff-sticker w-full bg-primary px-4 py-4 font-display text-2xl text-primary-ink">START GAME</button>
     </div>

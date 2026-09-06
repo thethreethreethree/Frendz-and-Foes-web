@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { HEADSUP_CATEGORIES } from "@ff/engine";
 import { useHeadsUpHost } from "../store/headsupStore";
 import { StatusPill } from "../net/pairing";
+import { HowToPlay } from "../net/howtoplay";
 import { getBrand } from "../brand/theme";
 
 // Holder's device for "Foreheads". The phone goes on the holder's forehead so the group sees the
@@ -100,6 +101,8 @@ function Setup() {
       </section>
 
       <button onClick={start} className="ff-sticker w-full bg-primary px-4 py-4 font-display text-2xl text-primary-ink">START GAME</button>
+
+      <HowToPlay game="headsup" />
     </div>
   );
 }

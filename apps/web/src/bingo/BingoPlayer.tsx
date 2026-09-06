@@ -2,6 +2,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { BINGO_COLUMNS, BINGO_LETTERS, ballById, dareForBall } from "@ff/engine";
 import { BingoDisplayProvider, useBingo } from "../store/bingoStore";
+import { HowToPlay } from "../net/howtoplay";
 
 // A Bingo PLAYER's phone. Players hold a physical card; this screen is a pure follower of the
 // host — it shows the current call and (once the host reveals it) its dare, and nothing updates
@@ -92,7 +93,10 @@ function BingoPlayerView() {
             <div className="ff-sticker bg-surface px-5 py-4 text-center font-display text-2xl tracking-widest text-ink/70">
               WAITING FOR THE DARE…
             </div>
-          ) : null}
+          ) : (
+            // Pre-game: nothing called yet — player is waiting for the host, so show the rules.
+            <HowToPlay game="bingo" />
+          )}
         </div>
       </div>
 

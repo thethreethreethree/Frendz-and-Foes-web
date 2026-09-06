@@ -4,6 +4,7 @@ import { playSfx } from "../audio/sfx";
 import { loadPlayer2, m2Pick, m2Kill, m2Vote, m2Investigate, m2Protect, m2LastWords, type V2Announce, type V2Character, type V2Player } from "../net/murder2";
 import { getBrand } from "../brand/theme";
 import { AvatarNameForm, AvatarBadge } from "../net/avatars";
+import { HowToPlay } from "../net/howtoplay";
 
 // location string → allocated scene-plate path (mirrors the allocation slug).
 function locationPlate(location: string) {
@@ -95,6 +96,10 @@ function Lobby({ state, you }: { state: ReturnType<typeof useMurder2>["state"] &
             </button>
           );
         })}
+      </div>
+      {/* Lobby: player has joined and is picking a character while waiting for the host to start. */}
+      <div className="mt-4">
+        <HowToPlay game="murder" />
       </div>
     </div>
   );
