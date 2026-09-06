@@ -59,7 +59,25 @@ const sessionUser = (req) => {
   return s ? getUser(s.uid) : null;
 };
 
+// Simple in-memory per-IP rate limiter for the public auth endpoints (open signup invites abuse).
+// req.ip is the real client behind nginx because trust proxy is set above.
+const authHits = new Map(); // `${ip}:${bucket}` -> { windowStart, count }
+function rateLimited(req, res, bucket, max, windowMs) {
+  const key = `${req.ip}:${bucket}`;
+  const now = Date.now();
+  const s = authHits.get(key) || { windowStart: now, count: 0 };
+  if (now - s.windowStart > windowMs) { s.windowStart = now; s.count = 0; }
+  s.count += 1;
+  authHits.set(key, s);
+  if (s.count > max) {
+    res.status(429).json({ error: "Too many attempts — please wait a minute and try again." });
+    return true;
+  }
+  return false;
+}
+
 app.post("/api/auth/signup", (req, res) => {
+  if (rateLimited(req, res, "signup", 6, 15 * 60_000)) return; // 6 new accounts / 15 min / IP
   const { email, password } = req.body || {};
   const r = createUser(email, password);
   if (r.error) return res.status(400).json({ error: r.error });
@@ -68,6 +86,7 @@ app.post("/api/auth/signup", (req, res) => {
 });
 
 app.post("/api/auth/login", (req, res) => {
+  if (rateLimited(req, res, "login", 12, 10 * 60_000)) return; // 12 tries / 10 min / IP
   const { email, password } = req.body || {};
   const user = authenticate(email, password);
   if (!user) return res.status(401).json({ error: "Wrong email or password." });
