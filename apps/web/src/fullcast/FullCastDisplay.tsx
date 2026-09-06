@@ -1,4 +1,6 @@
+import { useEffect, useRef } from "react";
 import { useFullCastView } from "../store/fullcastStore";
+import { useRexHost, RexBanner } from "../host/RexHost";
 import { Logo } from "../display/Logo";
 import { getBrand } from "../brand/theme";
 import type { WordGamePublic } from "@ff/engine";
@@ -7,9 +9,33 @@ import type { WordGamePublic } from "@ff/engine";
 // guesser might watch the TV).
 
 export function FullCastDisplay() {
-  const { pub } = useFullCastView();
+  const { pub, connection } = useFullCastView();
   const label = getBrand().games.reverse?.label ?? "Full Cast";
   const active = pub.teams[pub.activeIdx];
+
+  // Rex, the AI host, reacts to a few high-impact moments (display only — one voice per room).
+  const { line, say } = useRexHost(connection.room, "Full Cast");
+  const rex = useRef({ started: false, lastTurn: "", won: false });
+  useEffect(() => {
+    const st = rex.current;
+    if ((pub.phase === "ready" || pub.phase === "playing") && !st.started) {
+      st.started = true;
+      say("game_start");
+    }
+    if (pub.phase === "turnover") {
+      const key = `${pub.round}:${pub.activeIdx}`;
+      if (st.lastTurn !== key) {
+        st.lastTurn = key;
+        say("turnover", { team: pub.teams[pub.activeIdx]?.name, got: pub.turnGot });
+      }
+    }
+    if (pub.phase === "ended" && !st.won) {
+      st.won = true;
+      const w = winnerOf(pub);
+      if (w) say("winner", { team: w.name });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pub.phase, pub.round, pub.activeIdx, say]);
 
   return (
     <div className="ff-backdrop relative flex h-full w-full flex-col items-center justify-center overflow-hidden p-8 text-center text-ink">
@@ -70,6 +96,8 @@ export function FullCastDisplay() {
           <Scoreboard />
         </div>
       )}
+
+      <RexBanner line={line} />
     </div>
   );
 }

@@ -1,4 +1,6 @@
+import { useEffect, useRef } from "react";
 import { useOffLimitsView } from "../store/offlimitsStore";
+import { useRexHost, RexBanner } from "../host/RexHost";
 import { Logo } from "../display/Logo";
 import { getBrand } from "../brand/theme";
 
@@ -7,9 +9,33 @@ import { getBrand } from "../brand/theme";
 // shows the review of words that were played.
 
 export function OffLimitsDisplay() {
-  const { pub } = useOffLimitsView();
+  const { pub, connection } = useOffLimitsView();
   const label = getBrand().games.taboo?.label ?? "Off Limits";
   const active = pub.teams[pub.activeIdx];
+
+  // Rex, the AI host, reacts to a few high-impact moments (display only — one voice per room).
+  const { line, say } = useRexHost(connection.room, "Off Limits");
+  const rex = useRef({ started: false, lastTurn: "", won: false });
+  useEffect(() => {
+    const st = rex.current;
+    if ((pub.phase === "ready" || pub.phase === "playing") && !st.started) {
+      st.started = true;
+      say("game_start");
+    }
+    if (pub.phase === "turnover") {
+      const key = `${pub.round}:${pub.activeIdx}`;
+      if (st.lastTurn !== key) {
+        st.lastTurn = key;
+        say("turnover", { team: pub.teams[pub.activeIdx]?.name, got: pub.turnGot });
+      }
+    }
+    if (pub.phase === "ended" && !st.won) {
+      st.won = true;
+      const w = winnerOf(pub);
+      if (w) say("winner", { team: w.name });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pub.phase, pub.round, pub.activeIdx, say]);
 
   return (
     <div className="ff-backdrop relative flex h-full w-full flex-col items-center justify-center overflow-hidden p-8 text-center text-ink">
@@ -57,6 +83,8 @@ export function OffLimitsDisplay() {
           <Scoreboard />
         </div>
       )}
+
+      <RexBanner line={line} />
     </div>
   );
 }

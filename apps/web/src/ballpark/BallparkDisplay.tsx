@@ -1,4 +1,6 @@
+import { useEffect, useRef } from "react";
 import { useBallpark } from "./useBallpark";
+import { useRexHost, RexBanner } from "../host/RexHost";
 import { Logo } from "../display/Logo";
 import { QR } from "../net/pairing";
 import { ballparkJoinUrl, controllerUrl } from "../net/room";
@@ -9,6 +11,29 @@ import type { BpState } from "../net/ballpark";
 export function BallparkDisplay({ room }: { room: string }) {
   const { state } = useBallpark(room, "display");
   const label = getBrand().games.ballpark?.label ?? "Ballpark";
+
+  // Rex, the AI host, reacts to Ballpark moments (display only — one voice per room).
+  const { line, say } = useRexHost(room, label);
+  const rex = useRef({ started: false, revealRound: -1, ended: false });
+  useEffect(() => {
+    if (!state) return;
+    const st = rex.current;
+    if (state.phase !== "lobby" && !st.started) {
+      st.started = true;
+      say("intro");
+    }
+    if (state.phase === "reveal" && st.revealRound !== state.round) {
+      st.revealRound = state.round;
+      say("reveal", { answer: state.answer, closest: state.winningValue });
+    }
+    if (state.phase === "ended" && !st.ended) {
+      st.ended = true;
+      const leader = [...state.players].sort((a, b) => b.score - a.score)[0];
+      if (leader) say("ended", { name: leader.name });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.phase, state?.round, say]);
+
   if (!state) return <Center><p className="text-muted">Connecting…</p></Center>;
 
   if (state.phase === "lobby") {
@@ -33,7 +58,7 @@ export function BallparkDisplay({ room }: { room: string }) {
   }
 
   return (
-    <div className="ff-backdrop flex h-full w-full flex-col items-center gap-4 overflow-auto p-8 text-center text-ink">
+    <div className="ff-backdrop relative flex h-full w-full flex-col items-center gap-4 overflow-auto p-8 text-center text-ink">
       <div className="text-sm font-semibold uppercase tracking-widest text-muted">Round {state.round}/{state.totalRounds}</div>
       <div className="ff-title max-w-3xl text-4xl" style={{ textWrap: "balance" }}>{state.question}</div>
 
@@ -69,6 +94,8 @@ export function BallparkDisplay({ room }: { room: string }) {
 
       {(state.phase === "reveal" || state.phase === "ended") && <Standings state={state} />}
       {state.phase === "ended" && <div className="ff-title text-5xl text-primary">Final standings</div>}
+
+      <RexBanner line={line} />
     </div>
   );
 }

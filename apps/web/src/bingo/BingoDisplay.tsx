@@ -1,6 +1,8 @@
+import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { BINGO_COLUMNS, BINGO_LETTERS, ballById, dareForBall } from "@ff/engine";
 import { useBingo } from "../store/bingoStore";
+import { useRexHost, RexBanner } from "../host/RexHost";
 import { BingoLogo } from "../display/Logo";
 import { MusicPlayer } from "../music/MusicPlayer";
 import { QR } from "../net/pairing";
@@ -18,6 +20,32 @@ export function BingoDisplay() {
   const { bingo, joinQrVisible, connection } = useBingo();
   const cur = ballById(bingo.currentId);
   const drawn = new Set(bingo.drawn);
+
+  // Rex, the AI host, reacts to Bingo moments (display only — one voice per room).
+  const { line, say } = useRexHost(connection.room, "Bingo Night");
+  const rex = useRef({ introduced: false, lastBallId: "", callCount: 0, won: false });
+  useEffect(() => {
+    const st = rex.current;
+    if (bingo.currentId && bingo.currentId !== st.lastBallId) {
+      st.lastBallId = bingo.currentId;
+      const ball = ballById(bingo.currentId);
+      if (!st.introduced) {
+        st.introduced = true;
+        say("intro");
+      } else {
+        // Throttle: only chime in every few balls, not all 75.
+        st.callCount += 1;
+        if (st.callCount % 5 === 0 && ball) {
+          say("ball_called", { ball: `${ball.letter}${ball.number}` });
+        }
+      }
+    }
+    if (bingo.drawn.length >= 75 && !st.won) {
+      st.won = true;
+      say("bingo");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bingo.currentId, bingo.drawn.length, say]);
 
   return (
     <div className="ff-backdrop-bingo relative flex h-full w-full flex-col overflow-hidden p-6">
@@ -129,6 +157,8 @@ export function BingoDisplay() {
           ))}
         </div>
       </main>
+
+      <RexBanner line={line} />
     </div>
   );
 }

@@ -1,6 +1,8 @@
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { currentQuestion } from "@ff/engine";
 import { useGame } from "../store/gameStore";
+import { useRexHost, RexBanner } from "../host/RexHost";
 import { Logo } from "./Logo";
 import { FloatingAccents } from "./Icons";
 import { MusicPlayer } from "../music/MusicPlayer";
@@ -10,8 +12,37 @@ import { Participants } from "./Participants";
 import { Announcement } from "./Announcement";
 
 export function DisplayView() {
-  const { state, timerRemaining, buzzersArmed, scoresVisible } = useGame();
+  const { state, timerRemaining, buzzersArmed, scoresVisible, connection } = useGame();
   const question = currentQuestion(state);
+
+  // Rex, the AI host, reacts to Feud moments (display only — one voice per room).
+  const { line, say } = useRexHost(connection.room, "Survey Showdown");
+  const rex = useRef({ introduced: false, announced: new Set<string>(), won: false });
+  useEffect(() => {
+    const st = rex.current;
+    if (state.phase === "playing" && !st.introduced) {
+      st.introduced = true;
+      say("intro");
+    }
+    // React the first time each answer flips to revealed on the current question.
+    if (state.phase === "playing" && question) {
+      for (const a of question.answers) {
+        if (a.revealed && !st.announced.has(a.id)) {
+          st.announced.add(a.id);
+          const team = a.awardedTeamId
+            ? state.teams.find((t) => t.id === a.awardedTeamId)
+            : null;
+          say("reveal", { answer: a.text, team: team?.name });
+        }
+      }
+    }
+    if (state.phase === "finished" && !st.won) {
+      st.won = true;
+      const w = [...state.teams].sort((a, b) => b.score - a.score)[0];
+      if (w) say("winner", { name: w.name, score: w.score });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.phase, state.currentQuestionIndex, question, say]);
 
   return (
     <div className="ff-backdrop relative flex h-full w-full flex-col overflow-hidden p-6">
@@ -77,6 +108,8 @@ export function DisplayView() {
           <Scoreboard state={state} />
         </footer>
       )}
+
+      <RexBanner line={line} />
     </div>
   );
 }

@@ -1,4 +1,6 @@
+import { useEffect, useRef } from "react";
 import { useCodenames } from "./useCodenames";
+import { useRexHost, RexBanner } from "../host/RexHost";
 import { CodenamesBoard } from "./CodenamesBoard";
 import { Logo } from "../display/Logo";
 import { QR } from "../net/pairing";
@@ -10,6 +12,33 @@ import type { CnState, CnTeam } from "../net/codenames";
 export function CodenamesDisplay({ room }: { room: string }) {
   const { state } = useCodenames(room, "display");
   const label = getBrand().games.codenames?.label ?? "Cover Ops";
+
+  // Rex, the AI host, reacts to Cover Ops beats (display only — one voice per room). No announce feed
+  // here, so Rex is driven off real state transitions and deduped via refs so each moment fires once,
+  // never every render: game start, each new clue (keyed on word+team), and the winner at game over.
+  const { line, say } = useRexHost(room, "Cover Ops");
+  const rex = useRef({ started: false, lastClue: "", ended: false });
+  useEffect(() => {
+    if (!state) return;
+    const st = rex.current;
+    if (state.phase === "playing" && !st.started) {
+      st.started = true;
+      say("start");
+    }
+    if (state.clue) {
+      const key = `${state.clue.team}:${state.clue.word}`;
+      if (key !== st.lastClue) {
+        st.lastClue = key;
+        say("clue", { clue: state.clue.word, team: state.clue.team === "red" ? "Red" : "Blue" });
+      }
+    }
+    if (state.phase === "ended" && !st.ended) {
+      st.ended = true;
+      say("winner", { name: state.winner === "red" ? "Red" : "Blue" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.phase, state?.clue?.word, state?.clue?.team, state?.winner]);
+
   if (!state) return <Center><p className="text-muted">Connecting…</p></Center>;
 
   if (state.phase === "lobby") {
@@ -31,7 +60,7 @@ export function CodenamesDisplay({ room }: { room: string }) {
   }
 
   return (
-    <div className="ff-backdrop flex h-full w-full flex-col items-center gap-3 overflow-hidden p-4 text-ink">
+    <div className="ff-backdrop relative flex h-full w-full flex-col items-center gap-3 overflow-hidden p-4 text-ink">
       {/* Top bar: turn + clue + counts */}
       <div className="flex w-full max-w-4xl items-center justify-between gap-3">
         <TeamCount label="Red" n={state.counts.red} color="#d64550" active={state.turn === "red"} />
@@ -63,6 +92,8 @@ export function CodenamesDisplay({ room }: { room: string }) {
       {state.log.length > 0 && (
         <div className="max-w-3xl text-center text-sm text-muted">{state.log[state.log.length - 1]}</div>
       )}
+
+      <RexBanner line={line} />
     </div>
   );
 }

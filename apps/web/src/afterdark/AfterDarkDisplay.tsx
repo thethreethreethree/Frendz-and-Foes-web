@@ -1,4 +1,6 @@
+import { useEffect, useRef } from "react";
 import { useAfterDark } from "./useAfterDark";
+import { useRexHost, RexBanner } from "../host/RexHost";
 import { Logo } from "../display/Logo";
 import { QR } from "../net/pairing";
 import { afterdarkJoinUrl, controllerUrl } from "../net/room";
@@ -10,6 +12,34 @@ import { getBrand } from "../brand/theme";
 export function AfterDarkDisplay({ room }: { room: string }) {
   const { state } = useAfterDark(room, "display");
   const label = getBrand().games.afterdark?.label ?? "After Dark";
+
+  // Rex, the AI host, works the room After Dark (display only — one filthy voice per room).
+  const { line, say } = useRexHost(room, label);
+  const rex = useRef({ started: false, judgeRound: -1, revealRound: -1, ended: false });
+  useEffect(() => {
+    if (!state) return;
+    const st = rex.current;
+    const judgeName = state.players.find((p) => p.id === state.judgeId)?.name;
+    if (state.phase !== "lobby" && !st.started) {
+      st.started = true;
+      say("intro");
+    }
+    if (state.phase === "judging" && st.judgeRound !== state.round) {
+      st.judgeRound = state.round;
+      say("judging", { judge: judgeName });
+    }
+    if (state.phase === "reveal" && st.revealRound !== state.round) {
+      st.revealRound = state.round;
+      say("reveal", { name: state.winner?.name });
+    }
+    if (state.phase === "ended" && !st.ended) {
+      st.ended = true;
+      const champ = [...state.players].sort((a, b) => b.score - a.score)[0];
+      say("ended", { name: champ?.name });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.phase, state?.round, say]);
+
   if (!state) return <Center><p className="text-muted">Connecting…</p></Center>;
   const judge = state.players.find((p) => p.id === state.judgeId)?.name ?? "?";
 
@@ -29,7 +59,7 @@ export function AfterDarkDisplay({ room }: { room: string }) {
   }
 
   return (
-    <div className="ff-backdrop flex h-full w-full flex-col items-center gap-4 overflow-auto p-8 text-center text-ink">
+    <div className="ff-backdrop relative flex h-full w-full flex-col items-center gap-4 overflow-auto p-8 text-center text-ink">
       <div className="text-sm font-semibold uppercase tracking-widest text-muted">Round {state.round} · Judge: {judge} · first to {state.config.winScore}</div>
       <div className="ff-title max-w-3xl text-4xl" style={{ textWrap: "balance" }}>{state.prompt?.text}</div>
 
@@ -61,6 +91,8 @@ export function AfterDarkDisplay({ room }: { room: string }) {
 
       {(state.phase === "reveal" || state.phase === "ended") && <Standings state={state} />}
       {state.phase === "ended" && <div className="ff-title text-5xl text-primary">Champion!</div>}
+
+      <RexBanner line={line} />
     </div>
   );
 }

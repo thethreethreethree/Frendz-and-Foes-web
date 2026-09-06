@@ -1,4 +1,6 @@
+import { useEffect, useRef } from "react";
 import { useTelestrations } from "./useTelestrations";
+import { useRexHost, RexBanner } from "../host/RexHost";
 import { StrokesView, type Stroke } from "../pictionary/PictionaryCanvas";
 import { Logo } from "../display/Logo";
 import { QR } from "../net/pairing";
@@ -10,6 +12,32 @@ import { getBrand } from "../brand/theme";
 export function TelestrationsDisplay({ room }: { room: string }) {
   const { state } = useTelestrations(room, "display");
   const label = getBrand().games.telestrations?.label ?? "Sketch Relay";
+
+  // Rex, the AI host, reacts to Sketch Relay moments (display only — one voice per room).
+  const { line, say } = useRexHost(room, label);
+  const rex = useRef({ started: false, revealed: false, lastBook: -1, ended: false });
+  useEffect(() => {
+    if (!state) return;
+    const st = rex.current;
+    if (state.phase === "playing" && !st.started) {
+      st.started = true;
+      say("intro");
+    }
+    if (state.phase === "reveal" && !st.revealed) {
+      st.revealed = true;
+      st.lastBook = state.reveal?.bookIndex ?? 0;
+      say("reveal_intro");
+    } else if (state.phase === "reveal" && state.reveal && state.reveal.bookIndex !== st.lastBook) {
+      st.lastBook = state.reveal.bookIndex;
+      say("new_book", { book: state.reveal.bookIndex + 1 });
+    }
+    if (state.phase === "ended" && !st.ended) {
+      st.ended = true;
+      say("ended");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.phase, state?.reveal?.bookIndex, say]);
+
   if (!state) return <Center><p className="text-muted">Connecting…</p></Center>;
 
   if (state.phase === "lobby") {
@@ -41,6 +69,7 @@ export function TelestrationsDisplay({ room }: { room: string }) {
           ))}
         </div>
         <div className="mt-3 text-2xl font-semibold text-primary">{done}/{state.players.length} done</div>
+        <RexBanner line={line} />
       </Center>
     );
   }
@@ -48,7 +77,7 @@ export function TelestrationsDisplay({ room }: { room: string }) {
   // reveal / ended
   const r = state.reveal;
   return (
-    <div className="ff-backdrop flex h-full w-full flex-col items-center gap-3 overflow-auto p-6 text-center text-ink">
+    <div className="ff-backdrop relative flex h-full w-full flex-col items-center gap-3 overflow-auto p-6 text-center text-ink">
       {state.phase === "ended" || !r ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-3"><div className="ff-title text-7xl">That's a wrap! 🎉</div><p className="text-lg text-muted">Hit reset on the host to play again.</p></div>
       ) : (
@@ -68,6 +97,8 @@ export function TelestrationsDisplay({ room }: { room: string }) {
           {r.complete && <div className="text-lg font-semibold text-muted">End of the chain — next book →</div>}
         </>
       )}
+
+      <RexBanner line={line} />
     </div>
   );
 }

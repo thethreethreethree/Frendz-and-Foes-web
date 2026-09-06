@@ -1,13 +1,31 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import QRCode from "qrcode";
 import { useMurder2 } from "./useMurder2";
+import { useRexHost, RexBanner } from "../host/RexHost";
 import { playSfx } from "../audio/sfx";
 import type { V2Announce, V2Character, V2Clue, V2Player, V2State } from "../net/murder2";
 
 // Big-screen display for Murder v2.
 export function Murder2Display({ room }: { room: string }) {
   const { state, announce } = useMurder2(room, "display");
+
+  // Rex, the AI host, reacts to the big beats (display only — one voice per room). Driven off the
+  // announce feed and deduped on `nonce` (same key MomentBanner uses) so each announcement fires at
+  // most one Rex line — never on every render, never twice for a replayed/reconnected announce.
+  const { line, say } = useRexHost(room, "Murder Mystery");
+  const rexNonce = useRef(0);
+  useEffect(() => {
+    if (!announce || announce.nonce === rexNonce.current) return;
+    rexNonce.current = announce.nonce;
+    const a = announce.a;
+    if (a.type === "start") say("start");
+    else if (a.type === "killed") say("killed", { name: a.victim });
+    else if (a.type === "vote-caught") say("caught", { name: a.caught });
+    else if (a.type === "end") say("winner", { name: a.winner === "town" ? "the town" : "the murderer" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [announce]);
+
   // Show the lobby (with the join QR) immediately, even before any player has joined — otherwise
   // players would have no QR to scan and no game state could ever start.
   if (!state || state.phase === "lobby") return <Lobby room={room} state={state} />;
@@ -23,6 +41,7 @@ export function Murder2Display({ room }: { room: string }) {
         {state.phase === "ended" && <EndBanner state={state} />}
       </div>
       <MomentBanner announce={announce} />
+      <RexBanner line={line} />
     </Backdrop>
   );
 }

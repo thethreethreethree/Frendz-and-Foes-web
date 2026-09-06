@@ -1,4 +1,6 @@
+import { useEffect, useRef } from "react";
 import { useJustOne } from "./useJustOne";
+import { useRexHost, RexBanner } from "../host/RexHost";
 import { Logo } from "../display/Logo";
 import { QR } from "../net/pairing";
 import { justoneJoinUrl, controllerUrl } from "../net/room";
@@ -11,6 +13,32 @@ import type { JoState } from "../net/justone";
 export function JustOneDisplay({ room }: { room: string }) {
   const { state, word } = useJustOne(room, "display");
   const label = getBrand().games.justone?.label ?? "Solo Clue";
+
+  // Rex, the AI host, reacts to Solo Clue moments (display only — one voice per room).
+  const { line, say } = useRexHost(room, label);
+  const rex = useRef({ started: false, revealRound: -1, overRound: -1, ended: false });
+  useEffect(() => {
+    if (!state) return;
+    const st = rex.current;
+    if (state.phase !== "lobby" && !st.started) {
+      st.started = true;
+      say("intro");
+    }
+    if (state.phase === "reveal" && st.revealRound !== state.round) {
+      st.revealRound = state.round;
+      say("reveal");
+    }
+    if (state.phase === "roundover" && st.overRound !== state.round) {
+      st.overRound = state.round;
+      say("roundover", { got: state.lastGot ? "yes" : "no" });
+    }
+    if (state.phase === "ended" && !st.ended) {
+      st.ended = true;
+      say("ended", { score: `${state.score}/${state.totalRounds}` });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.phase, state?.round, say]);
+
   if (!state) return <Center><p className="text-muted">Connecting…</p></Center>;
 
   const guesser = state.players.find((p) => p.id === state.guesserId)?.name ?? "?";
@@ -34,7 +62,7 @@ export function JustOneDisplay({ room }: { room: string }) {
   }
 
   return (
-    <div className="ff-backdrop flex h-full w-full flex-col items-center justify-center gap-4 overflow-hidden p-8 text-center text-ink">
+    <div className="ff-backdrop relative flex h-full w-full flex-col items-center justify-center gap-4 overflow-hidden p-8 text-center text-ink">
       <div className="text-sm font-semibold uppercase tracking-widest text-muted">
         Round {state.round}/{state.totalRounds} · Score {state.score}
       </div>
@@ -87,6 +115,8 @@ export function JustOneDisplay({ room }: { room: string }) {
           <div className="ff-title text-8xl text-primary">{state.score}/{state.totalRounds}</div>
         </>
       )}
+
+      <RexBanner line={line} />
     </div>
   );
 }
