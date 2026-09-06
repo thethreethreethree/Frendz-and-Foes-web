@@ -19,6 +19,16 @@ const GAME_GRADIENT: Record<string, [string, string]> = {
 };
 const ORDER: GameType[] = ["trivia", "murder", "codenames", "taboo", "pictionary", "bingo", "feud", "headsup", "justone", "ballpark", "telestrations", "reverse", "monikers", "afterdark"];
 
+// Rex's animal regulars — the cutouts generated for PlayZoo. Emoji is the graceful fallback
+// if an image is missing, so the strip never shows a broken frame.
+const CAST: { file: string; name: string; role: string; emoji: string }[] = [
+  { file: "vince",  name: "Vince",  role: "The schemer",  emoji: "🦝" },
+  { file: "trixie", name: "Trixie", role: "The diva",     emoji: "🦩" },
+  { file: "boomer", name: "Boomer", role: "The bouncer",  emoji: "🦍" },
+  { file: "pixel",  name: "Pixel",  role: "The loudmouth", emoji: "🦜" },
+  { file: "mo",     name: "Mo",     role: "The chill one", emoji: "🦥" },
+];
+
 export function HomeRoute() {
   const brand = getBrand();
   const { line, say } = useRexHost(null, "PlayZoo");
@@ -73,6 +83,25 @@ export function HomeRoute() {
               "Settle down, you animals — winner takes the enclosure. 🦁"
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* MEET THE CAST */}
+      <section className="relative mx-auto max-w-5xl px-6 py-10">
+        <div className="text-center">
+          <h2 className="ff-title text-3xl font-extrabold sm:text-4xl">Meet the animals</h2>
+          <p className="mt-2 text-muted">Rex's regulars. You'll be one of them soon enough.</p>
+        </div>
+        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+          {CAST.map((c) => (
+            <div key={c.file} className="group flex flex-col items-center rounded-2xl border border-line bg-surface/50 p-4 text-center backdrop-blur transition duration-150 hover:-translate-y-1 hover:bg-surface/70">
+              <div className="grid h-28 w-28 place-items-center">
+                <CastImg file={c.file} emoji={c.emoji} name={c.name} />
+              </div>
+              <div className="ff-title mt-2 text-lg font-bold">{c.name}</div>
+              <div className="text-xs font-medium text-muted">{c.role}</div>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -148,4 +177,18 @@ function RexAvatar() {
   const [ok, setOk] = useState(true);
   if (!ok) return <span>🦁</span>;
   return <img src="/crew/rex-keeper.png" alt="Rex" className="h-full w-full object-cover" onError={() => setOk(false)} />;
+}
+
+// A cast portrait that falls back to its emoji if the cutout PNG hasn't been generated.
+function CastImg({ file, emoji, name }: { file: string; emoji: string; name: string }) {
+  const [ok, setOk] = useState(true);
+  if (!ok) return <span className="text-6xl">{emoji}</span>;
+  return (
+    <img
+      src={`/crew/${file}.png`}
+      alt={name}
+      className="h-full w-full object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.45)] transition-transform duration-150 group-hover:scale-105"
+      onError={() => setOk(false)}
+    />
+  );
 }
