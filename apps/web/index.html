@@ -5,6 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <link rel="icon" type="image/webp" href="/brand/icon-app.webp" />
     <title>PlayZoo</title>
+    <meta name="description" content="PlayZoo — party games hosted by Rex, your AI zookeeper. Play on the big screen with your phones." />
+
+    <!-- Installable PWA (add to home screen). Icons resolve once the art bible's icons are generated. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#0b0f1a" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="apple-touch-icon" href="/web/icon-app.png" />
+
+    <!-- Social share card (Open Graph + Twitter). og:image lands when web/og-share.jpg is generated. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="PlayZoo" />
+    <meta property="og:title" content="PlayZoo — party games with an AI host" />
+    <meta property="og:description" content="A zoo of party games hosted by Rex, your AI zookeeper. TV + phones, 14 games, one wild night." />
+    <meta property="og:image" content="/web/og-share.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="PlayZoo — party games with an AI host" />
+    <meta name="twitter:description" content="A zoo of party games hosted by Rex, your AI zookeeper. TV + phones, 14 games, one wild night." />
+    <meta name="twitter:image" content="/web/og-share.jpg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- Default brand fonts for first paint. applyBrand() (src/brand/theme.ts) reuses this
