@@ -140,7 +140,7 @@ function RexFace({ size, bare = false }: { size: number; bare?: boolean }) {
     );
   return (
     <img
-      src="/crew/rex-keeper.png"
+      src="/crew/rex-cutout.png"
       alt="Rex"
       style={dim}
       onError={() => setOk(false)}
