@@ -19,14 +19,17 @@ const GAME_GRADIENT: Record<string, [string, string]> = {
 };
 const ORDER: GameType[] = ["trivia", "murder", "codenames", "taboo", "pictionary", "bingo", "feud", "headsup", "justone", "ballpark", "telestrations", "reverse", "monikers", "afterdark"];
 
-// Rex's animal regulars — the cutouts generated for PlayZoo. Emoji is the graceful fallback
-// if an image is missing, so the strip never shows a broken frame.
-const CAST: { file: string; name: string; role: string; emoji: string }[] = [
-  { file: "vince",  name: "John",   role: "The schemer",   emoji: "🦝" },
-  { file: "trixie", name: "Trixie", role: "The diva",      emoji: "🦩" },
-  { file: "boomer", name: "Boomer", role: "The bouncer",   emoji: "🦍" },
-  { file: "pixel",  name: "Pixel",  role: "The loudmouth", emoji: "🦜" },
-  { file: "mo",     name: "Mo",     role: "The chill one", emoji: "🦥" },
+// The full PlayZoo cast — all 20 animal cutouts (full-body, transparent, in /cast). Ordered so no
+// two darker-silhouette figures (penguin, panda, gorilla, otter, bear, sloth, cat) sit adjacent in
+// the parade. Emoji is the graceful fallback if an image is missing, so the strip never breaks.
+const CAST: { slug: string; emoji: string }[] = [
+  { slug: "toucan", emoji: "🐦" }, { slug: "penguin", emoji: "🐧" }, { slug: "flamingo", emoji: "🦩" },
+  { slug: "panda", emoji: "🐼" }, { slug: "crocodile", emoji: "🐊" }, { slug: "otter", emoji: "🦦" },
+  { slug: "zebra", emoji: "🦓" }, { slug: "gorilla", emoji: "🦍" }, { slug: "parrot", emoji: "🦜" },
+  { slug: "bear", emoji: "🐻" }, { slug: "chameleon", emoji: "🦎" }, { slug: "sloth", emoji: "🦥" },
+  { slug: "lion", emoji: "🦁" }, { slug: "cat", emoji: "🐱" }, { slug: "rhino", emoji: "🦏" },
+  { slug: "owl", emoji: "🦉" }, { slug: "raccoon", emoji: "🦝" }, { slug: "hippo", emoji: "🦛" },
+  { slug: "fox", emoji: "🦊" }, { slug: "skunk", emoji: "🦨" },
 ];
 
 export function HomeRoute() {
@@ -86,22 +89,36 @@ export function HomeRoute() {
         </div>
       </section>
 
-      {/* MEET THE CAST */}
-      <section className="relative mx-auto max-w-5xl px-6 py-10">
-        <div className="text-center">
+      {/* MEET THE ANIMALS — a full-bleed parade that scrolls the whole cast left→right on a
+          seamless loop. The track holds two copies of CAST and slides from -50%→0, so the wrap is
+          invisible; hovering the strip pauses it, and reduced-motion users get a static row. */}
+      <section className="relative py-12">
+        <div className="px-6 text-center">
           <h2 className="ff-title text-3xl font-extrabold sm:text-4xl">Meet the animals</h2>
-          <p className="mt-2 text-muted">You'll join one of these goons and be part of their team soon enough.</p>
+          <p className="mt-2 text-muted">Twenty goons roam the zoo. You'll join one of their teams soon enough.</p>
         </div>
-        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-          {CAST.map((c) => (
-            <div key={c.file} className="group flex flex-col items-center rounded-2xl border border-line bg-surface/50 px-3 pb-4 pt-3 text-center backdrop-blur transition duration-150 hover:-translate-y-1 hover:bg-surface/70">
-              <div className="flex h-28 w-full items-end justify-center overflow-hidden">
-                <CastImg file={c.file} emoji={c.emoji} name={c.name} />
-              </div>
-              <div className="ff-title mt-3 text-lg font-bold leading-tight text-ink">{c.name}</div>
-              <div className="mt-0.5 text-xs font-medium text-muted">{c.role}</div>
-            </div>
-          ))}
+
+        <style>{`@keyframes pz-parade { from { transform: translateX(-50%); } to { transform: translateX(0); } }`}</style>
+
+        <div className="group relative mt-8 overflow-hidden">
+          {/* edge fades so figures slide in/out of view instead of popping at the borders */}
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-14 bg-gradient-to-r from-canvas to-transparent sm:w-28" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-14 bg-gradient-to-l from-canvas to-transparent sm:w-28" />
+          <ul
+            className="flex w-max items-end gap-7 pr-7 hover:[animation-play-state:paused] motion-reduce:animate-none sm:gap-9 sm:pr-9"
+            style={{ animation: "pz-parade 55s linear infinite" }}
+          >
+            {[...CAST, ...CAST].map((c, i) => (
+              <li key={`${c.slug}-${i}`} className="relative flex shrink-0 items-end justify-center">
+                {/* soft under-glow lifts the darker silhouettes off the dark backdrop */}
+                <span
+                  className="pointer-events-none absolute bottom-3 left-1/2 h-16 w-24 -translate-x-1/2 rounded-full bg-white/10 blur-2xl"
+                  aria-hidden
+                />
+                <ParadeImg slug={c.slug} emoji={c.emoji} />
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
@@ -196,16 +213,19 @@ function TileArt({ game, icon }: { game: string; icon?: string }) {
   );
 }
 
-// A cast portrait that falls back to its emoji if the cutout PNG hasn't been generated.
-function CastImg({ file, emoji, name }: { file: string; emoji: string; name: string }) {
+// One full-body cast figure in the parade. Falls back to its emoji if the /cast cutout is missing,
+// so the strip never shows a broken frame. Hovering a figure lifts it slightly above the line.
+function ParadeImg({ slug, emoji }: { slug: string; emoji: string }) {
   const [ok, setOk] = useState(true);
-  if (!ok) return <span className="text-6xl">{emoji}</span>;
+  if (!ok) return <span className="grid h-32 w-24 place-items-end pb-2 text-6xl sm:h-44">{emoji}</span>;
   return (
     <img
-      src={`/crew/${file}.png`}
-      alt={name}
-      className="h-full w-full object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.45)] transition-transform duration-150 group-hover:scale-105"
+      src={`/cast/${slug}.png`}
+      alt=""
+      aria-hidden
+      loading="lazy"
       onError={() => setOk(false)}
+      className="relative h-32 w-auto object-contain drop-shadow-[0_12px_22px_rgba(0,0,0,0.55)] transition-transform duration-200 hover:-translate-y-2 hover:scale-105 sm:h-44"
     />
   );
 }
