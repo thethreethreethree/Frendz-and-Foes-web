@@ -22,14 +22,27 @@ const ORDER: GameType[] = ["trivia", "murder", "codenames", "taboo", "pictionary
 // The full PlayZoo cast — all 20 animal cutouts (full-body, transparent, in /cast). Ordered so no
 // two darker-silhouette figures (penguin, panda, gorilla, otter, bear, sloth, cat) sit adjacent in
 // the parade. Emoji is the graceful fallback if an image is missing, so the strip never breaks.
-const CAST: { slug: string; emoji: string }[] = [
-  { slug: "toucan", emoji: "🐦" }, { slug: "penguin", emoji: "🐧" }, { slug: "flamingo", emoji: "🦩" },
-  { slug: "panda", emoji: "🐼" }, { slug: "crocodile", emoji: "🐊" }, { slug: "otter", emoji: "🦦" },
-  { slug: "zebra", emoji: "🦓" }, { slug: "gorilla", emoji: "🦍" }, { slug: "parrot", emoji: "🦜" },
-  { slug: "bear", emoji: "🐻" }, { slug: "chameleon", emoji: "🦎" }, { slug: "sloth", emoji: "🦥" },
-  { slug: "lion", emoji: "🦁" }, { slug: "cat", emoji: "🐱" }, { slug: "rhino", emoji: "🦏" },
-  { slug: "owl", emoji: "🦉" }, { slug: "raccoon", emoji: "🦝" }, { slug: "hippo", emoji: "🦛" },
-  { slug: "fox", emoji: "🦊" }, { slug: "skunk", emoji: "🦨" },
+const CAST: { slug: string; emoji: string; name: string; role: string }[] = [
+  { slug: "toucan", emoji: "🐦", name: "Rico", role: "The DJ" },
+  { slug: "penguin", emoji: "🐧", name: "Waddles", role: "The try-hard" },
+  { slug: "flamingo", emoji: "🦩", name: "Trixie", role: "The diva" },
+  { slug: "panda", emoji: "🐼", name: "Bianca", role: "The drama queen" },
+  { slug: "crocodile", emoji: "🐊", name: "Chomp", role: "The competitor" },
+  { slug: "otter", emoji: "🦦", name: "Otis", role: "The prankster" },
+  { slug: "zebra", emoji: "🦓", name: "Zara", role: "The party starter" },
+  { slug: "gorilla", emoji: "🦍", name: "Boomer", role: "The bouncer" },
+  { slug: "parrot", emoji: "🦜", name: "Pixel", role: "The loudmouth" },
+  { slug: "bear", emoji: "🐻", name: "Bruno", role: "The bruiser" },
+  { slug: "chameleon", emoji: "🦎", name: "Kai", role: "The two-face" },
+  { slug: "sloth", emoji: "🦥", name: "Mo", role: "The chill one" },
+  { slug: "lion", emoji: "🦁", name: "Duke", role: "The big shot" },
+  { slug: "cat", emoji: "🐱", name: "Duchess", role: "The snob" },
+  { slug: "rhino", emoji: "🦏", name: "Tank", role: "The muscle" },
+  { slug: "owl", emoji: "🦉", name: "Hoot", role: "The know-it-all" },
+  { slug: "raccoon", emoji: "🦝", name: "John", role: "The schemer" },
+  { slug: "hippo", emoji: "🦛", name: "Hank", role: "The heavyweight" },
+  { slug: "fox", emoji: "🦊", name: "Kip", role: "The hustler" },
+  { slug: "skunk", emoji: "🦨", name: "Sludge", role: "The instigator" },
 ];
 
 export function HomeRoute() {
@@ -109,13 +122,24 @@ export function HomeRoute() {
             style={{ animation: "pz-parade 55s linear infinite" }}
           >
             {[...CAST, ...CAST].map((c, i) => (
-              <li key={`${c.slug}-${i}`} className="relative flex shrink-0 items-end justify-center">
-                {/* soft under-glow lifts the darker silhouettes off the dark backdrop */}
-                <span
-                  className="pointer-events-none absolute bottom-3 left-1/2 h-16 w-24 -translate-x-1/2 rounded-full bg-white/10 blur-2xl"
-                  aria-hidden
-                />
-                <ParadeImg slug={c.slug} emoji={c.emoji} />
+              <li key={`${c.slug}-${i}`} className="flex shrink-0 flex-col items-center">
+                <div className="relative flex items-end justify-center">
+                  {/* soft under-glow lifts the darker silhouettes off the dark backdrop */}
+                  <span
+                    className="pointer-events-none absolute bottom-3 left-1/2 h-16 w-24 -translate-x-1/2 rounded-full bg-white/10 blur-2xl"
+                    aria-hidden
+                  />
+                  <ParadeImg slug={c.slug} emoji={c.emoji} />
+                </div>
+                {/* fixed-height caption band so named and un-named figures keep the row even */}
+                <div className="mt-2 h-9 text-center">
+                  {c.name && (
+                    <>
+                      <div className="ff-title text-base font-bold leading-tight text-ink">{c.name}</div>
+                      {c.role && <div className="text-[11px] font-medium text-muted">{c.role}</div>}
+                    </>
+                  )}
+                </div>
               </li>
             ))}
           </ul>
