@@ -56,14 +56,20 @@ export function HomeRoute() {
   }, [say]);
 
   return (
-    <div className="ff-backdrop relative h-full overflow-y-auto text-ink">
-      {/* Night-zoo backdrop: the empty PlayZoo set, fixed so all content scrolls over it. The dark
-          scrim gradient keeps hero text + cards readable; ff-backdrop's gradient is the fallback. */}
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center"
-        style={{ backgroundImage: "linear-gradient(rgba(6,9,18,0.45), rgba(6,9,18,0.72)), url(/bg/home.jpg)" }}
-      />
+    <div
+      className="relative h-full overflow-y-auto text-ink"
+      style={{
+        // Night-zoo backdrop as the page's OWN background (children paint over it, so hero text +
+        // cards sit on top). Dark scrim gradient keeps text readable; canvas colour is the fallback
+        // if the image 404s. Fixed attachment so the scene stays put while content scrolls.
+        backgroundColor: "rgb(var(--c-canvas))",
+        backgroundImage: "linear-gradient(rgba(6,9,18,0.45), rgba(6,9,18,0.72)), url(/bg/home.jpg)",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundAttachment: "fixed",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
       <FloatingAccents />
 
       {/* HERO */}
