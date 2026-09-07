@@ -89,6 +89,14 @@ export function HomeRoute() {
         <img src="/ui/kickstarter-badge.png" alt="Back PlayZoo on Kickstarter" className="w-full" />
       </a>
 
+      {/* Top-right header slot — where sign-in/up will live once we launch. For now it's the waitlist. */}
+      <Link
+        to="/waitlist"
+        className="absolute right-3 top-3 z-30 whitespace-nowrap rounded-full border border-line bg-surface/85 px-4 py-2 font-display text-sm font-extrabold text-ink shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:border-primary hover:text-primary sm:right-5 sm:top-4 sm:px-5 sm:py-2.5 sm:text-base"
+      >
+        Join the waitlist →
+      </Link>
+
       {/* HERO */}
       <section className="relative mx-auto flex max-w-5xl flex-col items-center px-6 pt-16 pb-14 text-center sm:pt-24">
         <span className="rounded-full border border-line bg-surface/60 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.18em] text-muted backdrop-blur">

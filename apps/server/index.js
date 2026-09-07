@@ -26,6 +26,7 @@ import { registerBallparkHandlers } from "./ballpark.js";
 import { registerTelestrationsHandlers } from "./telestrations.js";
 import { registerAfterDarkHandlers } from "./afterdark.js";
 import { hostLine, hostChat, hostReady } from "./host.js";
+import { johnChat, johnReady } from "./john.js";
 import { getBrand, listBrandSlugs, upsertBrand, deleteBrand, dbReady } from "./db.js";
 import {
   authReady, createUser, authenticate, getUser, makeSession, readSession,
@@ -58,6 +59,14 @@ app.post("/api/rex-chat", async (req, res) => {
   res.json({ ...out, ready: hostReady() });
 });
 
+// John, the schemer — hosts the pre-launch waitlist and subtly pitches the Kickstarter. Same shape
+// as Rex's chat, his own persona. Body: { room?, messages: [{role, content}] }.
+app.post("/api/john-chat", async (req, res) => {
+  const { room, messages } = req.body || {};
+  const out = await johnChat({ room, messages });
+  res.json({ ...out, ready: johnReady() });
+});
+
 // --- Accounts (Phase 2b) --------------------------------------------------------------------
 // Open self-serve signup; scrypt passwords + stateless HMAC cookie sessions (see auth.js). The
 // legacy ADMIN_PASSCODE (below) still works as a superadmin override so the founder keeps god-mode.
@@ -86,6 +95,13 @@ function rateLimited(req, res, bucket, max, windowMs) {
 }
 
 app.post("/api/auth/signup", (req, res) => {
+  // Pre-launch gate: public account creation is closed and funnelled to the /waitlist page. The
+  // founder can still create accounts by passing the admin passcode (or setting SIGNUPS_OPEN=true).
+  const founder = !!(process.env.ADMIN_PASSCODE && req.body && req.body.passcode === process.env.ADMIN_PASSCODE);
+  const signupsOpen = process.env.SIGNUPS_OPEN === "true";
+  if (!signupsOpen && !founder) {
+    return res.status(403).json({ error: "PlayZoo isn't open for new accounts yet — join the waitlist.", waitlist: true });
+  }
   if (rateLimited(req, res, "signup", 6, 15 * 60_000)) return; // 6 new accounts / 15 min / IP
   const { email, password } = req.body || {};
   const r = createUser(email, password);

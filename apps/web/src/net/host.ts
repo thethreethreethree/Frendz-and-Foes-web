@@ -53,3 +53,24 @@ export async function chatWithRex(messages: RexMessage[], room?: string): Promis
     return null;
   }
 }
+
+// Chat with John, the schemer who fronts the pre-launch waitlist. Same shape as chatWithRex, its
+// own endpoint/persona. Returns null on failure so the UI shows a graceful fallback.
+export async function chatWithJohn(messages: RexMessage[], room?: string): Promise<string | null> {
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 20000);
+    const res = await fetch("/api/john-chat", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ room, messages }),
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return typeof data.reply === "string" ? data.reply : null;
+  } catch {
+    return null;
+  }
+}

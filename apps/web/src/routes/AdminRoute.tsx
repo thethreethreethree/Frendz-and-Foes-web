@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { type Brand, type WordmarkColor, defaultBrand } from "../brand/brand";
 
 // Self-serve brand admin (Phase 2, passcode-gated). Edit a tenant's colors/fonts/name/games
@@ -43,11 +44,14 @@ const GAME_KEYS = ["feud", "bingo", "murder", "trivia", "taboo", "headsup", "rev
 const clone = (b: Brand): Brand => JSON.parse(JSON.stringify(b));
 
 export function AdminRoute() {
+  const navigate = useNavigate();
   const [user, setUser] = useState<{ email: string } | null>(null);
   const [checking, setChecking] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  // Pre-launch: public signups are closed — the login form is sign-in only, and "new here" goes to
+  // the John-hosted waitlist. (The server also enforces this on /api/auth/signup.)
+  const [mode] = useState<"login" | "signup">("login");
   const [authErr, setAuthErr] = useState("");
   const [myBrands, setMyBrands] = useState<{ slug: string; productName: string }[]>([]);
   const [slug, setSlug] = useState("");
@@ -78,6 +82,7 @@ export function AdminRoute() {
         method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email, password }),
       });
       const data = await res.json().catch(() => ({}));
+      if (data.waitlist) return navigate("/waitlist"); // signups are gated pre-launch
       if (!res.ok) return setAuthErr(data.error || "Something went wrong.");
       setUser(data.user); setPassword(""); loadMyBrands();
     } catch { setAuthErr("Could not reach the server."); }
@@ -135,7 +140,7 @@ export function AdminRoute() {
       <Shell>
         <div className="mx-auto mt-20 w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
           <h1 className="text-lg font-semibold text-gray-900">PlayZoo brand admin</h1>
-          <p className="mt-1 text-sm text-gray-500">{mode === "signup" ? "Create an account to brand your own PlayZoo." : "Sign in to manage your brands."}</p>
+          <p className="mt-1 text-sm text-gray-500">Sign in to manage your brands.</p>
           <input type="email" value={email} autoFocus autoComplete="email" onChange={(e) => setEmail(e.target.value)}
             placeholder="Email" className="mt-4 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900" />
           <input type="password" value={password} autoComplete={mode === "signup" ? "new-password" : "current-password"}
@@ -144,12 +149,11 @@ export function AdminRoute() {
             className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900" />
           {authErr && <p className="mt-2 text-sm text-red-600">{authErr}</p>}
           <button onClick={submitAuth} className="mt-4 w-full rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800">
-            {mode === "signup" ? "Create account" : "Sign in"}
+            Sign in
           </button>
-          <button onClick={() => { setMode(mode === "signup" ? "login" : "signup"); setAuthErr(""); }}
-            className="mt-3 w-full text-center text-sm text-gray-500 hover:text-gray-900">
-            {mode === "signup" ? "Already have an account? Sign in" : "New here? Create an account"}
-          </button>
+          <Link to="/waitlist" className="mt-3 block w-full text-center text-sm text-gray-500 hover:text-gray-900">
+            New here? PlayZoo isn't open yet — join the waitlist →
+          </Link>
         </div>
       </Shell>
     );
