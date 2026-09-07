@@ -5,6 +5,8 @@
 // providers. Degrades gracefully to canned lines when no API key is set or the call fails, so the
 // host never breaks a game. Cost is contained: short outputs + per-room throttling.
 
+import { REX_KNOWLEDGE } from "./rexKnowledge.js";
+
 const KEY = process.env.DEEPSEEK_API_KEY || process.env.HOST_API_KEY || "";
 const API_URL = process.env.HOST_API_URL || "https://api.deepseek.com/chat/completions";
 const MODEL = process.env.HOST_MODEL || "deepseek-chat";
@@ -77,7 +79,7 @@ async function callModel(payload) {
       max_tokens: 80,
       temperature: 0.9,
       messages: [
-        { role: "system", content: REX_PERSONA + ONE_LINER_RULE },
+        { role: "system", content: REX_PERSONA + "\n\n" + REX_KNOWLEDGE + "\n\n" + ONE_LINER_RULE },
         { role: "user", content: userPrompt(payload) },
       ],
     }),
@@ -132,7 +134,7 @@ async function chatCompletion(messages) {
       model: MODEL,
       max_tokens: 220,
       temperature: 0.95,
-      messages: [{ role: "system", content: REX_PERSONA }, ...messages],
+      messages: [{ role: "system", content: REX_PERSONA + "\n\n" + REX_KNOWLEDGE }, ...messages],
     }),
   });
   if (!res.ok) throw new Error(`host provider ${res.status}`);
