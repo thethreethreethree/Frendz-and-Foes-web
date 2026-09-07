@@ -98,14 +98,7 @@ export function HomeRoute() {
             <div className="mt-3 inline-block rounded-2xl rounded-bl-sm border border-primary/50 bg-canvas/70 px-4 py-2 text-left font-display text-lg font-bold">
               "Settle down, you animals — winner takes the enclosure. 🦁"
             </div>
-            <div className="mt-4">
-              <Link
-                to="/rex"
-                className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-br from-primary to-accent px-6 py-3 font-display text-lg font-extrabold text-white shadow-[0_14px_40px_-12px_rgb(var(--c-primary)/0.6)] transition hover:-translate-y-0.5 hover:scale-[1.03] active:scale-95"
-              >
-                💬 Chat with Rex
-              </Link>
-            </div>
+            <p className="mt-3 text-sm font-semibold text-primary">💬 Tap Rex in the corner to chat with him — on any screen.</p>
           </div>
         </div>
       </section>
