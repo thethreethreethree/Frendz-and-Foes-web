@@ -85,7 +85,7 @@ export function HomeRoute() {
         <a
           href="/kickstarter"
           aria-label="Back PlayZoo on Kickstarter"
-          className="ks-badge absolute right-1 top-2 z-20 block w-28 transition-transform duration-300 hover:scale-110 active:scale-95 sm:right-3 sm:top-3 sm:w-52 lg:right-0 lg:w-64 xl:w-72"
+          className="ks-badge absolute right-1 top-2 z-20 block w-24 transition-transform duration-300 hover:scale-110 active:scale-95 sm:right-0 sm:top-44 sm:w-52 lg:top-52 lg:w-64 xl:-right-8 xl:top-56 xl:w-72"
         >
           <img src="/ui/kickstarter-badge.png" alt="Back PlayZoo on Kickstarter" className="w-full" />
         </a>
