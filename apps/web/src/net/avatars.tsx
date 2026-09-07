@@ -1,11 +1,12 @@
 // Shared player-avatar picker + badge, used by the named-player games (Solo Clue, Ballpark,
-// After Dark, Cover Ops, Murder, Sketch Relay). The 12 animal cutouts live in /avatars.
+// After Dark, Cover Ops, Murder, Sketch Relay). The 20 animal head-badges live in /avatars.
 // Team-based games don't have per-person players, so they don't use this.
 import { useState } from "react";
 
 export const AVATARS = [
   "lion", "raccoon", "flamingo", "gorilla", "parrot", "sloth",
   "fox", "zebra", "panda", "toucan", "hippo", "cat",
+  "bear", "owl", "penguin", "skunk", "chameleon", "crocodile", "rhino", "otter",
 ] as const;
 export type Avatar = (typeof AVATARS)[number];
 
