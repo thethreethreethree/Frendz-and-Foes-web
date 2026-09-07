@@ -9,6 +9,7 @@
 //               never stored.
 // Presence counts are broadcast so each side can show a live connection status.
 
+import "./env.js"; // MUST be first — loads .env into process.env before any module reads it.
 import { createServer } from "node:http";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -24,7 +25,7 @@ import { registerJustOneHandlers } from "./justone.js";
 import { registerBallparkHandlers } from "./ballpark.js";
 import { registerTelestrationsHandlers } from "./telestrations.js";
 import { registerAfterDarkHandlers } from "./afterdark.js";
-import { hostLine, hostReady } from "./host.js";
+import { hostLine, hostChat, hostReady } from "./host.js";
 import { getBrand, listBrandSlugs, upsertBrand, deleteBrand, dbReady } from "./db.js";
 import {
   authReady, createUser, authenticate, getUser, makeSession, readSession,
@@ -46,6 +47,14 @@ app.get("/healthz", (_req, res) => res.json({ ok: true }));
 app.post("/api/host", async (req, res) => {
   const { room, game, moment, detail } = req.body || {};
   const out = await hostLine({ room, game, moment, detail });
+  res.json({ ...out, ready: hostReady() });
+});
+
+// Free-form chat with Rex (the "Chat with Rex" page). Body: { room?, messages: [{role, content}] }
+// where role is "user" | "assistant". Returns { reply, source, ready }. Best-effort; never blocks.
+app.post("/api/rex-chat", async (req, res) => {
+  const { room, messages } = req.body || {};
+  const out = await hostChat({ room, messages });
   res.json({ ...out, ready: hostReady() });
 });
 

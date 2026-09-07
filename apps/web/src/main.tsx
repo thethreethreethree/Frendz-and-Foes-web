@@ -7,6 +7,7 @@ import { defaultBrand } from "./brand/brand";
 import { resolveSlug, fetchBrand } from "./brand/resolve";
 import { DisplayRoute } from "./routes/DisplayRoute";
 import { HomeRoute } from "./routes/HomeRoute";
+import { RexChat } from "./routes/RexChat";
 import { ControlRoute } from "./routes/ControlRoute";
 import { PlayerRoute } from "./routes/PlayerRoute";
 import { PosterRoute } from "./routes/PosterRoute";
@@ -16,6 +17,7 @@ import { AdminRoute } from "./routes/AdminRoute";
 // Hash routing keeps deep links working when served as static files (no server rewrites needed).
 const router = createHashRouter([
   { path: "/", element: <HomeRoute /> },
+  { path: "/rex", element: <RexChat /> },
   { path: "/display", element: <DisplayRoute /> },
   { path: "/control", element: <ControlRoute /> },
   { path: "/play", element: <PlayerRoute /> },

@@ -9,13 +9,22 @@ const KEY = process.env.DEEPSEEK_API_KEY || process.env.HOST_API_KEY || "";
 const API_URL = process.env.HOST_API_URL || "https://api.deepseek.com/chat/completions";
 const MODEL = process.env.HOST_MODEL || "deepseek-chat";
 
+// Rex's character, shared by the one-liner MC banter and the free chat. Cheeky, sarcastic, quick —
+// a burnt-out zookeeper who roasts you but secretly adores the chaos.
 const REX_PERSONA =
-  "You are Rex, the frazzled, sardonic human ZOOKEEPER who runs PlayZoo — an after-hours zoo where the players ARE the animals. " +
-  "Voice: brash, quick, funny, a little roast-y, warm underneath — a keeper who loves his chaotic animals but is barely holding it together. " +
-  "Lean into the bit: call the players 'you animals', reference the zoo, enclosures, feeding time, the exhibits. " +
-  "ALWAYS reply with exactly ONE short line, 20 words max, that a keeper would shout across the zoo. " +
-  "No quotation marks, no stage directions, no markdown, at most one emoji. " +
-  "Adult and cheeky is fine; never use slurs, hate, or anything targeting real, protected groups. React to the moment.";
+  "You are REX — the gloriously washed-up, chain-of-command-of-one human ZOOKEEPER running PlayZoo, " +
+  "an after-hours party zoo where the players ARE the animals (raccoons, flamingos, gorillas, the works). " +
+  "PERSONALITY: razor-sharp wit, deadpan sarcasm, theatrically exasperated, a shameless showman. You roast " +
+  "the players constantly and lovingly — like a stand-up comic who got stuck running a petting zoo and made " +
+  "peace with it. Big confidence, zero patience, secretly delighted by the mayhem. " +
+  "VOICE: punchy, cheeky, quotable. Sarcasm first, warmth underneath. Zoo metaphors are your whole bit — " +
+  "'you animals', enclosures, feeding time, the exhibits, the reptile house, back in your pen. Land a joke, don't explain it. " +
+  "BOUNDARIES: adult and savage is fine; never slurs, hate, or anything punching at real protected groups — you roast the PLAYERS, not people's identities. " +
+  "Keep replies tight and spoken-aloud clean (this may be read by a voice), no markdown, no stage directions, at most one emoji.";
+
+// Extra instruction appended only for the one-line MC banter (game moments).
+const ONE_LINER_RULE =
+  " For THIS reply: exactly ONE short line, 20 words max, no quotation marks — something a keeper would holler across the zoo. React to the moment.";
 
 // Canned fallbacks so Rex still has personality with no API key / on error.
 const FALLBACKS = {
@@ -68,7 +77,7 @@ async function callModel(payload) {
       max_tokens: 80,
       temperature: 0.9,
       messages: [
-        { role: "system", content: REX_PERSONA },
+        { role: "system", content: REX_PERSONA + ONE_LINER_RULE },
         { role: "user", content: userPrompt(payload) },
       ],
     }),
@@ -94,3 +103,54 @@ export async function hostLine(payload = {}) {
 }
 
 export const hostReady = () => !!KEY;
+
+// --- Free chat with Rex ------------------------------------------------------------------------
+// A back-and-forth conversation (the "Chat with Rex" page), as opposed to the one-line game banter
+// above. Takes the recent message history and returns Rex's next reply. Same persona, but allowed a
+// couple of sentences instead of a single holler. Kept text-only + clean so a future TTS layer
+// (11Labs) can speak it verbatim. Never throws; falls back to a canned quip on any failure.
+const CHAT_FALLBACKS = [
+  "The keeper's radio is down — try me again in a sec, you animal.",
+  "Static on the line. Even I can't hear myself over this zoo. Say that again?",
+  "Give me a beat — I'm wrangling a loose flamingo. Ask again in a moment.",
+];
+
+// Keep only clean role/content turns and cap how much history we forward (cost + latency).
+function sanitizeMessages(messages) {
+  if (!Array.isArray(messages)) return [];
+  return messages
+    .filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
+    .map((m) => ({ role: m.role, content: m.content.slice(0, 800) }))
+    .slice(-12);
+}
+
+async function chatCompletion(messages) {
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: `Bearer ${KEY}` },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: 220,
+      temperature: 0.95,
+      messages: [{ role: "system", content: REX_PERSONA }, ...messages],
+    }),
+  });
+  if (!res.ok) throw new Error(`host provider ${res.status}`);
+  const data = await res.json();
+  const text = data?.choices?.[0]?.message?.content || "";
+  return String(text).replace(/\s+/g, " ").trim();
+}
+
+// Returns { reply, source: "ai"|"canned" }. Never throws.
+export async function hostChat({ room = "_", messages = [] } = {}) {
+  const turns = sanitizeMessages(messages);
+  const canned = () => ({ reply: pick(CHAT_FALLBACKS), source: "canned" });
+  if (!KEY || turns.length === 0) return canned();
+  if (!allowed(`chat:${room}`)) return canned();
+  try {
+    const reply = await chatCompletion(turns);
+    return reply ? { reply, source: "ai" } : canned();
+  } catch {
+    return canned();
+  }
+}
