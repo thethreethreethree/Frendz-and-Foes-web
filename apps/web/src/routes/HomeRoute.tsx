@@ -74,6 +74,21 @@ export function HomeRoute() {
 
       {/* HERO */}
       <section className="relative mx-auto flex max-w-5xl flex-col items-center px-6 pt-16 pb-14 text-center sm:pt-24">
+        {/* Kickstarter badge — floats top-right, bobs + glows to catch the eye, links to /kickstarter. */}
+        <style>{`
+          @keyframes ks-badge-bob { 0%,100%{transform:translateY(0) rotate(-2.5deg)} 50%{transform:translateY(-10px) rotate(2.5deg)} }
+          @keyframes ks-badge-glow { 0%,100%{filter:drop-shadow(0 8px 18px rgba(0,0,0,.55)) drop-shadow(0 0 6px rgba(236,72,153,.35))} 50%{filter:drop-shadow(0 12px 26px rgba(0,0,0,.6)) drop-shadow(0 0 20px rgba(236,72,153,.8))} }
+          .ks-badge img{ animation: ks-badge-bob 4.5s ease-in-out infinite, ks-badge-glow 2.8s ease-in-out infinite; }
+          .ks-badge:hover img{ animation-play-state: paused; }
+          @media (prefers-reduced-motion: reduce){ .ks-badge img{ animation: none } }
+        `}</style>
+        <a
+          href="/kickstarter"
+          aria-label="Back PlayZoo on Kickstarter"
+          className="ks-badge absolute right-1 top-2 z-20 block w-24 transition-transform duration-300 hover:scale-110 active:scale-95 sm:right-4 sm:top-6 sm:w-40 lg:right-2 lg:w-48"
+        >
+          <img src="/ui/kickstarter-badge.png" alt="Back PlayZoo on Kickstarter" className="w-full" />
+        </a>
         <span className="rounded-full border border-line bg-surface/60 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.18em] text-muted backdrop-blur">
           Party games with an AI host
         </span>

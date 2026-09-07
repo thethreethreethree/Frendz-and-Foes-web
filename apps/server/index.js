@@ -213,6 +213,9 @@ if (existsSync(musicDir)) app.use("/music", express.static(musicDir, { dotfiles:
 const webDist = join(__dirname, "../web/dist");
 if (existsSync(webDist)) {
   app.use(express.static(webDist));
+  // The Kickstarter campaign is a standalone page (built from kickstarter/), not a SPA route —
+  // serve it directly at /kickstarter so it doesn't fall through to the app shell.
+  app.get("/kickstarter", (_req, res) => res.sendFile(join(webDist, "kickstarter.html")));
   app.get("*", (_req, res) => res.sendFile(join(webDist, "index.html")));
 }
 
