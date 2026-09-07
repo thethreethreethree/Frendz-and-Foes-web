@@ -115,12 +115,12 @@ export function RexBubble() {
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label={open ? "Close Rex chat" : "Chat with Rex"}
-        className="group grid h-16 w-16 place-items-center rounded-full border-2 border-primary bg-gradient-to-br from-primary to-accent shadow-[0_10px_30px_-6px_rgb(var(--c-primary)/0.7)] transition hover:-translate-y-0.5 active:scale-95"
+        className="group grid h-20 w-20 place-items-center overflow-hidden rounded-full border-2 border-primary bg-gradient-to-br from-primary to-accent shadow-[0_10px_30px_-6px_rgb(var(--c-primary)/0.7)] transition hover:-translate-y-0.5 active:scale-95"
       >
         {open ? (
           <span className="font-display text-2xl text-white">✕</span>
         ) : (
-          <RexFace size={54} bare />
+          <RexFace size={72} bare />
         )}
       </button>
     </div>
