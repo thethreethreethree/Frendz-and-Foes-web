@@ -54,6 +54,10 @@ GAMES = [
 games_html = '<div class="games">\n'
 for slug,label,line in GAMES:
     games_html += f'  <div class="game"><img src="{jpg(f"tiles/{slug}.jpg",440,80)}" alt="{label} game art"><div class="gt"><b>{label}</b><span>{line}</span></div></div>\n'
+# 15th tile: the coming-soon art, dimmed + centred label (mirrors the live site)
+games_html += (f'  <div class="game soon"><img src="{jpg("tiles/coming-soon.jpg",560,84)}" '
+               f'alt="More games coming soon"><span class="soonveil"></span>'
+               f'<span class="soonlabel">More coming soon</span></div>\n')
 games_html += '</div>'
 
 CAST = [
