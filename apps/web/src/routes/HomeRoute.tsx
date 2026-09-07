@@ -4,6 +4,7 @@ import { Logo } from "../display/Logo";
 import { FloatingAccents } from "../display/Icons";
 import { useRexHost, RexBanner } from "../host/RexHost";
 import { getBrand } from "../brand/theme";
+import { gamesAreOpen } from "../net/gate";
 import type { GameType } from "../net/socket";
 
 // PlayZoo's public front door — a scrolling marketing landing that doubles as the entry to the app.
@@ -47,6 +48,10 @@ const CAST: { slug: string; emoji: string; name: string; role: string }[] = [
 
 export function HomeRoute() {
   const brand = getBrand();
+  // Pre-launch gate: while the games are locked (until the Kickstarter completes), every play entry
+  // point on this page funnels to the waitlist instead of opening a game. Resolved from the server
+  // at boot; defaults to locked. Flip GAMES_OPEN=true on the box to open everything.
+  const open = gamesAreOpen();
   const { line, say } = useRexHost(null, "PlayZoo");
   const greeted = useRef(false);
   useEffect(() => {
@@ -110,14 +115,31 @@ export function HomeRoute() {
           14 party games. One AI zookeeper running the chaos. Play on the big screen — everyone joins from their phones.
         </p>
         <div className="mt-9 flex flex-col items-center gap-3.5 sm:flex-row">
-          <Link to="/display" className="rounded-2xl bg-gradient-to-br from-primary to-accent px-9 py-4 font-display text-2xl font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,.18),0_18px_46px_-10px_rgb(var(--c-primary)/0.65)] transition duration-150 hover:-translate-y-0.5 hover:scale-[1.03] active:scale-95">
-            Open the big screen
-          </Link>
-          <Link to="/control" className="rounded-2xl border border-line bg-surface/70 px-9 py-4 font-display text-2xl font-extrabold text-ink backdrop-blur transition duration-150 hover:-translate-y-0.5 hover:scale-[1.03] active:scale-95">
-            Host controller
-          </Link>
+          {open ? (
+            <>
+              <Link to="/display" className="rounded-2xl bg-gradient-to-br from-primary to-accent px-9 py-4 font-display text-2xl font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,.18),0_18px_46px_-10px_rgb(var(--c-primary)/0.65)] transition duration-150 hover:-translate-y-0.5 hover:scale-[1.03] active:scale-95">
+                Open the big screen
+              </Link>
+              <Link to="/control" className="rounded-2xl border border-line bg-surface/70 px-9 py-4 font-display text-2xl font-extrabold text-ink backdrop-blur transition duration-150 hover:-translate-y-0.5 hover:scale-[1.03] active:scale-95">
+                Host controller
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link to="/waitlist" className="rounded-2xl bg-gradient-to-br from-primary to-accent px-9 py-4 font-display text-2xl font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,.18),0_18px_46px_-10px_rgb(var(--c-primary)/0.65)] transition duration-150 hover:-translate-y-0.5 hover:scale-[1.03] active:scale-95">
+                🔒 Join the waitlist
+              </Link>
+              <a href="/kickstarter" className="rounded-2xl border border-line bg-surface/70 px-9 py-4 font-display text-2xl font-extrabold text-ink backdrop-blur transition duration-150 hover:-translate-y-0.5 hover:scale-[1.03] active:scale-95">
+                Back us on Kickstarter
+              </a>
+            </>
+          )}
         </div>
-        <p className="mt-4 text-sm text-muted">No app to install · works on any phone + TV browser</p>
+        <p className="mt-4 text-sm text-muted">
+          {open
+            ? "No app to install · works on any phone + TV browser"
+            : "🔒 The games unlock when our Kickstarter wraps — get on the waitlist for first access."}
+        </p>
       </section>
 
       {/* MEET REX */}
@@ -199,15 +221,24 @@ export function HomeRoute() {
             return (
               <a
                 key={g}
-                href={`/?game=${g}#/display`}
+                // Locked pre-launch: tiles funnel to the waitlist instead of opening the game.
+                href={open ? `/?game=${g}#/display` : "#/waitlist"}
+                aria-label={open ? meta.label : `${meta.label} — locked until launch, join the waitlist`}
                 className="group relative flex aspect-[4/3] flex-col items-start justify-end overflow-hidden rounded-2xl p-4 text-left text-white transition duration-150 hover:-translate-y-1 hover:brightness-110 active:scale-[0.97]"
                 style={{ background: `linear-gradient(135deg, ${from} 0%, ${to} 100%)`, boxShadow: "0 1px 2px rgb(0 0 0 / 0.3), 0 16px 34px -18px rgb(0 0 0 / 0.7)" }}
               >
                 <TileArt game={g} icon={meta.icon} />
                 <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                {/* Locked veil + padlock so a closed game reads as not-yet-available, not broken. */}
+                {!open && <span className="pointer-events-none absolute inset-0 bg-black/45" />}
+                {!open && (
+                  <span className="pointer-events-none absolute right-2.5 top-2.5 grid h-8 w-8 place-items-center rounded-full bg-black/55 text-base backdrop-blur-sm" aria-hidden>
+                    🔒
+                  </span>
+                )}
                 <span className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 skew-x-12 bg-white/20 blur-md transition-transform duration-500 ease-out group-hover:translate-x-[400%]" />
                 <span className="relative font-display text-xl font-extrabold leading-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">{meta.label}</span>
-                <span className="relative mt-0.5 text-xs font-medium text-white/90 drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">{meta.tagline}</span>
+                <span className="relative mt-0.5 text-xs font-medium text-white/90 drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">{open ? meta.tagline : "Locked · join the waitlist"}</span>
               </a>
             );
           })}

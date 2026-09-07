@@ -42,6 +42,15 @@ app.set("trust proxy", 1); // behind nginx — so req.secure reflects X-Forwarde
 app.use(express.json({ limit: "256kb" }));
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
 
+// Pre-launch access gate. The web app reads this at boot to decide whether the games are reachable
+// or every entry point funnels to /waitlist instead. Public games stay LOCKED until Kickstarter
+// completes: flip GAMES_OPEN=true in the box's .env and restart to open everything at once. The
+// client fails CLOSED (treats games as locked) if this can't be reached, so a launch gate never
+// fails open.
+app.get("/api/status", (_req, res) => {
+  res.json({ gamesOpen: process.env.GAMES_OPEN === "true" });
+});
+
 // --- Rex, the AI host --------------------------------------------------------------------------
 // The display posts a game "moment"; Rex returns one line of MC banter (Claude, or a canned line
 // if no key). Public + best-effort — never blocks a game.
@@ -274,14 +283,24 @@ function presence(room) {
 
 io.on("connection", (socket) => {
   let code = null;
-  registerMurder2Handlers(io, socket, rooms); // roomKey/now default to uppercase/Date.now here
-  registerCodenamesHandlers(io, socket, rooms);
-  registerJustOneHandlers(io, socket, rooms);
-  registerBallparkHandlers(io, socket, rooms);
-  registerTelestrationsHandlers(io, socket, rooms);
-  registerAfterDarkHandlers(io, socket, rooms);
+
+  // Pre-launch lockdown (see GET /api/status). Until GAMES_OPEN=true, NO game room can be created
+  // or joined — not by clicking, not by a typed URL, not by a hand-rolled socket. We simply don't
+  // wire up any game handlers and refuse the generic relay "join", so the socket is inert for games
+  // while locked. The front-end funnels every entry point to /waitlist; this is the server backstop.
+  const gamesOpen = process.env.GAMES_OPEN === "true";
+
+  if (gamesOpen) {
+    registerMurder2Handlers(io, socket, rooms); // roomKey/now default to uppercase/Date.now here
+    registerCodenamesHandlers(io, socket, rooms);
+    registerJustOneHandlers(io, socket, rooms);
+    registerBallparkHandlers(io, socket, rooms);
+    registerTelestrationsHandlers(io, socket, rooms);
+    registerAfterDarkHandlers(io, socket, rooms);
+  }
 
   socket.on("join", ({ room, role, teamId }) => {
+    if (!gamesOpen) { socket.emit("locked", { waitlist: true }); return; }
     if (typeof room !== "string" || !room) return;
     code = room.toUpperCase();
     socket.data.role = role || "display";
