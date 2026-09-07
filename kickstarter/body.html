@@ -124,6 +124,11 @@
   .game .gt{padding:.7rem .8rem .85rem}
   .game b{display:block;font-family:var(--display);font-weight:700;font-size:1.02rem;color:var(--ink)}
   .game span{display:block;font-size:.86rem;color:var(--muted);margin-top:.15rem;line-height:1.35}
+  .morebar{display:flex;flex-wrap:wrap;align-items:baseline;gap:.4rem 1rem;margin:1.4rem 0 0;
+           border:2px dashed var(--violet);border-radius:14px;padding:1rem 1.2rem;
+           background:color-mix(in oklab,var(--violet) 10%,var(--raised))}
+  .morebar b{font-family:var(--display);font-weight:800;color:var(--violet);font-size:1.15rem;white-space:nowrap}
+  .morebar span{color:var(--muted);font-size:.98rem;flex:1 1 300px;line-height:1.45}
 
   /* cast grid (20 transparent cutouts) */
   .cast{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.85rem;margin:1.6rem 0}
@@ -209,7 +214,7 @@
         <figcaption>The zoo, after hours. Your phone is the key; the big screen is the show.</figcaption>
       </figure>
       <div class="statrow">
-        <div><b>14</b><span>Games</span></div>
+        <div><b>14+</b><span>Games &amp; counting</span></div>
         <div><b>20</b><span>Animals to be</span></div>
         <div><b>1</b><span>AI host (me)</span></div>
         <div><b>0</b><span>Apps to install</span></div>
@@ -259,9 +264,13 @@
   <section class="block" id="games">
     <p class="tab">05 · The games</p>
     <div class="blockin">
-      <h2>Fourteen games. Trivia to murder to the one that's strictly after dark.</h2>
-      <p class="muted">Same phones, same big screen, same insufferable host. Fourteen different ways for your friends to disappoint you in public.</p>
+      <h2>Fourteen games so far. Trivia to murder to the one that's strictly after dark.</h2>
+      <p class="muted">Same phones, same big screen, same insufferable host. Fourteen different ways for your friends to disappoint you in public — with more landing all the time.</p>
       {{GAMES_GRID}}
+      <div class="morebar">
+        <b>+ more on the way</b>
+        <span>Fourteen is where the zoo starts, not where it stops. New games drop into the rotation regularly, and every backer here is literally what funds the next batch. Back it and the roster keeps growing.</span>
+      </div>
     </div>
   </section>
 
