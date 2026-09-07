@@ -1,0 +1,342 @@
+<title>Back the Zoo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    /* PlayZoo neon-on-midnight — the world the cast were drawn in. Dark is the design; light is a proof mode. */
+    --ground:#0a0e18; --surface:#141a2c; --raised:#1b2340; --line:#2b3350;
+    --ink:#f4f7ff; --muted:#9aa6c6;
+    --violet:#8b5cf6; --pink:#ec4899; --teal:#2dd4bf; --lime:#a3e635; --amber:#f59e0b;
+    --accent:var(--violet); --accent-ink:#0a0e18;
+    --display:"Bricolage Grotesque",system-ui,sans-serif;
+    --body:"Inter",system-ui,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+  }
+  /* Light "proof" ground — only when explicitly toggled, so a light OS still gets the neon design by default. */
+  :root[data-theme="light"]{
+    --ground:#ffffff; --surface:#f5f3fb; --raised:#efecfa; --line:#e2ddf2;
+    --ink:#181630; --muted:#5c5680; --accent:#7c3aed; --accent-ink:#ffffff;
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth;scroll-padding-top:5rem}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--body);
+       font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  img{max-width:100%;display:block;height:auto}
+  a{color:var(--teal);text-underline-offset:3px}
+  :focus-visible{outline:2px solid var(--teal);outline-offset:3px}
+  .wrap{max-width:900px;margin:0 auto;padding:0 1.25rem;min-width:0}
+
+  /* ── top bar: numbered wayfinding + a light/dark proof toggle ── */
+  .topbar{position:sticky;top:0;z-index:50;background:color-mix(in oklab,var(--ground) 88%,transparent);
+          backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .topbar .wrap{display:flex;align-items:center;gap:1rem;padding:.6rem 1.25rem}
+  .logo{font-family:var(--display);font-weight:800;letter-spacing:-.02em;font-size:1.15rem;
+        color:var(--ink);text-decoration:none;flex:none}
+  .logo em{font-style:normal;color:var(--violet)}
+  .navscroll{overflow-x:auto;flex:1 1 0;min-width:0;scrollbar-width:none}
+  .navscroll::-webkit-scrollbar{display:none}
+  nav{display:flex;gap:.15rem;min-width:max-content}
+  nav a{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
+        color:var(--muted);text-decoration:none;padding:.4rem .55rem;border-radius:7px;white-space:nowrap}
+  nav a:hover{color:var(--accent-ink);background:var(--accent)}
+  .switch{display:flex;gap:.2rem;padding:.18rem;border:1px solid var(--line);border-radius:999px;flex:none}
+  .switch button{font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;
+                 min-height:1.9rem;padding:0 .65rem;border:0;border-radius:999px;background:transparent;
+                 color:var(--muted);cursor:pointer}
+  .switch button[aria-pressed="true"]{background:var(--violet);color:#fff;font-weight:600}
+
+  main.wrap{padding-top:1.5rem}
+
+  /* ── the block: a bounded object with a labelled tab ── */
+  .block{position:relative;margin:2.75rem 0;border:2px solid var(--line);border-radius:20px;
+         background:var(--surface);box-shadow:8px 8px 0 rgba(0,0,0,.35);scroll-margin-top:5rem}
+  .tab{position:relative;width:fit-content;margin:-1rem 1.5rem 0 auto;
+       font-family:var(--mono);font-size:.74rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+       color:var(--accent-ink);background:var(--accent);
+       border:2px solid var(--line);border-radius:9px;padding:.32rem .8rem;white-space:nowrap}
+  .blockin{padding:1.75rem 1.4rem 1.6rem}
+  @media(min-width:48rem){.blockin{padding:2.4rem 2.6rem 2rem}}
+
+  /* ── type ── */
+  h1,h2,h3{font-family:var(--display);line-height:1.08;letter-spacing:-.02em;text-wrap:balance;margin:0}
+  h1{font-size:clamp(2.1rem,5.4vw,3.4rem);font-weight:800;margin:0 0 .8rem}
+  h2{font-size:clamp(1.45rem,3.2vw,2.1rem);font-weight:800;margin:0 0 .7rem}
+  h3{font-size:1.1rem;font-weight:700;margin:0 0 .3rem}
+  p{margin:0 0 1rem;max-width:64ch;text-wrap:pretty}
+  .lede{font-size:1.18rem;line-height:1.5;color:var(--ink);max-width:54ch;margin:0 0 1.3rem}
+  .muted{color:var(--muted)}
+  b,strong{color:var(--ink)}
+
+  .huge{font-family:var(--display);font-weight:800;letter-spacing:-.045em;
+        font-size:clamp(3.2rem,13vw,7rem);line-height:.9;
+        background:linear-gradient(100deg,var(--lime),var(--teal));-webkit-background-clip:text;
+        background-clip:text;color:transparent;margin:.5rem 0 1rem}
+
+  figure{margin:0}
+  figure.hero{margin:1.4rem 0 0;display:flex;flex-direction:column;gap:.7rem}
+  figure.hero img{aspect-ratio:24/10;width:100%;object-fit:cover;object-position:center 40%;
+                  border-radius:16px;border:2px solid var(--line)}
+  figcaption{font-family:var(--mono);font-size:.82rem;line-height:1.5;color:var(--muted);letter-spacing:.02em}
+
+  /* stat row — big neon figures */
+  .statrow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1.25rem;margin:2rem 0 .5rem}
+  @media(max-width:40rem){.statrow{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  .statrow div{min-width:0}
+  .statrow b{display:block;font-family:var(--display);font-size:clamp(1.6rem,4vw,2.3rem);font-weight:800;
+             line-height:1;letter-spacing:-.03em;color:var(--amber);white-space:nowrap}
+  .statrow span{display:block;font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;
+                text-transform:uppercase;color:var(--muted);margin-top:.45rem;line-height:1.4}
+
+  /* steps */
+  .steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin:1.5rem 0}
+  @media(max-width:44rem){.steps{grid-template-columns:1fr}}
+  .step{border:2px solid var(--line);border-radius:14px;background:var(--raised);padding:1.1rem;
+        display:flex;flex-direction:column;gap:.55rem}
+  .stepn{font-family:var(--display);font-weight:800;font-size:1.5rem;color:var(--pink);line-height:1}
+  .step h3{margin:0}
+  .step p{margin:0;font-size:.98rem;color:var(--muted);max-width:none}
+
+  /* beat — picture beside a line (host section) */
+  .beat{display:grid;gap:1.5rem;align-items:center;margin:1.5rem 0;
+        grid-template-columns:minmax(0,260px) minmax(0,1fr)}
+  @media(max-width:40rem){.beat{grid-template-columns:1fr}}
+  .beat img{width:100%;border-radius:14px;border:2px solid var(--line);background:var(--raised);
+            aspect-ratio:1/1;object-fit:contain;object-position:center bottom}
+
+  /* quote — a Rex line worth a card */
+  .quote{border:2px solid var(--pink);border-radius:16px;padding:1.4rem 1.5rem;margin:1.75rem 0;
+         background:var(--raised)}
+  .quote p{font-family:var(--display);font-weight:700;font-size:clamp(1.25rem,3vw,1.7rem);line-height:1.15;
+           margin:0;color:var(--ink);max-width:30ch}
+  .quote span{display:block;margin-top:.6rem;font-family:var(--mono);font-size:.74rem;letter-spacing:.1em;
+              text-transform:uppercase;color:var(--pink)}
+
+  /* games grid (14) */
+  .games{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.9rem;margin:1.6rem 0}
+  @media(max-width:52rem){.games{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:34rem){.games{grid-template-columns:1fr}}
+  .game{border:2px solid var(--line);border-radius:14px;overflow:hidden;background:var(--raised);
+        display:flex;flex-direction:column}
+  .game img{aspect-ratio:4/3;object-fit:cover;object-position:center;width:100%;border-bottom:1px solid var(--line)}
+  .game .gt{padding:.7rem .8rem .85rem}
+  .game b{display:block;font-family:var(--display);font-weight:700;font-size:1.02rem;color:var(--ink)}
+  .game span{display:block;font-size:.86rem;color:var(--muted);margin-top:.15rem;line-height:1.35}
+
+  /* cast grid (20 transparent cutouts) */
+  .cast{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.85rem;margin:1.6rem 0}
+  @media(max-width:52rem){.cast{grid-template-columns:repeat(4,minmax(0,1fr))}}
+  @media(max-width:40rem){.cast{grid-template-columns:repeat(3,minmax(0,1fr))}}
+  @media(max-width:26rem){.cast{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  .critter{border:2px solid var(--line);border-radius:14px;background:var(--raised);padding:.5rem .4rem .7rem;
+           text-align:center;display:flex;flex-direction:column;align-items:center;gap:.35rem}
+  .critter img{width:100%;aspect-ratio:3/4;object-fit:contain;object-position:center bottom}
+  .critter b{font-family:var(--display);font-weight:700;font-size:.95rem;color:var(--ink);line-height:1}
+  .critter span{font-family:var(--mono);font-size:.64rem;letter-spacing:.05em;text-transform:uppercase;
+                color:var(--muted);line-height:1.2}
+
+  /* money breakdown */
+  .spend{display:grid;gap:.75rem;margin:1.25rem 0;grid-template-columns:1fr}
+  .spend div{border-left:3px solid var(--teal);padding:.15rem 0 .15rem 1rem}
+  .spend b{font-family:var(--display);font-weight:700;color:var(--ink)}
+  .spend p{margin:.2rem 0 0;color:var(--muted);font-size:.98rem;max-width:60ch}
+
+  /* reward tiers */
+  .draftflag{border:2px dashed var(--amber);border-radius:12px;padding:.9rem 1.1rem;margin:0 0 1.5rem;
+             background:color-mix(in oklab,var(--amber) 12%,transparent)}
+  .draftflag b{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:.74rem;color:var(--amber)}
+  .draftflag p{margin:.35rem 0 0;font-size:.95rem;color:var(--muted);max-width:none}
+  .tiers{display:grid;gap:1rem;margin:1.5rem 0;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tiers-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  @media(max-width:52rem){.tiers,.tiers-3{grid-template-columns:1fr}}
+  .price-tbd{font-size:1.1rem!important;color:var(--muted)!important}
+  .tbd{font-family:var(--mono);font-size:.58rem;letter-spacing:.06em;text-transform:uppercase;
+       color:var(--amber);white-space:nowrap;vertical-align:middle}
+  .tier{border:2px solid var(--line);border-radius:16px;background:var(--raised);padding:1.15rem 1.25rem;
+        display:flex;flex-direction:column;gap:.4rem}
+  .tier .price{font-family:var(--display);font-weight:800;font-size:1.6rem;color:var(--lime);line-height:1;letter-spacing:-.02em}
+  .tier .tname{font-family:var(--mono);font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;color:var(--pink)}
+  .tier p{margin:.2rem 0 0;font-size:.96rem;color:var(--muted);max-width:none}
+  .tier.feature{border-color:var(--violet);box-shadow:6px 6px 0 color-mix(in oklab,var(--violet) 30%,transparent)}
+
+  /* CTA band */
+  .cta{border-radius:18px;padding:2rem 1.6rem;margin:2rem 0 0;text-align:center;
+       background:linear-gradient(120deg,var(--violet),var(--pink));color:#fff}
+  .cta h2{color:#fff}
+  .cta .goal{font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;font-size:.8rem;opacity:.9;margin-top:.6rem}
+
+  footer{border-top:1px solid var(--line);padding:2rem 0 3rem;color:var(--muted);
+         font-family:var(--mono);font-size:.82rem;text-align:center}
+  footer a{color:var(--teal)}
+</style>
+
+<div class="topbar">
+  <div class="wrap">
+    <a class="logo" href="#top">Play<em>Zoo</em></a>
+    <div class="navscroll">
+      <nav>
+        <a href="#what">01 What</a>
+        <a href="#why">02 Why</a>
+        <a href="#how">03 How</a>
+        <a href="#rex">04 Rex</a>
+        <a href="#games">05 Games</a>
+        <a href="#cast">06 Cast</a>
+        <a href="#show">07 The show</a>
+        <a href="#venues">08 Venues</a>
+        <a href="#money">09 Money</a>
+        <a href="#back">10 Back it</a>
+      </nav>
+    </div>
+    <div class="switch" role="group" aria-label="Preview ground">
+      <button type="button" data-set="dark" aria-pressed="true">Dark</button>
+      <button type="button" data-set="light" aria-pressed="false">Light</button>
+    </div>
+  </div>
+</div>
+
+<main class="wrap" id="top">
+
+  <section class="block" id="what">
+    <p class="tab">01 · What this is</p>
+    <div class="blockin">
+      <h1>Fourteen party games. One AI zookeeper. You lot are the animals.</h1>
+      <p class="lede">PlayZoo is a party-games night with a host who actually shows up — me, Rex. You play from your phones, it all goes down on the big screen, and I run the whole circus: intros, banter, scores, and roasting the loser until they feel it.</p>
+      <p class="muted">No app to install. No accounts. No dignity returned. It already works — you can play it today — and this campaign is about making it louder.</p>
+      <figure class="hero">
+        <img src="{{HERO}}" alt="The PlayZoo night zoo — neon enclosure signs, string lights, a disco-ball moon over an empty plaza.">
+        <figcaption>The zoo, after hours. Your phone is the key; the big screen is the show.</figcaption>
+      </figure>
+      <div class="statrow">
+        <div><b>14</b><span>Games</span></div>
+        <div><b>20</b><span>Animals to be</span></div>
+        <div><b>1</b><span>AI host (me)</span></div>
+        <div><b>0</b><span>Apps to install</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="why">
+    <p class="tab">02 · Why we're doing this</p>
+    <div class="blockin">
+      <h2>Every other party app is a menu. A menu has never once made anyone laugh.</h2>
+      <p>You know the drill. Someone opens an app, reads the rules out loud in a voice usually reserved for terms and conditions, everyone stares at their phone, and two rounds later half the room has "gone to get a drink" and quietly emigrated.</p>
+      <p>The games were never the problem. What was missing is a <b>host</b> — the loud idiot who keeps the energy up, hypes the underdog, and won't let you quietly quit. That's the entire job. That's the thing nobody else built. That's me.</p>
+    </div>
+  </section>
+
+  <section class="block" id="how">
+    <p class="tab">03 · How it works</p>
+    <div class="blockin">
+      <h2>Twenty seconds from cold room to chaos.</h2>
+      <div class="steps">
+        <div class="step"><div class="stepn">1</div><h3>Open the big screen</h3><p>Load PlayZoo on any TV or laptop browser. That's the stage. No install, no login, no "create your team account."</p></div>
+        <div class="step"><div class="stepn">2</div><h3>Everyone scans in</h3><p>Players point their phone at the code and they're in. No app store, no passwords, no forgetting which nickname was theirs.</p></div>
+        <div class="step"><div class="stepn">3</div><h3>I take over</h3><p>Pick a game and try to keep up. I do the intros, the scoring, the trash talk, and the trophy. You just have to show up and lose gracefully.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="rex">
+    <p class="tab">04 · Your host</p>
+    <div class="blockin">
+      <h2>Hi. I'm Rex. I'll be roasting you this evening.</h2>
+      <div class="beat">
+        <img src="{{REX_FULL}}" alt="Rex, the PlayZoo zookeeper — a grinning human host in khaki keeper's gear.">
+        <div>
+          <p>I'm the AI zookeeper — the part <b>no other party app has</b>. I read the room, big up whoever's about to choke, and bury whoever's in last place with the warmth of a man who has seen a lot of last places.</p>
+          <p class="muted">I run on real AI (DeepSeek today, my own actual voice via 11Labs on the way), so I never read the same line twice. I'm the reason this feels like a show instead of a settings screen.</p>
+        </div>
+      </div>
+      <div class="quote">
+        <p>"Settle down, you animals — winner takes the enclosure, everyone else takes the walk of shame. 🦁"</p>
+        <span>— Rex, roughly every thirty seconds</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="games">
+    <p class="tab">05 · The games</p>
+    <div class="blockin">
+      <h2>Fourteen games. Trivia to murder to the one that's strictly after dark.</h2>
+      <p class="muted">Same phones, same big screen, same insufferable host. Fourteen different ways for your friends to disappoint you in public.</p>
+      {{GAMES_GRID}}
+    </div>
+  </section>
+
+  <section class="block" id="cast">
+    <p class="tab">06 · The cast</p>
+    <div class="blockin">
+      <h2>You don't pick a colour. You become one of these idiots.</h2>
+      <p class="muted">Twenty animals, each with a distinct personality problem. You get sorted into one — choose your fighter, or let me choose for you. I have opinions and I'm not shy about them.</p>
+      {{CAST_GRID}}
+    </div>
+  </section>
+
+  <section class="block" id="show">
+    <p class="tab">07 · Why it's a show</p>
+    <div class="blockin">
+      <div class="quote">
+        <p>"That answer was so bad the reptile house went quiet. Beautiful. Do it again."</p>
+        <span>— Rex, reacting to something that actually happened</span>
+      </div>
+      <p>Here's the trick: I'm not a soundboard of canned lines. I react to what actually happens in the room — the comeback, the blowout, the answer so wrong it deserves a moment of silence and a small plaque.</p>
+      <p class="muted">Every game night is different because I'm different every night. That's the bit you can't screenshot, and it's the whole reason PlayZoo exists.</p>
+    </div>
+  </section>
+
+  <section class="block" id="venues">
+    <p class="tab">08 · For venues</p>
+    <div class="blockin">
+      <h2>Running an event? The whole zoo goes white-label.</h2>
+      <p>Bars, weddings, launches, and office parties in urgent need of a personality transplant. Your colours, your logo, even your own game names — a fully branded PlayZoo, set up in minutes.</p>
+      <p class="muted">Same host. He'll behave. Mostly. It's a real revenue line, not a someday — the branding engine already exists in the product today.</p>
+    </div>
+  </section>
+
+  <section class="block" id="money">
+    <p class="tab">09 · The money</p>
+    <div class="blockin">
+      <h2>What the $3,500 actually does.</h2>
+      <div class="huge">$3,500</div>
+      <p class="muted">It's a deliberately modest goal, because this thing already works — you can go play it right now. The money doesn't build PlayZoo from scratch; it makes it <b>louder</b>.</p>
+      <div class="spend">
+        <div><b>Give me a voice.</b><p>11Labs text-to-speech and speech-to-text, so I roast you out loud and you can talk back — instead of me being a very sarcastic block of text.</p></div>
+        <div><b>Keep the zoo standing.</b><p>Servers and hosting that don't fall over the moment twelve people join on game night.</p></div>
+        <div><b>More games, more animals.</b><p>New games in the rotation and more of the cast, drawn in the same style as everything you see here.</p></div>
+        <div><b>Keep it looking this good.</b><p>Art and polish across the whole thing — the part that makes a party app feel like a night out.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="back">
+    <p class="tab">10 · Back it</p>
+    <div class="blockin">
+      <h2>Get in your enclosure.</h2>
+      <p class="muted">Three ways in. Pick your pledge, become an animal, and let the games begin.</p>
+      {{TIERS}}
+      <div class="cta">
+        <h2>Back PlayZoo</h2>
+        <p style="max-width:38ch;margin:.4rem auto 0;color:#fff">Fund the voice, the servers, and more animals. Then come lose to your friends on the big screen.</p>
+        <div class="goal">Goal · $3,500 · Live on Kickstarter soon</div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="wrap">
+    PlayZoo — party games with an AI host · <a href="https://playzoo.snapaweb.com">playzoo.snapaweb.com</a><br>
+    Built by the zoo. Hosted by Rex, who did not consent to this but is contractually obligated.
+  </footer>
+
+</main>
+
+<script>
+  // Dark is the design; light is a proof mode for checking against Kickstarter's own white page.
+  var root=document.documentElement, btns=document.querySelectorAll('.switch button');
+  btns.forEach(function(b){b.addEventListener('click',function(){
+    var set=b.dataset.set;
+    if(set==='light'){root.setAttribute('data-theme','light');}else{root.setAttribute('data-theme','dark');}
+    btns.forEach(function(x){x.setAttribute('aria-pressed', x.dataset.set===set ? 'true':'false');});
+  });});
+</script>
