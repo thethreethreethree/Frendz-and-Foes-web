@@ -189,13 +189,15 @@ export function HomeRoute() {
           {/* The roster keeps growing — a placeholder tile in the empty slot. Uses
               /tiles/coming-soon.jpg once that art exists, with a dashed neon gradient + ✨ until then. */}
           <div
-            className="ff-rise group relative flex aspect-[4/3] flex-col items-start justify-end overflow-hidden rounded-2xl border-2 border-dashed border-white/35 p-4 text-left text-white"
+            className="ff-rise relative flex aspect-[4/3] flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-white/35 p-4 text-center text-white"
             style={{ background: "linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)", boxShadow: "0 1px 2px rgb(0 0 0 / 0.3), 0 16px 34px -18px rgb(0 0 0 / 0.7)" }}
+            aria-label="More games coming soon — not available yet"
           >
+            {/* Art dimmed under a veil so the tile clearly reads as not-yet-available (locked). */}
             <TileArt game="coming-soon" icon="✨" />
-            <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
-            <span className="relative font-display text-xl font-extrabold leading-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">More coming soon</span>
-            <span className="relative mt-0.5 text-xs font-medium text-white/90 drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">New games drop into the zoo regularly</span>
+            <span className="pointer-events-none absolute inset-0 bg-black/55" />
+            <span className="relative font-display text-2xl font-extrabold leading-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.95)]">More coming soon</span>
+            <span className="relative mt-1 text-xs font-semibold uppercase tracking-wide text-white/80 drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">New games drop in regularly</span>
           </div>
         </div>
       </section>
