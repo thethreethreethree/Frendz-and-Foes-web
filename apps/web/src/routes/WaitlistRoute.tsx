@@ -43,8 +43,8 @@ export function WaitlistRoute() {
   }
 
   return (
-    <div className="ff-backdrop min-h-full overflow-y-auto text-ink">
-      <div className="mx-auto w-full max-w-2xl px-5 py-10 sm:py-14">
+    <div className="ff-backdrop h-full text-ink">
+      <div className="mx-auto flex h-full w-full max-w-2xl flex-col px-5 pt-8 pb-6">
         {/* Who's talking */}
         <div className="flex items-center gap-3">
           <JohnFace size={52} />
@@ -78,13 +78,13 @@ export function WaitlistRoute() {
         <p className="mt-2 text-xs text-muted">The full Kickstarter goes live soon. For now, take a look at the campaign — and tell 'em John sent you.</p>
 
         {/* Chat with John */}
-        <div className="mt-9 flex flex-col overflow-hidden rounded-2xl border border-line bg-surface/60 backdrop-blur">
+        <div className="mt-6 flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-line bg-surface/60 backdrop-blur">
           <div className="flex items-center gap-2 border-b border-line px-4 py-2.5">
             <JohnFace size={28} />
             <span className="text-sm font-bold text-ink">Chat with John</span>
             <span className="ml-auto text-[11px] font-semibold uppercase tracking-wide text-muted">While you wait</span>
           </div>
-          <div ref={scroller} className="h-[clamp(240px,40vh,380px)] space-y-3 overflow-y-auto px-4 py-4">
+          <div ref={scroller} className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
             {messages.map((m, i) => (
               <div key={i} className={`flex items-end gap-2 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                 {m.role === "assistant" && <JohnFace size={26} />}
