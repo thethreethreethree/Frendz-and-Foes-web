@@ -26,3 +26,17 @@ and `dist/preview.html` (wrapped for local screenshotting). `dist/` is gitignore
 1. **$15 — Zoo Pass:** 6 months of PlayZoo + 5 games.
 2. **$30 — Founding Animal:** 1 year + 10 games + 1 custom character drawn for the backer.
 3. **$50 — Head Keeper:** 1 year, every game unlocked + 2 custom characters.
+
+## Story images for Kickstarter's editor
+```
+python kickstarter/build.py && python kickstarter/export_ks.py
+```
+Writes `dist/story/NN-slug.png` (one PNG per block, rounded corners + transparent margin)
+and `dist/story/kickstarter-copy.txt` (the plain-text copy for captions/alt text).
+
+**Render width is the whole ballgame.** Kickstarter shows story images in a ~680px column.
+The first export rendered the *desktop* layout at a 980px viewport, so 17px body text arrived
+on the page at ~12px — the "text is too small" bug. The exporter now renders at a **560px CSS
+viewport at 3×** (1680px PNGs): body text lands at ~21px on Kickstarter, ~1.9× bigger, while
+560px stays above the page's own 34rem breakpoint so the games grid keeps 2 columns and the
+block structure survives. Going narrower (phone width) would stack the games one per row.
