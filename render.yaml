@@ -16,3 +16,12 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 22.15.0
+      # Render is the OWNER'S TESTING environment and is deliberately UNLOCKED, so the games are
+      # playable there while the public Hetzner box (playzoo.snapaweb.com) stays shut until the
+      # Kickstarter completes.
+      #
+      # This only affects Render. The Hetzner box reads its own environment from a systemd drop-in
+      # and never looks at this file, so unlocking here cannot unlock production. To open the
+      # public site on launch day, set GAMES_OPEN=true THERE - do not rely on this line.
+      - key: GAMES_OPEN
+        value: "true"
