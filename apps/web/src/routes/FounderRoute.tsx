@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   type BackerDetail, type BackerRow, type CodeRow, type EventRow,
-  editBacker, getBackerDetail, listBackers, listCodes, listEvents, mintCodes, setCodeRevoked,
+  type Plan, type SubscriptionRow,
+  editBacker, getBackerDetail, listBackers, listCodes, listEvents, listSubscriptions,
+  mintCodes, setCodeRevoked, setSubscription,
 } from "../net/founder";
 import { enclosureView } from "../backer/enclosures";
 
@@ -113,6 +115,8 @@ export function FounderRoute() {
         <MintCard passcode={passcode} onMinted={refresh} />
 
         <CodesCard passcode={passcode} rows={rows} setRows={setRows} onRefresh={refresh} />
+
+        <SubscriptionsCard passcode={passcode} users={users} />
 
         <AuditCard passcode={passcode} />
       </div>
@@ -383,6 +387,119 @@ function BackerDetailCard({ passcode, id, onClose, onChanged }: {
           {err && <p className="mt-2 text-sm font-semibold text-red-400">{err}</p>}
         </>
       )}
+    </div>
+  );
+}
+
+// Who is on which plan. Kickstarter rewards are fulfilled BY HAND before Stripe exists, so the
+// founder sets a plan here; afterwards this stays the override for when Stripe and reality disagree.
+// Every change is recorded in the audit log, because an admin granting entitlements is exactly the
+// kind of action that should be on the record.
+function SubscriptionsCard({ passcode, users }: { passcode: string; users: BackerRow[] }) {
+  const [subs, setSubs] = useState<SubscriptionRow[]>([]);
+  const [plans, setPlans] = useState<Record<string, Plan>>({});
+  const [err, setErr] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+  const [who, setWho] = useState("");
+  const [plan, setPlan] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function load() {
+    const r = await listSubscriptions(passcode);
+    if (r.error) { setErr(r.error); return; }
+    setSubs(r.subscriptions || []);
+    setPlans(r.plans || {});
+  }
+  useEffect(() => { void load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [passcode]);
+
+  const nameOf = (id: string) => users.find((u) => u.id === id)?.username || id;
+
+  async function grant() {
+    if (!who || !plan) return;
+    setBusy(true); setErr(null); setNote(null);
+    const months = plans[plan]?.months ?? 12;
+    // The period end is derived from the plan's own length, so a hand-granted reward expires the
+    // same way a paid one does rather than lasting forever.
+    const end = Date.now() + months * 30 * 86400_000;
+    const r = await setSubscription(passcode, who, { plan, status: "active", currentPeriodEnd: end });
+    setBusy(false);
+    if (r.error) { setErr(r.error); return; }
+    setNote(`${nameOf(who)} is now ${plans[plan]?.name} until ${new Date(end).toLocaleDateString()}.`);
+    void load();
+  }
+
+  const statusPill = (st: string) =>
+    st === "active" || st === "trialing" ? "bg-teal-500/15 text-teal-400"
+    : st === "past_due" ? "bg-amber-500/15 text-amber-400"
+    : st === "canceled" ? "bg-red-500/15 text-red-400"
+    : "bg-muted/15 text-muted";
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-line bg-surface/60 backdrop-blur">
+      <div className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-2.5">
+        <span className="text-sm font-bold text-ink">Subscriptions</span>
+        <span className="text-xs text-muted">{subs.length} on a plan · Stripe not connected yet</span>
+        <button onClick={() => load()} className="ml-auto rounded-lg border border-line bg-canvas px-2.5 py-1 text-xs font-bold text-muted hover:text-ink">Refresh</button>
+      </div>
+
+      <div className="flex flex-wrap items-end gap-3 border-b border-line px-4 py-3">
+        <label className="text-sm font-bold text-ink">Backer
+          <select value={who} onChange={(e) => setWho(e.target.value)}
+            className="mt-1 block rounded-xl border border-line bg-canvas px-3 py-2 text-sm text-ink outline-none focus:border-primary">
+            <option value="">pick someone…</option>
+            {users.map((u) => <option key={u.id} value={u.id}>{u.username}</option>)}
+          </select>
+        </label>
+        <label className="text-sm font-bold text-ink">Plan
+          <select value={plan} onChange={(e) => setPlan(e.target.value)}
+            className="mt-1 block rounded-xl border border-line bg-canvas px-3 py-2 text-sm text-ink outline-none focus:border-primary">
+            <option value="">pick a tier…</option>
+            {Object.values(plans).map((p) => <option key={p.id} value={p.id}>{p.price} {p.name}</option>)}
+          </select>
+        </label>
+        <button onClick={grant} disabled={busy || !who || !plan}
+          className="rounded-xl bg-gradient-to-br from-primary to-accent px-4 py-2.5 font-display font-extrabold text-white transition active:scale-95 disabled:opacity-40">
+          {busy ? "Saving…" : "Grant"}
+        </button>
+        {plan && plans[plan] && (
+          <span className="text-xs text-muted">
+            {plans[plan].months} months · {plans[plan].games === "all" ? "every game" : `${plans[plan].games} games`}
+            {plans[plan].customCharacters > 0 && ` · ${plans[plan].customCharacters} custom character${plans[plan].customCharacters > 1 ? "s" : ""}`}
+          </span>
+        )}
+      </div>
+      {note && <p className="border-b border-line px-4 py-2 text-sm font-semibold text-teal-400">{note}</p>}
+      {err && <p className="border-b border-line px-4 py-2 text-sm font-semibold text-red-400">{err}</p>}
+
+      <div className="max-h-[320px] overflow-y-auto">
+        {subs.length === 0 && (
+          <p className="px-4 py-6 text-center text-sm text-muted">
+            Nobody is on a plan yet. Grant one above, or connect Stripe and let it fill in.
+          </p>
+        )}
+        <table className="w-full text-left text-sm">
+          <tbody>
+            {subs.map((sub) => {
+              const p = sub.plan ? plans[sub.plan] : null;
+              const expired = !!(sub.currentPeriodEnd && sub.currentPeriodEnd < Date.now());
+              return (
+                <tr key={sub.id} className="border-t border-line/60">
+                  <td className="px-4 py-2 font-bold text-ink">{nameOf(sub.backerId)}</td>
+                  <td className="px-4 py-2 text-muted">{p ? `${p.price} ${p.name}` : "—"}</td>
+                  <td className="px-4 py-2">
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${statusPill(sub.status)}`}>{sub.status}</span>
+                    {expired && <span className="ml-2 text-xs font-semibold text-red-400">expired</span>}
+                  </td>
+                  <td className="px-4 py-2 tabular-nums text-xs text-muted">
+                    {sub.currentPeriodEnd ? `until ${new Date(sub.currentPeriodEnd).toLocaleDateString()}` : "no end date"}
+                  </td>
+                  <td className="px-4 py-2 text-right text-xs text-muted">{sub.stripeSubId ? "via Stripe" : "by hand"}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

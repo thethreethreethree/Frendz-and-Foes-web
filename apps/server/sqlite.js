@@ -62,6 +62,42 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 );
 CREATE INDEX IF NOT EXISTS idx_sub_backer ON subscriptions(backer_id);
 
+-- Durable key/value marks. Its first job: recording that a JSON->SQLite migration has RUN.
+--
+-- The migrations originally used "is the table empty?" as the test for "has this migrated?", and
+-- those are NOT the same question. Delete every row - which an admin legitimately can - and the next
+-- restart re-imports the legacy JSON, resurrecting data that was deliberately removed. Found by the
+-- brands test doing exactly that.
+CREATE TABLE IF NOT EXISTS meta (
+  key   TEXT PRIMARY KEY,
+  value TEXT,
+  at    INTEGER NOT NULL
+);
+
+-- Brand-admin accounts (auth.js) - distinct from the backers table, which is club members.
+CREATE TABLE IF NOT EXISTS users (
+  id          TEXT PRIMARY KEY,
+  email       TEXT NOT NULL,
+  email_lower TEXT NOT NULL UNIQUE,
+  salt        TEXT NOT NULL,
+  hash        TEXT NOT NULL,
+  created     INTEGER NOT NULL
+);
+
+-- Which admin account owns which white-label brand.
+CREATE TABLE IF NOT EXISTS brand_owners (
+  slug    TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_brand_owners_user ON brand_owners(user_id);
+
+-- White-label brand configs, one row per brand (was one JSON file per brand on disk).
+CREATE TABLE IF NOT EXISTS brands (
+  slug       TEXT PRIMARY KEY,
+  config     TEXT NOT NULL,          -- the brand config as JSON
+  updated_at INTEGER NOT NULL
+);
+
 -- Backer chat. One row per message, replacing a JSON blob that was rewritten IN FULL on every
 -- single send: that was O(all messages) per message, and a partial write would have taken the whole
 -- room's history with it. speaker is 'backer' | 'rex' | 'john'; backer_id is NULL for the characters.
@@ -85,6 +121,23 @@ CREATE TABLE IF NOT EXISTS events (
 );
 CREATE INDEX IF NOT EXISTS idx_events_type ON events(type);
 `);
+
+// Has this one-time migration already run? Explicit, because "the table is empty" is not the same
+// question - see the meta table's comment.
+export function hasMigrated(key) {
+  try {
+    return !!db.prepare("SELECT 1 FROM meta WHERE key = ?").get("migrated:" + key);
+  } catch { return false; }
+}
+
+export function markMigrated(key, note = null) {
+  try {
+    db.prepare("INSERT OR REPLACE INTO meta (key, value, at) VALUES (?, ?, ?)")
+      .run("migrated:" + key, note ? JSON.stringify(note) : null, Date.now());
+  } catch (err) {
+    console.error("[ff-server] could not mark migration", key, err?.message || err);
+  }
+}
 
 // Add a column to an existing table if it is missing.
 //

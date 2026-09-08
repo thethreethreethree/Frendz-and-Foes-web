@@ -25,10 +25,13 @@ const CODES_FILE = join(AUTH_DIR, "backer-codes.json");
 let db = null;
 let logEvent = () => {};
 let tx = (fn) => fn();
+let hasMigrated = () => false;
+let markMigrated = () => {};
 let ready = false;
 try {
   const m = await import("./sqlite.js");
   db = m.db; logEvent = m.logEvent; tx = m.tx;
+  hasMigrated = m.hasMigrated; markMigrated = m.markMigrated;
   // revoked_at is newer than the table, so an already-live database needs it added explicitly.
   m.ensureColumn("backer_codes", "revoked_at", "INTEGER");
   ready = true;
@@ -49,9 +52,12 @@ const normalize = (raw) => String(raw || "").toUpperCase().replace(/[^A-Z0-9]/g,
 function importLegacyJson() {
   if (!ready) return;
   try {
-    const n = db.prepare("SELECT COUNT(*) AS n FROM backer_codes").get().n;
-    if (n > 0) return;                       // already migrated (or already in use) — leave it alone
-    if (!existsSync(CODES_FILE)) return;     // nothing to migrate: a fresh install
+    if (hasMigrated("codes")) return;                    // explicitly done before
+    if (db.prepare("SELECT COUNT(*) AS n FROM backer_codes").get().n > 0) {
+      markMigrated("codes", { backfilled: true });     // live before markers existed
+      return;
+    }
+    if (!existsSync(CODES_FILE)) { markMigrated("codes", { empty: true }); return; }
     const legacy = JSON.parse(readFileSync(CODES_FILE, "utf8"));
     const rows = Object.entries(legacy || {});
     if (!rows.length) return;
@@ -73,6 +79,7 @@ function importLegacyJson() {
     });
     console.log(`[ff-server] migrated ${rows.length} backer code(s) from JSON into SQLite`);
     logEvent("migrate.codes", null, { count: rows.length, from: "backer-codes.json" });
+    markMigrated("codes", { count: rows.length });
   } catch (err) {
     console.error("[ff-server] backer-code JSON migration FAILED:", err?.message || err);
   }

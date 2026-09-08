@@ -159,3 +159,55 @@ export async function listEvents(passcode: string, opts: { limit?: number; befor
     return { error: "Network hiccup — try again." };
   }
 }
+
+// --- Subscriptions ------------------------------------------------------------------------------
+// The founder can set a plan by hand. That matters BEFORE Stripe exists: Kickstarter rewards get
+// fulfilled manually at first, and afterwards this is the override for when the payment provider
+// and reality disagree.
+
+export interface Plan {
+  id: string; price: string; name: string;
+  months: number; games: number | "all"; customCharacters: number; blurb: string;
+}
+
+export interface SubscriptionRow {
+  id: string;
+  backerId: string;
+  plan: string | null;
+  status: "none" | "active" | "trialing" | "past_due" | "canceled";
+  stripeCustomerId: string | null;
+  stripeSubId: string | null;
+  currentPeriodEnd: number | null;
+  created: number;
+  updated: number;
+}
+
+export async function listSubscriptions(passcode: string)
+  : Promise<{ subscriptions?: SubscriptionRow[]; plans?: Record<string, Plan>; error?: string }> {
+  try {
+    const res = await fetch("/api/backer/admin/subscriptions", { headers: headers(passcode) });
+    if (res.status === 401) return { error: "That admin passcode isn't right." };
+    if (!res.ok) return { error: "Couldn't load subscriptions." };
+    const data = await res.json();
+    return { subscriptions: data.subscriptions || [], plans: data.plans || {} };
+  } catch {
+    return { error: "Network hiccup — try again." };
+  }
+}
+
+export async function setSubscription(
+  passcode: string, backerId: string,
+  patch: { plan?: string | null; status?: string; currentPeriodEnd?: number | null },
+): Promise<{ subscription?: SubscriptionRow; error?: string }> {
+  try {
+    const res = await fetch(`/api/backer/admin/subscriptions/${encodeURIComponent(backerId)}`, {
+      method: "POST", headers: headers(passcode), body: JSON.stringify(patch),
+    });
+    if (res.status === 401) return { error: "That admin passcode isn't right." };
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) return { error: data.error || "Couldn't save that subscription." };
+    return { subscription: data.subscription };
+  } catch {
+    return { error: "Network hiccup — try again." };
+  }
+}

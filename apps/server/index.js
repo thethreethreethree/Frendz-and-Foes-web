@@ -30,8 +30,9 @@ import { johnChat, johnReady } from "./john.js";
 import { generateCodes, checkCode, redeemCode, listCodes, revokeCode, backerCodesReady } from "./backerCodes.js";
 import { listEvents, listEventTypes } from "./sqlite.js";
 import {
-  PLANS, entitlementsFor, getSubscription, listSubscriptions, setSubscription,
+  PLANS, applyStripeEvent, entitlementsFor, getSubscription, listSubscriptions, setSubscription,
 } from "./subscriptions.js";
+import { stripeConfigured, verifyStripeSignature } from "./stripe.js";
 import {
   createBacker, getBacker, findBackerByCode, findBackerByUsername,
   setBackerPassword, verifyBackerPassword, setBackerEnclosure, updateBacker, publicBacker,
@@ -55,6 +56,29 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 app.set("trust proxy", 1); // behind nginx — so req.secure reflects X-Forwarded-Proto (Secure cookies)
+// --- Stripe webhook -------------------------------------------------------------------------
+// Registered BEFORE the global JSON parser, with express.raw(): Stripe's signature covers the exact
+// bytes it sent, and once express.json() has parsed and re-serialised them the signature can never
+// match again. This is the single door subscription state comes through from Stripe.
+//
+// Until STRIPE_WEBHOOK_SECRET is set this returns 503 rather than processing anything. Accepting an
+// UNVERIFIED webhook would let anyone on the internet grant themselves a subscription by POSTing
+// here, so "not configured" must fail closed, never open.
+app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), (req, res) => {
+  if (!stripeConfigured()) return res.status(503).json({ error: "Stripe is not configured." });
+  const v = verifyStripeSignature(req.body, req.get("stripe-signature"));
+  if (!v.ok) {
+    console.warn("[ff-server] rejected Stripe webhook:", v.error);
+    return res.status(400).json({ error: v.error });
+  }
+  const r = applyStripeEvent(v.event);
+  // Always 200 on a VERIFIED event, even if we could not map it to a backer: a non-2xx makes Stripe
+  // retry the same event indefinitely, and an event we do not understand will never succeed on a
+  // retry. It is logged instead.
+  if (r.error) console.warn("[ff-server] Stripe event not applied:", r.error, v.event?.type);
+  res.json({ received: true });
+});
+
 app.use(express.json({ limit: "256kb" }));
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
 

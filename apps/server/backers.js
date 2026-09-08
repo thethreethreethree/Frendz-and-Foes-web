@@ -32,11 +32,14 @@ const SECRET_FILE = join(AUTH_DIR, "backer-secret");
 let db = null;
 let logEvent = () => {};
 let tx = (fn) => fn();
+let hasMigrated = () => false;
+let markMigrated = () => {};
 let ready = false;
 try {
   mkdirSync(AUTH_DIR, { recursive: true });        // still needed: the session secret lives here
   const m = await import("./sqlite.js");
   db = m.db; logEvent = m.logEvent; tx = m.tx;
+  hasMigrated = m.hasMigrated; markMigrated = m.markMigrated;
   ready = true;
 } catch (err) {
   console.error("[ff-server] backer store DISABLED:", err?.message || err);
@@ -77,9 +80,12 @@ const rowToBacker = (r) => (r ? {
 function importLegacyJson() {
   if (!ready) return;
   try {
-    const n = db.prepare("SELECT COUNT(*) AS n FROM backers").get().n;
-    if (n > 0) return;                          // already migrated (or already in use)
-    if (!existsSync(BACKERS_FILE)) return;      // nothing to migrate: a fresh install
+    if (hasMigrated("backers")) return;                    // explicitly done before
+    if (db.prepare("SELECT COUNT(*) AS n FROM backers").get().n > 0) {
+      markMigrated("backers", { backfilled: true });     // live before markers existed
+      return;
+    }
+    if (!existsSync(BACKERS_FILE)) { markMigrated("backers", { empty: true }); return; }
     const legacy = JSON.parse(readFileSync(BACKERS_FILE, "utf8"));
     const rows = Object.values(legacy || {});
     if (!rows.length) return;
@@ -109,6 +115,7 @@ function importLegacyJson() {
     });
     console.log(`[ff-server] migrated ${rows.length} backer account(s) from JSON into SQLite`);
     logEvent("migrate.backers", null, { count: rows.length, from: "backers.json" });
+    markMigrated("backers", { count: rows.length });
   } catch (err) {
     console.error("[ff-server] backer JSON migration FAILED:", err?.message || err);
   }

@@ -43,10 +43,13 @@ const REX_WELCOME = {
 let db = null;
 let logEvent = () => {};
 let tx = (fn) => fn();
+let hasMigrated = () => false;
+let markMigrated = () => {};
 let ready = false;
 try {
   const m = await import("./sqlite.js");
   db = m.db; logEvent = m.logEvent; tx = m.tx;
+  hasMigrated = m.hasMigrated; markMigrated = m.markMigrated;
   ready = true;
 } catch (err) {
   console.error("[ff-server] chat store DISABLED:", err?.message || err);
@@ -70,8 +73,12 @@ function rowToMsg(r) {
 function importLegacyJson() {
   if (!ready) return;
   try {
-    if (db.prepare("SELECT COUNT(*) AS n FROM messages").get().n > 0) return;
-    if (!existsSync(CHAT_FILE)) return;
+    if (hasMigrated("chat")) return;                       // explicitly done before
+    if (db.prepare("SELECT COUNT(*) AS n FROM messages").get().n > 0) {
+      markMigrated("chat", { backfilled: true });          // live before markers existed
+      return;
+    }
+    if (!existsSync(CHAT_FILE)) { markMigrated("chat", { empty: true }); return; }
     const legacy = JSON.parse(readFileSync(CHAT_FILE, "utf8")) || {};
     let n = 0;
     tx(() => {
@@ -92,6 +99,7 @@ function importLegacyJson() {
     if (n) {
       console.log(`[ff-server] migrated ${n} chat message(s) from JSON into SQLite`);
       logEvent("migrate.chat", null, { count: n, from: "chat.json" });
+      markMigrated("chat", { count: n });
     }
   } catch (err) {
     console.error("[ff-server] chat JSON migration FAILED:", err?.message || err);
