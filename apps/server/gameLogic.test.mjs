@@ -78,26 +78,16 @@ check("a single guess wins by default", winningValue([99], 50), 99);
 check("no guesses at all yields no winner, not Infinity", winningValue([], 50), null);
 check("and it is not Infinity", winningValue([], 50) === Infinity, false);
 
-// --- Murder Mystery: the game must always be able to END ------------------------------------------
-// The murderer win was only checked after a KILL. Votes also remove players, so a town that voted
-// out its own last villagers left a game with nobody to kill and no way to finish.
-function outcomeAfterElimination({ murderersAlive, villagersAlive }) {
-  if (murderersAlive === 0) return "town";
-  if (villagersAlive === 0) return "murderers";   // nobody left to kill: it cannot continue
-  return "continue";
-}
-
-console.log("");
-console.log("--- Murder Mystery: a vote must not deadlock the game ---");
-check("catching the last murderer wins it for the town",
-  outcomeAfterElimination({ murderersAlive: 0, villagersAlive: 3 }), "town");
-check("an ordinary wrong vote continues",
-  outcomeAfterElimination({ murderersAlive: 1, villagersAlive: 2 }), "continue");
-// THE BUG: this used to fall through to "continue" forever.
-check("voting out the LAST villager ends it for the murderers",
-  outcomeAfterElimination({ murderersAlive: 2, villagersAlive: 0 }), "murderers");
-check("the town winning takes priority when both hit zero",
-  outcomeAfterElimination({ murderersAlive: 0, villagersAlive: 0 }), "town");
+// --- Murder Mystery: NOT tested here, on purpose ---------------------------------------------------
+// A "vote deadlock" was reported here and it was WRONG. The check re-implemented the rules from a
+// misreading of the engine, and then agreed with the misreading. In the real game a wrong majority
+// CLEARS a suspect (immunises them); only a caught MURDERER is ever eliminated, so a vote cannot
+// wipe out the villagers and the deadlock does not exist.
+//
+// The lesson is about this file: re-implementing logic proves the re-implementation, not the engine.
+// That is fine for pure rules with no engine equivalent (the two above are self-contained), and
+// worthless for anything the engine actually decides. Murder Mystery's flow is asserted by PLAYING
+// it over real sockets in murderGame.test.mjs instead.
 
 console.log(`\n${fails === 0 ? "ALL PASS" : fails + " FAILURE(S)"}`);
 process.exit(fails === 0 ? 0 : 1);

@@ -246,10 +246,14 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
 
   // Host actions are the controller's alone. Players reach the room via m2:join, which never sets
   // socket.data.role, so this stops any player — using the app or a script driving their own player
-  // socket — from starting, resetting, or running votes. It is HARDENING, not authentication: a
-  // hand-crafted socket can still emit join{role:"host"} and claim the controller. Closing that
-  // needs a real host token minted with the room and carried in the host QR, which remains open
-  // (recorded [KNOWN · LOW] in docs/AUDIT-2026-07-11-multitenant-foundation.md).
+  // socket — from starting, resetting, or running votes.
+  //
+  // The gap this comment used to describe — "a hand-crafted socket can still emit join{role:'host'}
+  // and claim the controller", recorded [KNOWN · LOW] in
+  // docs/AUDIT-2026-07-11-multitenant-foundation.md — is CLOSED (2026-09-09). index.js now issues a
+  // host token on the first claim of a room and DOWNGRADES any later claimer to "spectator", so
+  // socket.data.role is no longer something a client can simply assert. murderGame.test.mjs proves
+  // it end to end: an impostor's m2:reset is refused on a live game.
   const isHost = () => socket.data.role === "host";
 
   socket.on("m2:config", ({ killTarget, cooldownSec }) => {
@@ -462,14 +466,6 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
         m.winner = "town";
         awardScores(m);
         announce(code, { type: "end", winner: "town", caught: caught?.name });
-      } else if (alivePlayers(m).filter((p) => !isMurderer(m, p.id)).length === 0) {
-        // The town voted out its own last villager. The murderer win was only ever checked after a
-        // KILL, so this deadlocked: no villagers left to kill means the kill target can never be
-        // reached and the game never ends. Same failure the kill path already guards against.
-        m.phase = "ended";
-        m.winner = "murderers";
-        awardScores(m);
-        announce(code, { type: "end", winner: "murderers" });
       } else {
         m.phase = "playing";
         announce(code, { type: "vote-caught", caught: caught?.name, remaining: murderersAlive(m) });
