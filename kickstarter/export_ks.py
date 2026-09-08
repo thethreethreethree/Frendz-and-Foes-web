@@ -55,13 +55,13 @@ SECTIONS = [
     ("why",    "02-why",                   "Why we're doing this"),
     ("how",    "03-how-it-works",          "How it works"),
     ("rex",    "04-meet-rex",              "Meet Rex"),
-    ("games",  "05-the-games",             "The games"),
-    ("cast",   "06-the-cast",              "The cast"),
-    ("show",   "07-the-show",              "The show"),
-    ("venues", "08-venues",                "Venues"),
-    ("money",  "09-where-the-money-goes",  "Where the money goes"),
-    ("back",   "10-back-us",               "Back us"),
-    ("john",   "11-ask-john",              "Ask John"),
+    ("john",   "05-ask-john",              "Ask John"),
+    ("games",  "06-the-games",             "The games"),
+    ("cast",   "07-the-cast",              "The cast"),
+    ("show",   "08-the-show",              "The show"),
+    ("venues", "09-venues",                "Venues"),
+    ("money",  "10-where-the-money-goes",  "Where the money goes"),
+    ("back",   "11-back-us",               "Back us"),
 ]
 
 # Prefer the locally built, fully self-contained preview (all art inlined as
