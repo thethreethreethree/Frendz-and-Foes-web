@@ -168,12 +168,17 @@ export function registerJustOneHandlers(io, socket, rooms, roomKey = (r) => Stri
   });
 
   function doReveal(m) {
-    const counts = {};
-    for (const w of m.clues.values()) counts[norm(w)] = (counts[norm(w)] || 0) + 1;
+    // A Map, not a plain object. The keys here are words PLAYERS chose, and a plain object already
+    // has inherited members: counts["constructor"] reads Object's constructor (truthy) instead of
+    // undefined, so the count never reaches 2 and the clue never cancels. "constructor" is an
+    // ordinary English word, and "__proto__" does not even create an own property - either one was
+    // a guaranteed way to beat the cancellation rule.
+    const counts = new Map();
+    for (const w of m.clues.values()) counts.set(norm(w), (counts.get(norm(w)) || 0) + 1);
     m.survivors = [];
     m.cancelled = [];
     for (const [pid, w] of m.clues) {
-      if (counts[norm(w)] >= 2) m.cancelled.push({ word: w });
+      if ((counts.get(norm(w)) || 0) >= 2) m.cancelled.push({ word: w });
       else m.survivors.push({ by: m.players.get(pid)?.name || "?", word: w });
     }
     m.phase = "reveal";

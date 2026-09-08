@@ -211,6 +211,14 @@ export function registerBallparkHandlers(io, socket, rooms, roomKey = (r) => Str
 
   function score(m) {
     const values = m.sorted.map((g) => g.value);
+    // With NO guesses at all - reachable when the host advances manually from betting - Math.min()
+    // of nothing is Infinity, which JSON turns into null in the snapshot and leaves a round nobody
+    // can win. Say "no winning guess" explicitly instead.
+    if (!values.length) {
+      m.winningValue = null;
+      m.phase = "reveal";
+      return;
+    }
     const notOver = values.filter((v) => v <= m.answer);
     m.winningValue = notOver.length ? Math.max(...notOver) : Math.min(...values);
     for (const p of m.players.values()) {
