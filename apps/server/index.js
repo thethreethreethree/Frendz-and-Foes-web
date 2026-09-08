@@ -35,6 +35,7 @@ import {
 } from "./backers.js";
 import { sortQuestions, sortInto } from "./sorting.js";
 import { getEnclosure } from "./enclosures.js";
+import { canAccess, getMessages, addMessage, addRexMessage } from "./chat.js";
 import { getBrand, listBrandSlugs, upsertBrand, deleteBrand, dbReady } from "./db.js";
 import {
   authReady, createUser, authenticate, getUser, makeSession, readSession,
@@ -393,8 +394,67 @@ function presence(room) {
   };
 }
 
+// Resolve the signed-in backer from a socket's handshake cookie (backers-only chat auth). Read fresh
+// each time so a just-sorted backer's enclosure access is current.
+function socketBacker(socket) {
+  const tok = parseCookies(socket.handshake.headers.cookie)[BACKER_COOKIE];
+  const s = tok && readBackerSession(tok);
+  return s ? getBacker(s.uid) : null;
+}
+
+// Turn a stored chat message into its client shape, enriching a backer message with the author's
+// current username/avatar/enclosure (so avatar/name changes reflect everywhere; history stays lean).
+function publicMsg(m) {
+  if (m.rex) return { id: m.id, at: m.at, text: m.text, rex: true };
+  const b = getBacker(m.backerId);
+  return {
+    id: m.id, at: m.at, text: m.text,
+    author: b
+      ? { id: b.id, username: b.username, avatar: b.avatar || null, enclosure: b.enclosure || null }
+      : { id: null, username: "a former guest", avatar: null, enclosure: null },
+  };
+}
+
+const REX_MOD_LINES = [
+  "Oi. We don't do that here. Cool it. 🦁",
+  "Nope. Not in my zoo. Try being a person. 🦁",
+  "That one's going in the bin. Watch your mouth. 🦁",
+  "Absolutely not. I've thrown animals out for less. 🦁",
+];
+const rexModLine = () => REX_MOD_LINES[Math.floor(Math.random() * REX_MOD_LINES.length)];
+
 io.on("connection", (socket) => {
   let code = null;
+
+  // --- Backer chat (works regardless of GAMES_OPEN — the club is open while games are locked) ---
+  socket.on("chat:join", ({ roomId } = {}) => {
+    const b = socketBacker(socket);
+    if (!b) return socket.emit("chat:error", { error: "Sign in to the club to chat." });
+    if (!canAccess(b, roomId)) return socket.emit("chat:error", { error: "That room isn't yours." });
+    socket.join(`chat:${roomId}`);
+    socket.emit("chat:history", { roomId, messages: getMessages(roomId).map(publicMsg) });
+  });
+
+  socket.on("chat:send", ({ roomId, text } = {}) => {
+    const b = socketBacker(socket);
+    if (!b) return socket.emit("chat:error", { error: "Sign in to the club to chat." });
+    if (!canAccess(b, roomId)) return socket.emit("chat:error", { error: "That room isn't yours." });
+    // Per-socket rate limit: ~12 messages / 10s.
+    const now = Date.now();
+    const w = socket.data.chatWin || (socket.data.chatWin = { start: now, n: 0 });
+    if (now - w.start > 10_000) { w.start = now; w.n = 0; }
+    if (++w.n > 12) return socket.emit("chat:error", { error: "Easy — slow down a second." });
+
+    const r = addMessage(roomId, b.id, text);
+    if (r.blocked) {
+      socket.emit("chat:blocked", { roomId, reason: r.reason });
+      const rex = addRexMessage(roomId, rexModLine()); // Rex steps in, visible to the whole room
+      io.to(`chat:${roomId}`).emit("chat:msg", { roomId, message: publicMsg(rex) });
+      return;
+    }
+    if (r.error) return socket.emit("chat:error", { error: r.error });
+    io.to(`chat:${roomId}`).emit("chat:msg", { roomId, message: publicMsg(r.message) });
+  });
 
   // Pre-launch lockdown (see GET /api/status). Until GAMES_OPEN=true, NO game room can be created
   // or joined — not by clicking, not by a typed URL, not by a hand-rolled socket. We simply don't

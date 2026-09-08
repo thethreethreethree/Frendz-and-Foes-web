@@ -4,6 +4,7 @@ import { AvatarCropper } from "../backer/AvatarCropper";
 import { COUNTRIES } from "../backer/countries";
 import { RexSays } from "../backer/RexBits";
 import { SortingFlow } from "../backer/SortingFlow";
+import { ChatView } from "../backer/ChatView";
 import { enclosureView } from "../backer/enclosures";
 import {
   type Backer, backerMe, checkBackerCode, backerSignup, backerLogin, backerLogout, backerSetPassword,
@@ -235,9 +236,26 @@ function LoginPanel({ onIn, toSignup }: { onIn: (b: Backer) => void; toSignup: (
 function SignedIn({ me, onOut, onSorted }: { me: Backer; onOut: () => void; onSorted: (id: string) => void }) {
   const [showPw, setShowPw] = useState(false);
   const [sorting, setSorting] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   const enc = enclosureView(me.enclosure);
 
   if (sorting) return <SortingFlow onDone={(id) => { onSorted(id); setSorting(false); }} />;
+
+  // The chats — the whole point of the club. Bounded-height view (scrolls internally) + a compact header.
+  if (chatOpen && me.enclosure) {
+    return (
+      <div className="mt-6 flex flex-col gap-3">
+        <div className="flex items-center gap-3">
+          <button onClick={() => setChatOpen(false)} className="rounded-lg border border-line bg-surface/70 px-3 py-1.5 text-sm font-bold text-ink transition hover:-translate-y-0.5">← Club</button>
+          {enc && <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold" style={{ borderColor: enc.accent, color: enc.accent }}>{enc.emoji} {enc.name}</span>}
+          <span className="ml-auto text-sm font-semibold text-muted">{me.username}</span>
+        </div>
+        <div className="flex h-[72vh] min-h-0 flex-col">
+          <ChatView me={me} />
+        </div>
+      </div>
+    );
+  }
 
   // Not sorted yet — Rex wants to sort you. This is the obvious next action, not a dead end.
   if (!me.enclosure) {
@@ -257,10 +275,10 @@ function SignedIn({ me, onOut, onSorted }: { me: Backer; onOut: () => void; onSo
     );
   }
 
-  // Sorted — show the enclosure with pride. (House + General chats are the next build.)
+  // Sorted — the club home: enclosure pride + the door into the chats.
   return (
     <div className="mt-8 flex flex-col gap-6">
-      <RexSays>Welcome home, <b>{me.username}</b> — {enc?.name} suits you. The chats open soon; save your best material. 🦁</RexSays>
+      <RexSays>Welcome home, <b>{me.username}</b> — {enc?.name} suits you. Your enclosure chat and The Watering Hole are open. Behave. 🦁</RexSays>
       {enc && (
         <div
           className="flex flex-col items-center gap-3 rounded-3xl border p-6 text-center"
@@ -272,11 +290,13 @@ function SignedIn({ me, onOut, onSorted }: { me: Backer; onOut: () => void; onSo
           <div className="font-display text-sm font-bold" style={{ color: enc.accent }}>"{enc.motto}"</div>
         </div>
       )}
+      <button
+        onClick={() => setChatOpen(true)}
+        className="rounded-2xl bg-gradient-to-br from-primary to-accent px-7 py-4 text-center font-display text-xl font-extrabold text-white shadow-[0_16px_40px_-12px_rgb(var(--c-primary)/0.6)] transition hover:-translate-y-0.5 active:scale-95"
+      >
+        💬 Enter the clubhouse chats
+      </button>
       <ProfileCard me={me} enc={enc} />
-      <div className="rounded-2xl border border-dashed border-line bg-surface/40 p-5 text-sm text-muted">
-        <div className="font-bold text-ink">What's next</div>
-        <p className="mt-1">Your enclosure chat + the General room (The Watering Hole) open soon. You're sorted and on the list.</p>
-      </div>
       {!me.hasPassword && <PasswordCard showPw={showPw} setShowPw={setShowPw} />}
       <LogoutButton onOut={onOut} />
     </div>
