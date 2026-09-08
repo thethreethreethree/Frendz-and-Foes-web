@@ -22,7 +22,7 @@ export function ClubRoute() {
   useEffect(() => { backerMe().then((b) => { setMe(b); setLoading(false); }); }, []);
 
   return (
-    <div className="ff-backdrop min-h-full text-ink">
+    <div className="ff-backdrop h-full overflow-y-auto text-ink">
       <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col px-5 pt-8 pb-12">
         <div className="flex items-center justify-between">
           <div className="ff-title text-xl font-extrabold">The Backers' Club</div>

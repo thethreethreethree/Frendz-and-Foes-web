@@ -54,7 +54,9 @@ export function AskJohnRoute() {
   }
 
   return (
-    <div className="ff-backdrop min-h-full text-ink">
+    // Own scroll container: body{overflow:hidden} (index.css) locks the viewport for the game
+    // screens, so a document-shaped page must scroll itself or its content is unreachable.
+    <div className="ff-backdrop h-full overflow-y-auto text-ink">
       <div className="mx-auto w-full max-w-3xl px-5 pt-6 pb-10">
         {/* Header */}
         <div className="flex items-center gap-3">
