@@ -74,6 +74,27 @@ else:
     URL = "https://playzoo.snapaweb.com/kickstarter"
 
 
+def save_png(img, path):
+    """Save through a temp file and swap it in.
+
+    dist/ sits inside a OneDrive-synced folder. As soon as a PNG's bytes change, OneDrive starts
+    uploading it and holds the handle, so the NEXT export of that same block fails with
+    OSError Errno 22 on the direct overwrite - reproducibly, and only for the blocks that actually
+    changed. Writing a sibling temp file (untracked by the sync client) and swapping avoids the
+    open-for-write on the locked path; the retry covers the swap itself.
+    """
+    tmp = path + ".tmp.png"
+    img.save(tmp)
+    for attempt in range(12):
+        try:
+            os.replace(tmp, path)
+            return
+        except OSError:
+            if attempt == 11:
+                raise
+            time.sleep(0.5)
+
+
 def present(png_bytes):
     """Transparent margin + rounded corners + a soft drop shadow, so each block
     reads as a card on Kickstarter's white story background."""
@@ -174,7 +195,7 @@ try:
         data = shot.get("result", {}).get("data")
         if data:
             img = present(base64.b64decode(data))
-            img.save(os.path.join(OUT, fname + ".png"))
+            save_png(img, os.path.join(OUT, fname + ".png"))
             print(f"saved {fname}.png  {img.width}x{img.height}px "
                   f"({int(rect['w'])}x{int(rect['h'])} css)")
         txt = ev(f"(function(){{var e=document.getElementById('{sid}');return e?e.innerText:'';}})()") or ""

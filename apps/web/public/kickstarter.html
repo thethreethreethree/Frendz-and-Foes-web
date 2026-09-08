@@ -105,7 +105,10 @@
         grid-template-columns:minmax(0,260px) minmax(0,1fr)}
   @media(max-width:40rem){.beat{grid-template-columns:1fr}}
   .beat img{width:100%;border-radius:14px;border:2px solid var(--line);background:var(--raised);
-            aspect-ratio:1/1;object-fit:contain;object-position:center bottom}
+            display:block}
+  /* Only a standing cut-out wants a square, bottom-anchored frame; a landscape photo keeps its
+     own ratio, or it letterboxes into a dead band that reads as a failed image. */
+  .beat img.cutout{aspect-ratio:1/1;object-fit:contain;object-position:center bottom}
 
   /* quote — a Rex line worth a card */
   .quote{border:2px solid var(--pink);border-radius:16px;padding:1.4rem 1.5rem;margin:1.75rem 0;
@@ -143,6 +146,16 @@
   .askbar span{color:var(--muted);font-size:.98rem;flex:1 1 300px;line-height:1.45}
   .askbar code{font-family:var(--mono);font-size:.9rem;color:var(--lime);background:rgba(163,230,53,.1);
                border-radius:8px;padding:.35rem .6rem;white-space:nowrap}
+  /* rexsays — Rex stood next to the warning he is delivering. A cut-out, deliberately NOT
+     plated like .beat img: he should read as a character speaking, not a second photo. */
+  .rexsays{display:grid;gap:.9rem;grid-template-columns:minmax(0,124px) minmax(0,1fr);align-items:start}
+  .beat .rexsays img.rexpic{width:100%;aspect-ratio:auto;border:0;border-radius:0;background:none;
+              object-fit:contain;object-position:center top;
+              filter:drop-shadow(0 6px 16px rgba(0,0,0,.5))}
+  @media(max-width:26rem){.rexsays{grid-template-columns:minmax(0,92px) minmax(0,1fr);gap:.7rem}}
+  /* attribution leads the quote, so the reader knows whose voice it is before the first word */
+  .rexsays .quoteby{margin:.15rem 0 .5rem}
+  .rexsays p:first-of-type{margin-top:0}
   .morebar b{font-family:var(--display);font-weight:800;color:var(--violet);font-size:1.15rem;white-space:nowrap}
   .morebar span{color:var(--muted);font-size:.98rem;flex:1 1 300px;line-height:1.45}
 
@@ -265,7 +278,7 @@
     <div class="blockin">
       <h2>Hi. I'm Rex. I'll be roasting you this evening.</h2>
       <div class="beat">
-        <img src="/crew/rex-full.png" alt="Rex, the PlayZoo zookeeper — a grinning human host in khaki keeper's gear.">
+        <img class="cutout" src="/crew/rex-full.png" alt="Rex, the PlayZoo zookeeper — a grinning human host in khaki keeper's gear.">
         <div>
           <p>I'm the AI zookeeper — the part <b>no other party app has</b>. I read the room, big up whoever's about to choke, and bury whoever's in last place with the warmth of a man who has seen a lot of last places.</p>
           <p class="muted">I run on real AI (DeepSeek today, my own actual voice via 11Labs on the way), so I never read the same line twice. I'm the reason this feels like a show instead of a settings screen.</p>
@@ -401,11 +414,14 @@
       <h2>Still got questions? Go and bother John.</h2>
       <div class="beat">
         <img src="/bg/john-desk.jpg" alt="John the raccoon on the PlayZoo support desk at 11:45pm - headset on, phone to his ear, mid-pitch, with a caffeine IV drip beside him.">
-        <div>
-          <p class="lede">"Any questions about PlayZoo? Ask John. He's on the desk all night and he actually knows the answers."</p>
-          <p>"Fair warning though — he'll try to sell you absolute rubbish. A single left sock. Half a bottle cap. 'Limited edition', he'll say. Do <b>NOT</b> buy it."</p>
-          <p class="muted">"Oh, and he loves being called a trash panda. Really makes his night. Tell him I said hello."</p>
-          <span class="quoteby">— Rex, your AI zookeeper</span>
+        <div class="rexsays">
+          <img class="rexpic" src="/crew/rex-warning.png" alt="Rex, the PlayZoo zookeeper, side-eyeing the camera with one finger raised, mid-warning.">
+          <div>
+          <span class="quoteby">Rex, your AI zookeeper</span>
+          <p class="lede">"Any questions about PlayZoo? Ask John. He's on the desk all night and he actually knows the answers.</p>
+          <p>Fair warning though — he'll try to sell you absolute rubbish. A single left sock. Half a bottle cap. 'Limited edition', he'll say. Do <b>NOT</b> buy it.</p>
+          <p class="muted">Oh, and he loves being called a trash panda. Really makes his night. Tell him I said hello."</p>
+          </div>
         </div>
       </div>
       <div class="askbar">

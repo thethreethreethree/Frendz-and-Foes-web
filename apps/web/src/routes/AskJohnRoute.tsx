@@ -104,12 +104,22 @@ export function AskJohnRoute() {
           Got questions? <span className="text-primary">John's on the desk.</span>
         </h1>
 
-        {/* Rex's set-up — the whole joke depends on the visitor reading this before they type. */}
-        <blockquote className="mt-5 rounded-2xl border-l-4 border-primary bg-surface/60 px-5 py-4">
-          <p className="text-[15px] leading-relaxed text-ink">“{REX_WARNING}”</p>
-          <footer className="mt-2 text-xs font-semibold uppercase tracking-wide text-muted">
-            — Rex, your AI zookeeper
-          </footer>
+        {/* Rex's set-up — the whole joke depends on the visitor reading this before they type.
+            Rex's portrait sits beside it so the warning has a visible face delivering it: he is a
+            character stitching John up, not a disclaimer. Cut-out, no plate, so he reads as present
+            in the page rather than as a second framed photo next to John's desk shot above. */}
+        <blockquote className="mt-5 flex items-start gap-3 rounded-2xl border-l-4 border-primary bg-surface/60 px-4 py-4 sm:gap-5 sm:px-5">
+          <img
+            src="/crew/rex-warning.png"
+            alt="Rex, the PlayZoo zookeeper, side-eyeing the camera with one finger raised, mid-warning"
+            className="w-20 shrink-0 drop-shadow-[0_6px_16px_rgba(0,0,0,0.5)] sm:w-28"
+          />
+          <div className="min-w-0">
+            <p className="text-[15px] leading-relaxed text-ink">“{REX_WARNING}”</p>
+            <footer className="mt-2 text-xs font-semibold uppercase tracking-wide text-muted">
+              — Rex, your AI zookeeper
+            </footer>
+          </div>
         </blockquote>
 
         {/* Chat */}
