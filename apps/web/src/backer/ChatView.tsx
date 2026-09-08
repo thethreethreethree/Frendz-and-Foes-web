@@ -103,7 +103,7 @@ export function ChatView({ me }: { me: Backer }) {
       {/* messages */}
       <div ref={scroller} className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
         {messages.length === 0 && <div className="mt-8 text-center text-sm text-muted">No messages yet — say hi. 👋</div>}
-        {messages.map((m) => <Message key={m.id} m={m} meId={me.id} accent={activeTab.accent} />)}
+        {messages.map((m) => <Message key={m.id} m={m} meId={me.id} meName={me.username} accent={activeTab.accent} />)}
       </div>
 
       {/* composer */}
@@ -130,18 +130,18 @@ export function ChatView({ me }: { me: Backer }) {
   );
 }
 
-function Message({ m, meId, accent }: { m: ChatMessage; meId: string; accent: string }) {
+function Message({ m, meId, meName, accent }: { m: ChatMessage; meId: string; meName: string; accent: string }) {
   if (m.rex) {
     return (
       <CharacterLine name="Rex" img="/crew/rex-cutout.png" emoji="🦁" accent="rgb(var(--c-primary))">
-        {m.text}
+        <RichText text={m.text} me={meName} />
       </CharacterLine>
     );
   }
   if (m.john) {
     return (
       <CharacterLine name="John" img="/avatars/raccoon.png" emoji="🦝" accent="#ec4899">
-        {m.text}
+        <RichText text={m.text} me={meName} />
       </CharacterLine>
     );
   }
@@ -153,12 +153,43 @@ function Message({ m, meId, accent }: { m: ChatMessage; meId: string; accent: st
       <div className={`max-w-[78%] ${mine ? "text-right" : ""}`}>
         {!mine && <div className="mb-0.5 text-xs font-bold" style={{ color: encAccent }}>{m.author?.username}</div>}
         <div className={`inline-block rounded-2xl px-3.5 py-2 text-[15px] leading-snug ${mine ? "rounded-br-sm bg-gradient-to-br from-primary to-accent font-medium text-white" : "rounded-bl-sm bg-raised font-medium text-ink"}`}>
-          {m.text}
+          <RichText text={m.text} me={meName} onGradient={!!mine} />
         </div>
         <div className="mt-0.5 text-[10px] text-muted">{timeOf(m.at)}</div>
       </div>
     </div>
   );
+}
+
+// Renders @username mentions as highlighted chips. When the mention is the current viewer, it gets a
+// stronger "you" highlight so a tagged member notices. `onGradient` softens the chip on a member's own
+// gradient bubble so it stays legible.
+function RichText({ text, me, onGradient = false }: { text: string; me: string; onGradient?: boolean }) {
+  const re = /@([A-Za-z0-9][A-Za-z0-9_.-]{2,19})/g;
+  const out: React.ReactNode[] = [];
+  let last = 0, key = 0, match: RegExpExecArray | null;
+  while ((match = re.exec(text)) !== null) {
+    if (match.index > last) out.push(text.slice(last, match.index));
+    const uname = match[1];
+    const isMe = uname.toLowerCase() === (me || "").toLowerCase();
+    out.push(
+      <span
+        key={key++}
+        className={
+          isMe
+            ? "rounded bg-primary px-1.5 py-0.5 font-extrabold text-white"
+            : onGradient
+              ? "rounded bg-white/25 px-1 font-bold"
+              : "rounded bg-primary/15 px-1 font-bold text-primary"
+        }
+      >
+        @{uname}
+      </span>,
+    );
+    last = match.index + match[0].length;
+  }
+  if (last < text.length) out.push(text.slice(last));
+  return <>{out}</>;
 }
 
 function Avatar({ url, name, accent }: { url: string | null; name: string; accent: string }) {

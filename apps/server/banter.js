@@ -12,6 +12,7 @@
 // in rooms with a live human audience, on a per-room cooldown, at random.
 
 import { addJohnMessage, addRexMessage } from "./chat.js";
+import { ensureTag } from "./mentions.js";
 
 const KEY = process.env.DEEPSEEK_API_KEY || process.env.HOST_API_KEY || "";
 const API_URL = process.env.HOST_API_URL || "https://api.deepseek.com/chat/completions";
@@ -96,8 +97,9 @@ async function runScene(roomId) {
   globallyRunning = true; s.running = true; s.humanJoined = false; s.joiner = null;
 
   const transcript = []; // running text for the model's context
-  const say = async (who, dir) => {
-    const line = await genLine(who, transcript.join("\n"), dir);
+  const say = async (who, dir, tagUser) => {
+    let line = await genLine(who, transcript.join("\n"), dir);
+    if (tagUser) line = ensureTag(line, tagUser); // guarantee the person is @tagged (pinged)
     transcript.push(`${who === "john" ? "John" : "Rex"}: ${line}`);
     post(roomId, who, line);
     await sleep(beat());
@@ -110,16 +112,16 @@ async function runScene(roomId) {
     await say("john", DIR.johnClap());
     await say("rex", DIR.rexJab());
 
-    // If a real person jumped in during the bicker, John sticks around and drags them in.
+    // If a real person jumped in during the bicker, John sticks around and drags them in (by @tag).
     if (s.humanJoined && s.joiner) {
-      await say("john", DIR.johnEngage(s.joiner));
-      await say("rex", DIR.rexEngage(s.joiner));
+      await say("john", DIR.johnEngage(s.joiner), s.joiner);
+      await say("rex", DIR.rexEngage(s.joiner), s.joiner);
     }
 
-    // The sign-off scam — always. Target a live member (prefer whoever just chimed in).
+    // The sign-off scam — always. Target a live member (prefer whoever chimed in), and @tag them.
     const pool = activeUsers(roomId);
-    const target = s.joiner || (pool.length ? pool[Math.floor(Math.random() * pool.length)] : "someone");
-    await say("john", DIR.johnScam(target));
+    const target = s.joiner || (pool.length ? pool[Math.floor(Math.random() * pool.length)] : null);
+    await say("john", DIR.johnScam(target || "someone"), target);
   } finally {
     s.running = false; s.lastAt = Date.now(); globallyRunning = false;
   }
@@ -201,27 +203,27 @@ const DIR = {
     ]),
   }),
   johnEngage: (u) => ({
-    text: `A member called ${u} just jumped into the chat. Turn to them by name, needle them playfully, and drag them into the bit.`,
+    text: `A member called ${u} just jumped into the chat. Turn to them, TAG them as @${u}, needle them playfully, and drag them into the bit.`,
     canned: () => pick([
-      `Ayy, ${u}! A person of taste and, I'm guessing, disposable income. Come here.`,
-      `${u}! Perfect timing. Rex, watch — THIS one gets it.`,
-      `Well if it isn't ${u}, the only smart one in here. Don't listen to Rex.`,
+      `Ayy, @${u}! A person of taste and, I'm guessing, disposable income. Come here.`,
+      `@${u}! Perfect timing. Rex, watch — THIS one gets it.`,
+      `Well if it isn't @${u}, the only smart one in here. Don't listen to Rex.`,
     ]),
   }),
   rexEngage: (u) => ({
-    text: `React to ${u} getting pulled into John's nonsense — warn them, fondly.`,
+    text: `React to @${u} getting pulled into John's nonsense — warn them by @${u}, fondly.`,
     canned: () => pick([
-      `${u}, do not make eye contact. He can smell hope.`,
-      `Run, ${u}. Whatever he offers, run.`,
-      `${u}, keep one paw on your wallet. Trust me.`,
+      `@${u}, do not make eye contact. He can smell hope.`,
+      `Run, @${u}. Whatever he offers, run.`,
+      `@${u}, keep one paw on your wallet. Trust me.`,
     ]),
   }),
   johnScam: (u) => ({
-    text: `Sign off by trying to SELL ${u} some absolutely worthless "trash" as a rare, limited-edition, one-of-a-kind must-have, pitched as a personal favour. Be specific and ridiculous (a single sock, a bent bottle cap, "slightly used" something). Then you're gone.`,
+    text: `Sign off by trying to SELL @${u} (tag them as @${u}) some absolutely worthless "trash" as a rare, limited-edition, one-of-a-kind must-have, pitched as a personal favour. Be specific and ridiculous (a single sock, a bent bottle cap, "slightly used" something). Then you're gone.`,
     canned: () => pick([
-      `Anyway ${u} — between us, I've got ONE mint-condition, slightly-used left sock. Limited edition. Last one. You want in?`,
-      `Before I go, ${u} — rare opportunity: a genuine bottle cap, barely bent, certificate of authenticity pending. For you? A steal.`,
-      `Tell you what ${u}, I like your face — first dibs on a one-of-a-kind gently-pre-owned shoelace. Collector's item. Cash only. 🦝`,
+      `Anyway @${u} — between us, I've got ONE mint-condition, slightly-used left sock. Limited edition. Last one. You want in?`,
+      `Before I go, @${u} — rare opportunity: a genuine bottle cap, barely bent, certificate of authenticity pending. For you? A steal.`,
+      `Tell you what @${u}, I like your face — first dibs on a one-of-a-kind gently-pre-owned shoelace. Collector's item. Cash only. 🦝`,
     ]),
   }),
 };

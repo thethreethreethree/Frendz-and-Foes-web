@@ -35,8 +35,9 @@ import {
 } from "./backers.js";
 import { sortQuestions, sortInto } from "./sorting.js";
 import { getEnclosure } from "./enclosures.js";
-import { canAccess, getMessages, addMessage, addRexMessage, ROOM_IDS } from "./chat.js";
+import { canAccess, getMessages, addMessage, addRexMessage, addJohnMessage, roomMeta, ROOM_IDS } from "./chat.js";
 import { initBanter, noteMessage as banterNote, forceScene } from "./banter.js";
+import { addressedCharacter, ensureTag } from "./mentions.js";
 import { getBrand, listBrandSlugs, upsertBrand, deleteBrand, dbReady } from "./db.js";
 import {
   authReady, createUser, authenticate, getUser, makeSession, readSession,
@@ -434,6 +435,56 @@ const REX_MOD_LINES = [
 ];
 const rexModLine = () => REX_MOD_LINES[Math.floor(Math.random() * REX_MOD_LINES.length)];
 
+// --- Reactive character replies -------------------------------------------------------------
+// When a member addresses Rex/John (by name or @tag) or asks the room something, a character answers
+// — but only after a ~3s grace so a real person gets first dibs. If another human posts in that room
+// within the grace, the pending reply is cancelled (someone answered). Per-room+character cooldown
+// keeps it from chiming in on every line.
+const pendingReply = new Map(); // roomId -> token (latest human message wins the grace window)
+const charCooldown = new Map(); // `${who}:${roomId}` -> lastReplyTs
+function charAllowed(who, roomId) {
+  const k = `${who}:${roomId}`, now = Date.now();
+  if (now - (charCooldown.get(k) || 0) < 8000) return false;
+  charCooldown.set(k, now);
+  return true;
+}
+// Does this message invite a reply even without naming a character? (greetings + questions)
+function invitesResponse(text) {
+  const s = String(text || "").toLowerCase();
+  if (s.includes("?")) return true;
+  return /\b(what'?s up|whats up|sup|hello+|hey+|hi+|yo+|anyone|anybody|quiet|how'?s it|how are)\b/.test(s);
+}
+async function genCharacterReply(who, roomId, username) {
+  const roomName = roomMeta(roomId)?.name || roomId;
+  const recent = getMessages(roomId, 7).map((msg) => {
+    const w = msg.rex ? "Rex" : msg.john ? "John" : (getBacker(msg.backerId)?.username || "someone");
+    return `${w}: ${msg.text}`;
+  }).join("\n");
+  const prompt = `You're hanging out in the "${roomName}" backer group chat. Recent messages:\n${recent}\n\n` +
+    `${username} is talking to you. Reply directly and briefly (1-2 short sentences), in character, and address them as @${username}.`;
+  const out = who === "john"
+    ? await johnChat({ room: `chat:${roomId}`, messages: [{ role: "user", content: prompt }] })
+    : await hostChat({ room: `chat:${roomId}`, messages: [{ role: "user", content: prompt }] });
+  const reply = out && out.reply ? out.reply : null;
+  return reply ? ensureTag(reply, username) : null;
+}
+function maybeCharacterReply(roomId, backer, text) {
+  const addressed = addressedCharacter(text);
+  if (!addressed && !invitesResponse(text)) return; // a plain statement: don't have Rex narrate it
+  const who = addressed || "rex"; // unaddressed openers default to Rex, the host
+  const token = Symbol("reply");
+  pendingReply.set(roomId, token); // a newer human message will supersede this one
+  setTimeout(async () => {
+    if (pendingReply.get(roomId) !== token) return; // someone else posted within the grace — they answered
+    pendingReply.delete(roomId);
+    if (!charAllowed(who, roomId)) return;
+    const reply = await genCharacterReply(who, roomId, backer.username);
+    if (!reply) return;
+    const m = who === "john" ? addJohnMessage(roomId, reply) : addRexMessage(roomId, reply);
+    io.to(`chat:${roomId}`).emit("chat:msg", { roomId, message: publicMsg(m) });
+  }, 3000);
+}
+
 io.on("connection", (socket) => {
   let code = null;
 
@@ -459,13 +510,14 @@ io.on("connection", (socket) => {
     const r = addMessage(roomId, b.id, text);
     if (r.blocked) {
       socket.emit("chat:blocked", { roomId, reason: r.reason });
-      const rex = addRexMessage(roomId, rexModLine()); // Rex steps in, visible to the whole room
+      const rex = addRexMessage(roomId, ensureTag(rexModLine(), b.username)); // Rex steps in + @tags the offender
       io.to(`chat:${roomId}`).emit("chat:msg", { roomId, message: publicMsg(rex) });
       return;
     }
     if (r.error) return socket.emit("chat:error", { error: r.error });
     io.to(`chat:${roomId}`).emit("chat:msg", { roomId, message: publicMsg(r.message) });
     banterNote(roomId, b.username); // feed the banter engine (who's active + joined an in-progress scene)
+    maybeCharacterReply(roomId, b, text); // Rex/John answer when addressed (after a 3s grace)
   });
 
   // Pre-launch lockdown (see GET /api/status). Until GAMES_OPEN=true, NO game room can be created
