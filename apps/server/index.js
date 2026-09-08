@@ -29,11 +29,32 @@ import { registerAfterDarkHandlers } from "./afterdark.js";
 import { hostLine, hostChat, hostReady } from "./host.js";
 import { johnChat, johnReady } from "./john.js";
 import { generateCodes, checkCode, redeemCode, listCodes, revokeCode, backerCodesReady } from "./backerCodes.js";
-import { listEvents, listEventTypes, legacyStatus } from "./sqlite.js";
-import {
-  PLANS, applyStripeEvent, entitlementsFor, getSubscription, listSubscriptions, setSubscription,
-  stripeStatus,
-} from "./subscriptions.js";
+// The database-backed modules are loaded DEFENSIVELY, not with a static import.
+//
+// Every store (backers, codes, chat, auth, brands) already wraps its own `await import("./sqlite.js")`
+// in a try/catch, precisely so "a storage problem never takes down the games" - the principle written
+// into db.js from the start. Importing sqlite.js statically HERE quietly undid that: an unopenable
+// database (bad permissions, full disk) would throw during module evaluation and kill the whole
+// server, taking the game relay down with it.
+//
+// Loaded this way, a database failure costs the founder tools and subscriptions - which need it -
+// while the games, which do not, keep running.
+let SQL = null;
+let SUBS = null;
+try {
+  SQL = await import("./sqlite.js");
+  SUBS = await import("./subscriptions.js");
+} catch (err) {
+  console.error("[ff-server] database unavailable - founder tools and subscriptions are OFF:", err?.message || err);
+}
+const dbUp = () => !!(SQL && SUBS);
+// 503, not 500: the request was fine, the dependency is not, and it may well be back next time.
+const needDb = (res) => {
+  if (dbUp()) return false;
+  res.status(503).json({ error: "The database is unavailable right now." });
+  return true;
+};
+const PLANS = () => (SUBS ? SUBS.PLANS : {});
 import { stripeConfigured, verifyStripeSignature } from "./stripe.js";
 import {
   createBacker, getBacker, findBackerByCode, findBackerByUsername,
@@ -68,12 +89,13 @@ app.set("trust proxy", 1); // behind nginx — so req.secure reflects X-Forwarde
 // here, so "not configured" must fail closed, never open.
 app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), (req, res) => {
   if (!stripeConfigured()) return res.status(503).json({ error: "Stripe is not configured." });
+  if (needDb(res)) return;
   const v = verifyStripeSignature(req.body, req.get("stripe-signature"));
   if (!v.ok) {
     console.warn("[ff-server] rejected Stripe webhook:", v.error);
     return res.status(400).json({ error: v.error });
   }
-  const r = applyStripeEvent(v.event);
+  const r = SUBS.applyStripeEvent(v.event);
   // Always 200 on a VERIFIED event, even if we could not map it to a backer: a non-2xx makes Stripe
   // retry the same event indefinitely, and an event we do not understand will never succeed on a
   // retry. It is logged instead.
@@ -303,22 +325,25 @@ app.post("/api/backer/codes/revoke", (req, res) => {
 // so a page cannot shift while new events are being written.
 app.get("/api/backer/admin/events", (req, res) => {
   if (!isSuperadmin(req, res)) return res.status(401).json({ error: "Superadmin only." });
+  if (needDb(res)) return;
   const { limit, before, type } = req.query || {};
-  res.json({ events: listEvents({ limit, before, type: type || null }), types: listEventTypes() });
+  res.json({ events: SQL.listEvents({ limit, before, type: type || null }), types: SQL.listEventTypes() });
 });
 
 // A backer's own subscription + what it entitles them to. Entitlements are DERIVED here rather than
 // read from a column, so an expired period stops granting access even if a webhook was missed.
 app.get("/api/backer/subscription", (req, res) => {
+  if (needDb(res)) return;
   const sess = readBackerSession(req.cookies?.[BACKER_COOKIE]);
   if (!sess) return res.status(401).json({ error: "Not signed in." });
-  res.json({ subscription: getSubscription(sess.uid), entitlements: entitlementsFor(sess.uid) });
+  res.json({ subscription: SUBS.getSubscription(sess.uid), entitlements: SUBS.entitlementsFor(sess.uid) });
 });
 
 // Founder-only: every subscription, and the plan catalogue behind them.
 app.get("/api/backer/admin/subscriptions", (req, res) => {
   if (!isSuperadmin(req, res)) return res.status(401).json({ error: "Superadmin only." });
-  res.json({ subscriptions: listSubscriptions(), plans: PLANS });
+  if (needDb(res)) return;
+  res.json({ subscriptions: SUBS.listSubscriptions(), plans: PLANS() });
 });
 
 // Founder-only: chat volume per room. Deliberately counts only - never message CONTENT. The founder
@@ -334,7 +359,8 @@ app.get("/api/backer/admin/chat", (req, res) => {
 // webhook failing closed looks identical to a webhook nobody has called yet.
 app.get("/api/backer/admin/stripe", (req, res) => {
   if (!isSuperadmin(req, res)) return res.status(401).json({ error: "Superadmin only." });
-  res.json(stripeStatus());
+  if (needDb(res)) return;
+  res.json(SUBS.stripeStatus());
 });
 
 // Founder-only: which legacy JSON stores are still on disk, and whether their migration is RECORDED
@@ -345,10 +371,11 @@ app.get("/api/backer/admin/stripe", (req, res) => {
 // per-environment act, taken by a human who can see this report.
 app.get("/api/backer/admin/legacy", (req, res) => {
   if (!isSuperadmin(req, res)) return res.status(401).json({ error: "Superadmin only." });
+  if (needDb(res)) return;
   const authDir = process.env.AUTH_DIR || join(__dirname, "data", "auth");
   const dataDir = join(authDir, "..");
   res.json({
-    files: legacyStatus({
+    files: SQL.legacyStatus({
       backers: join(authDir, "backers.json"),
       codes: join(authDir, "backer-codes.json"),
       users: join(authDir, "users.json"),
@@ -365,11 +392,12 @@ app.get("/api/backer/admin/legacy", (req, res) => {
 // override for when a payment provider and reality disagree. Recorded in the audit log either way.
 app.post("/api/backer/admin/subscriptions/:id", (req, res) => {
   if (!isSuperadmin(req, res)) return res.status(401).json({ error: "Superadmin only." });
+  if (needDb(res)) return;
   if (!adminGetBacker(req.params.id)) return res.status(404).json({ error: "No such account." });
   const { plan, status, currentPeriodEnd } = req.body || {};
-  const r = setSubscription(req.params.id, { plan: plan || null, status: status || "none", currentPeriodEnd: currentPeriodEnd || null });
+  const r = SUBS.setSubscription(req.params.id, { plan: plan || null, status: status || "none", currentPeriodEnd: currentPeriodEnd || null });
   if (r.error) return res.status(400).json({ error: r.error });
-  res.json({ subscription: r.subscription, entitlements: entitlementsFor(req.params.id) });
+  res.json({ subscription: r.subscription, entitlements: SUBS.entitlementsFor(req.params.id) });
 });
 
 // Founder-only: the backer roster for the admin dashboard. Avatars are excluded (see listBackers).
@@ -636,9 +664,13 @@ function hostEntitled(socket) {
   if (process.env.ENFORCE_ENTITLEMENTS !== "true") return { ok: true, reason: "not enforced" };
   const pc = socket.handshake?.auth?.adminPasscode || socket.handshake?.headers?.["x-admin-passcode"];
   if (ADMIN_PASSCODE && pc === ADMIN_PASSCODE) return { ok: true, reason: "superadmin" };
+  // Fail OPEN if the database is down. The games are precisely what is meant to survive a storage
+  // problem, and with no database nobody could sign in to be checked in the first place - refusing
+  // here would turn a database blip into "nobody can play".
+  if (!dbUp()) return { ok: true, reason: "db-unavailable" };
   const b = socketBacker(socket);
   if (!b) return { ok: false, reason: "sign-in", error: "Sign in with your backer account to host a game." };
-  const ent = entitlementsFor(b.id);
+  const ent = SUBS.entitlementsFor(b.id);
   if (!ent.active) {
     return {
       ok: false,
