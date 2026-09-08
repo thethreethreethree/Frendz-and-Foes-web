@@ -72,6 +72,30 @@ function publicState(m) {
   return { ...base, players: [...m.players.values()].map((p) => ({ id: p.id, name: p.name, avatar: p.avatar, connected: !!p.socketId })) };
 }
 
+// A submitted drawing is the only STRUCTURED input a player sends, and it was the only one with no
+// limit: text was capped at 40 characters while `strokes` accepted any array at all, stored it in
+// memory for the whole game, and rebroadcast it to every player at the reveal. A phone can generate
+// a lot of points; a hand-rolled client can generate far more.
+//
+// Shape (from PictionaryCanvas): { points: number[] /* x,y,x,y... */, color: string, width: number }.
+// Anything not matching is dropped rather than trusted - this is drawn on other people's screens.
+const MAX_STROKES = 400;          // a busy phone drawing is well under this
+const MAX_POINTS = 1200;          // 600 x/y pairs per stroke
+function sanitizeStrokes(strokes) {
+const out = [];
+for (const s of strokes.slice(0, MAX_STROKES)) {
+  if (!s || !Array.isArray(s.points)) continue;
+  const points = s.points.slice(0, MAX_POINTS).filter((n) => Number.isFinite(n));
+  if (points.length < 2) continue;                     // a stroke needs at least one x,y pair
+  out.push({
+    points,
+    color: String(s.color || "#fff").slice(0, 24),     // goes straight into a canvas fillStyle
+    width: Math.max(1, Math.min(64, Number(s.width) || 4)),
+  });
+}
+return out;
+}
+
 export function telestrationsPublicState(rooms, code) {
   const m = rooms.get(code)?.telestrations;
   return m ? publicState(m) : null;
@@ -173,7 +197,9 @@ export function registerTelestrationsHandlers(io, socket, rooms, roomKey = (r) =
     const type = turnType(m.turn);
     if (type === "draw") {
       if (!Array.isArray(strokes)) return err("Draw something first.");
-      book.entries[m.turn] = { type: "draw", by: p.id, byName: p.name, value: strokes };
+      const clean = sanitizeStrokes(strokes);
+      if (!clean.length) return err("Draw something first.");
+      book.entries[m.turn] = { type: "draw", by: p.id, byName: p.name, value: clean };
     } else {
       const t = String(text || "").trim().slice(0, 40);
       if (!t) return err("Type your guess.");
@@ -226,3 +252,6 @@ export function registerTelestrationsHandlers(io, socket, rooms, roomKey = (r) =
     push(code);
   });
 }
+
+// Exported for telestrations.test.mjs. Not part of the game surface.
+export { sanitizeStrokes as __test_sanitizeStrokes };

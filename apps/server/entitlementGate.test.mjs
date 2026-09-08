@@ -91,8 +91,11 @@ console.log("\n--- ENFORCE_ENTITLEMENTS=true ---");
 // entitlementsFor(), so that is asserted directly rather than not at all.
 console.log("\n--- the decision the gate makes ---");
 {
-  process.env.AUTH_DIR = join(TMP, "auth");
-  process.env.DB_PATH = join(TMP, "playzoo.db");
+  // A SEPARATE database on purpose. The spawned servers above held the other one open in WAL mode
+  // and were killed abruptly; on Windows that can leave -wal/-shm files another process cannot open
+  // straight away. This section only needs entitlement logic, not the servers' data.
+  process.env.AUTH_DIR = join(TMP, "auth2");
+  process.env.DB_PATH = join(TMP, "logic", "playzoo.db");
   const subs = await import(SRV + "subscriptions.js");
   const DAY = 86400_000;
   subs.setSubscription("bHOST", { plan: "head-keeper", status: "active", currentPeriodEnd: Date.now() + DAY });
