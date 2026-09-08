@@ -10,6 +10,7 @@ import { DisplayRoute } from "./routes/DisplayRoute";
 import { HomeRoute } from "./routes/HomeRoute";
 import { WaitlistRoute } from "./routes/WaitlistRoute";
 import { ClubRoute } from "./routes/ClubRoute";
+import { FounderRoute } from "./routes/FounderRoute";
 import { RexBubble } from "./rex/RexBubble";
 import { ControlRoute } from "./routes/ControlRoute";
 import { PlayerRoute } from "./routes/PlayerRoute";
@@ -31,6 +32,7 @@ const router = createHashRouter([
   { path: "/", element: <HomeRoute /> },
   { path: "/waitlist", element: <WaitlistRoute /> },
   { path: "/club", element: <ClubRoute /> },
+  { path: "/founder", element: <FounderRoute /> },
   { path: "/display", element: <GameGate><DisplayRoute /></GameGate> },
   { path: "/control", element: <GameGate><ControlRoute /></GameGate> },
   { path: "/play", element: <GameGate><PlayerRoute /></GameGate> },

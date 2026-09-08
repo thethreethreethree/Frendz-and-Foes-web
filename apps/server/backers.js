@@ -89,6 +89,26 @@ export function createBacker({ code, username, fullName, dob, country, avatar })
   return { backer: publicBacker(backers[id]) };
 }
 
+// Edit profile after signup: change username and/or avatar. Pass only the fields to change.
+export function updateBacker(id, { username, avatar } = {}) {
+  const b = backers[id];
+  if (!b) return { error: "No such account." };
+  if (username !== undefined) {
+    const uname = String(username || "").trim();
+    if (!usernameOk(uname)) return { error: "Username must be 3-20 characters: letters, numbers, . _ -" };
+    const existing = findBackerByUsername(uname);
+    if (existing && existing.id !== id) return { error: "That username is taken." };
+    b.username = uname;
+    b.usernameLower = normUser(uname);
+  }
+  if (avatar !== undefined) {
+    if (!avatarOk(avatar)) return { error: "That profile picture is too large or the wrong format." };
+    b.avatar = avatar || null;
+  }
+  saveJson(BACKERS_FILE, backers);
+  return { backer: publicBacker(b) };
+}
+
 // Optional password, set AFTER signup so they can log in with username+password too.
 export function setBackerPassword(id, password) {
   const b = backers[id];

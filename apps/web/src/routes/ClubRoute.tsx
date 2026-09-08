@@ -7,7 +7,7 @@ import { SortingFlow } from "../backer/SortingFlow";
 import { ChatView } from "../backer/ChatView";
 import { enclosureView } from "../backer/enclosures";
 import {
-  type Backer, backerMe, checkBackerCode, backerSignup, backerLogin, backerLogout, backerSetPassword,
+  type Backer, backerMe, checkBackerCode, backerSignup, backerLogin, backerLogout, backerSetPassword, updateProfile,
 } from "../net/backer";
 
 // The backers-only club, hosted by Rex. It's the front door to the (upcoming) enclosure chats: a
@@ -32,7 +32,7 @@ export function ClubRoute() {
         {loading ? (
           <div className="mt-24 text-center text-muted">Rex is checking the guest list…</div>
         ) : me ? (
-          <SignedIn me={me} onOut={() => setMe(null)} onSorted={(id) => setMe({ ...me, enclosure: id })} />
+          <SignedIn me={me} onOut={() => setMe(null)} onSorted={(id) => setMe({ ...me, enclosure: id })} onUpdate={setMe} />
         ) : (
           <Gate onIn={setMe} />
         )}
@@ -233,13 +233,15 @@ function LoginPanel({ onIn, toSignup }: { onIn: (b: Backer) => void; toSignup: (
 }
 
 // ---- Signed-in landing: unsorted → sorting → sorted ----
-function SignedIn({ me, onOut, onSorted }: { me: Backer; onOut: () => void; onSorted: (id: string) => void }) {
+function SignedIn({ me, onOut, onSorted, onUpdate }: { me: Backer; onOut: () => void; onSorted: (id: string) => void; onUpdate: (b: Backer) => void }) {
   const [showPw, setShowPw] = useState(false);
   const [sorting, setSorting] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
   const enc = enclosureView(me.enclosure);
 
   if (sorting) return <SortingFlow onDone={(id) => { onSorted(id); setSorting(false); }} />;
+  if (editing) return <EditProfile me={me} onSave={(u) => { onUpdate(u); setEditing(false); }} onCancel={() => setEditing(false)} />;
 
   // The chats — the whole point of the club. Bounded-height view (scrolls internally) + a compact header.
   if (chatOpen && me.enclosure) {
@@ -262,7 +264,7 @@ function SignedIn({ me, onOut, onSorted }: { me: Backer; onOut: () => void; onSo
     return (
       <div className="mt-8 flex flex-col gap-6">
         <RexSays>You're in, <b>{me.username}</b>. But before you run wild — I need to know which enclosure you belong in. Five questions. Ready when you are. 🦁</RexSays>
-        <ProfileCard me={me} enc={null} />
+        <ProfileCard me={me} enc={null} onEdit={() => setEditing(true)} />
         <button
           onClick={() => setSorting(true)}
           className="rounded-2xl bg-gradient-to-br from-primary to-accent px-7 py-4 text-center font-display text-xl font-extrabold text-white shadow-[0_16px_40px_-12px_rgb(var(--c-primary)/0.6)] transition hover:-translate-y-0.5 active:scale-95"
@@ -296,25 +298,90 @@ function SignedIn({ me, onOut, onSorted }: { me: Backer; onOut: () => void; onSo
       >
         💬 Enter the clubhouse chats
       </button>
-      <ProfileCard me={me} enc={enc} />
+      <ProfileCard me={me} enc={enc} onEdit={() => setEditing(true)} />
       {!me.hasPassword && <PasswordCard showPw={showPw} setShowPw={setShowPw} />}
       <LogoutButton onOut={onOut} />
     </div>
   );
 }
 
-function ProfileCard({ me, enc }: { me: Backer; enc: ReturnType<typeof enclosureView> }) {
+function ProfileCard({ me, enc, onEdit }: { me: Backer; enc: ReturnType<typeof enclosureView>; onEdit?: () => void }) {
   return (
     <div className="flex items-center gap-4 rounded-2xl border border-line bg-surface/60 p-5 backdrop-blur">
       {me.avatar
         ? <img src={me.avatar} alt="" className="h-20 w-20 shrink-0 rounded-full border-2 border-primary object-cover" />
         : <div className="grid h-20 w-20 shrink-0 place-items-center rounded-full border-2 border-primary bg-canvas text-3xl">🦁</div>}
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <div className="ff-title truncate text-2xl font-extrabold">{me.username}</div>
         <div className="truncate text-sm text-muted">{me.fullName} · {me.country}</div>
         <div className="mt-1 inline-block rounded-full border px-3 py-1 text-xs font-semibold"
           style={enc ? { borderColor: enc.accent, color: enc.accent } : { borderColor: "rgb(var(--c-line))", color: "rgb(var(--c-muted))" }}>
           {enc ? `${enc.emoji} ${enc.name}` : "Not sorted yet"}
+        </div>
+      </div>
+      {onEdit && (
+        <button onClick={onEdit} className="self-start rounded-lg border border-line bg-canvas px-3 py-1.5 text-sm font-bold text-ink transition hover:border-primary hover:text-primary">
+          Edit
+        </button>
+      )}
+    </div>
+  );
+}
+
+// Change username and/or profile picture. The cropper starts empty (keeps the current photo unless
+// you upload a new one); Username is prefilled. Full name / DOB / country are fixed at signup.
+function EditProfile({ me, onSave, onCancel }: { me: Backer; onSave: (b: Backer) => void; onCancel: () => void }) {
+  const [username, setUsername] = useState(me.username);
+  const [avatar, setAvatar] = useState<string | null | undefined>(undefined); // undefined = keep current
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function save() {
+    if (busy) return;
+    const patch: { username?: string; avatar?: string | null } = {};
+    if (username.trim() !== me.username) patch.username = username.trim();
+    if (avatar !== undefined) patch.avatar = avatar;
+    if (Object.keys(patch).length === 0) { onCancel(); return; }
+    setBusy(true); setErr(null);
+    const r = await updateProfile(patch);
+    setBusy(false);
+    if (r.error || !r.backer) { setErr(r.error || "Couldn't save your changes."); return; }
+    onSave(r.backer);
+  }
+
+  return (
+    <div className="mt-8 flex flex-col gap-6">
+      <RexSays>Freshening up, are we? Change your name or your mugshot — I'll update the records. 🦁</RexSays>
+      <div className="rounded-2xl border border-line bg-surface/60 p-5 backdrop-blur">
+        <div className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Edit profile</div>
+
+        <div className="mt-4 flex items-center gap-4">
+          <div>
+            <div className="mb-1 text-xs font-semibold text-muted">Current</div>
+            {me.avatar
+              ? <img src={me.avatar} alt="" className="h-16 w-16 rounded-full border-2 border-line object-cover" />
+              : <div className="grid h-16 w-16 place-items-center rounded-full border-2 border-line bg-canvas text-2xl">🦁</div>}
+          </div>
+          <div className="text-sm text-muted">Upload a new photo to replace it (or leave it as-is).</div>
+        </div>
+
+        <div className="mt-4"><AvatarCropper onChange={setAvatar} /></div>
+
+        <div className="mt-6">
+          <Field label="Username" hint="3–20 chars: letters, numbers, . _ -">
+            <input value={username} onChange={(e) => setUsername(e.target.value)}
+              className="w-full rounded-xl border border-line bg-canvas px-4 py-2.5 text-ink outline-none focus:border-primary" />
+          </Field>
+        </div>
+
+        {err && <p className="mt-3 text-sm font-semibold text-red-400">{err}</p>}
+
+        <div className="mt-5 flex items-center gap-3">
+          <button type="button" onClick={onCancel} className="rounded-xl border border-line bg-surface px-4 py-3 text-sm font-bold text-muted transition hover:text-ink">Cancel</button>
+          <button type="button" onClick={save} disabled={busy}
+            className="flex-1 rounded-xl bg-gradient-to-br from-primary to-accent px-5 py-3 font-display text-lg font-extrabold text-white transition active:scale-95 disabled:opacity-40">
+            {busy ? "Saving…" : "Save changes"}
+          </button>
         </div>
       </div>
     </div>

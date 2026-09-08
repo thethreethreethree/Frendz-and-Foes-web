@@ -30,7 +30,7 @@ import { johnChat, johnReady } from "./john.js";
 import { generateCodes, checkCode, redeemCode, listCodes, backerCodesReady } from "./backerCodes.js";
 import {
   createBacker, getBacker, findBackerByCode, findBackerByUsername,
-  setBackerPassword, verifyBackerPassword, setBackerEnclosure, publicBacker,
+  setBackerPassword, verifyBackerPassword, setBackerEnclosure, updateBacker, publicBacker,
   makeBackerSession, readBackerSession, backerCookie, clearBackerCookie, BACKER_COOKIE, backersReady,
 } from "./backers.js";
 import { sortQuestions, sortInto } from "./sorting.js";
@@ -273,6 +273,19 @@ app.post("/api/backer/logout", (req, res) => {
 
 app.get("/api/backer/me", (req, res) => {
   res.json({ backer: publicBacker(sessionBacker(req)), ready: backersReady() });
+});
+
+// Edit profile: change username and/or avatar. Only the provided fields change.
+app.post("/api/backer/profile", (req, res) => {
+  const b = sessionBacker(req);
+  if (!b) return res.status(401).json({ error: "Sign in first." });
+  const { username, avatar } = req.body || {};
+  const patch = {};
+  if (username !== undefined) patch.username = username;
+  if (avatar !== undefined) patch.avatar = avatar;
+  const r = updateBacker(b.id, patch);
+  if (r.error) return res.status(400).json({ error: r.error });
+  res.json({ backer: r.backer });
 });
 
 // Set an optional password after signup (so username+password login works alongside the code).

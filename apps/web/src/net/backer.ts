@@ -74,6 +74,11 @@ export async function backerSetPassword(password: string): Promise<{ ok?: boolea
   return postJson("/api/backer/password", { password });
 }
 
+// Edit profile — pass only what changed. `avatar: null` removes the picture; omit it to keep it.
+export async function updateProfile(patch: { username?: string; avatar?: string | null }): Promise<{ backer?: Backer; error?: string }> {
+  return postJson("/api/backer/profile", patch);
+}
+
 export async function backerLogout(): Promise<void> {
   try { await fetch("/api/backer/logout", { method: "POST", credentials: "include" }); } catch { /* ignore */ }
 }
