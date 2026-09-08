@@ -32,6 +32,7 @@ import {
   createBacker, getBacker, findBackerByCode, findBackerByUsername,
   setBackerPassword, verifyBackerPassword, setBackerEnclosure, updateBacker, publicBacker,
   makeBackerSession, readBackerSession, backerCookie, clearBackerCookie, BACKER_COOKIE, backersReady,
+  listBackers, adminGetBacker,
 } from "./backers.js";
 import { sortQuestions, sortInto } from "./sorting.js";
 import { getEnclosure } from "./enclosures.js";
@@ -217,6 +218,20 @@ app.post("/api/backer/codes", (req, res) => {
 app.get("/api/backer/codes", (req, res) => {
   if (!isSuperadmin(req)) return res.status(401).json({ error: "Superadmin only." });
   res.json({ ready: backerCodesReady(), codes: listCodes() });
+});
+
+// Founder-only: the backer roster for the admin dashboard. Avatars are excluded (see listBackers).
+app.get("/api/backer/admin/users", (req, res) => {
+  if (!isSuperadmin(req)) return res.status(401).json({ error: "Superadmin only." });
+  res.json({ ready: backersReady(), users: listBackers() });
+});
+
+// Founder-only: one backer in full, including their avatar.
+app.get("/api/backer/admin/users/:id", (req, res) => {
+  if (!isSuperadmin(req)) return res.status(401).json({ error: "Superadmin only." });
+  const b = adminGetBacker(req.params.id);
+  if (!b) return res.status(404).json({ error: "No such account." });
+  res.json({ user: b });
 });
 
 // Founder-only: manually kick off a John banter scene in a room (for testing / a nudge). Normally

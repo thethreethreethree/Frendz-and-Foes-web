@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { type CodeRow, listCodes, mintCodes } from "../net/founder";
+import { type BackerRow, type CodeRow, listBackers, listCodes, mintCodes } from "../net/founder";
+import { enclosureView } from "../backer/enclosures";
 
 // The founder admin page (/founder) — a hidden tool for you, not backers. Paste the admin passcode
-// once (optionally remembered on this device), then mint backer codes and see who's redeemed what.
+// once (optionally remembered on this device), then see every backer (who they are, which enclosure
+// they landed in, how they log in) and mint/track backer codes.
+//
+// The roster sits ABOVE minting on purpose: "who is actually in?" is the question you open this page
+// asking, and minting is the thing you do occasionally.
 // The passcode is only ever sent as the x-admin-passcode header to the same-origin admin API.
 
 const REMEMBER_KEY = "pz_founder_pc";
@@ -13,6 +18,7 @@ export function FounderRoute() {
   const [remember, setRemember] = useState(false);
   const [authed, setAuthed] = useState(false);
   const [rows, setRows] = useState<CodeRow[]>([]);
+  const [users, setUsers] = useState<BackerRow[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -31,6 +37,7 @@ export function FounderRoute() {
     if (r.error) { setErr(r.error); return; }
     setAuthed(true);
     setRows(r.codes || []);
+    void refreshBackers(pc);
     try { if (remember) localStorage.setItem(REMEMBER_KEY, pc); } catch { /* ignore */ }
   }
 
@@ -39,8 +46,13 @@ export function FounderRoute() {
     if (!r.error) setRows(r.codes || []);
   }
 
+  async function refreshBackers(pc = passcode) {
+    const r = await listBackers(pc);
+    if (!r.error) setUsers(r.users || []);
+  }
+
   function lock() {
-    setAuthed(false); setRows([]); setPasscode("");
+    setAuthed(false); setRows([]); setUsers([]); setPasscode("");
     try { localStorage.removeItem(REMEMBER_KEY); } catch { /* ignore */ }
   }
 
@@ -49,7 +61,7 @@ export function FounderRoute() {
       <Shell>
         <div className="mx-auto mt-16 max-w-md rounded-2xl border border-line bg-surface/60 p-6 backdrop-blur">
           <h1 className="ff-title text-2xl font-extrabold">Founder access</h1>
-          <p className="mt-1 text-sm text-muted">Enter the admin passcode to manage backer codes.</p>
+          <p className="mt-1 text-sm text-muted">Enter the admin passcode to see your backers and manage codes.</p>
           <input
             type="password" value={passcode} onChange={(e) => setPasscode(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") unlock(passcode); }}
@@ -77,12 +89,14 @@ export function FounderRoute() {
     <Shell>
       <div className="mx-auto mt-8 flex max-w-3xl flex-col gap-6">
         <div className="flex items-center gap-3">
-          <h1 className="ff-title text-2xl font-extrabold">Backer codes</h1>
+          <h1 className="ff-title text-2xl font-extrabold">Backers</h1>
           <span className="rounded-full border border-line bg-canvas px-3 py-1 text-xs font-semibold text-muted">
-            {rows.length} total · {valid.length} valid · {used.length} used
+            {users.length} {users.length === 1 ? "backer" : "backers"} · {rows.length} codes · {valid.length} valid · {used.length} used
           </span>
           <button onClick={lock} className="ml-auto text-sm font-semibold text-muted hover:text-ink">Lock</button>
         </div>
+
+        <BackersCard users={users} onRefresh={() => refreshBackers()} />
 
         <MintCard passcode={passcode} onMinted={refresh} />
 
@@ -115,6 +129,83 @@ export function FounderRoute() {
         </div>
       </div>
     </Shell>
+  );
+}
+
+// The backer roster. This is the question you open the founder page asking - who is actually in? -
+// so it sits above minting. Search covers username, code, country and enclosure in one box rather
+// than a filter row: with a few hundred backers you are looking for one person, not slicing a table.
+function BackersCard({ users, onRefresh }: { users: BackerRow[]; onRefresh: () => void }) {
+  const [q, setQ] = useState("");
+  const needle = q.trim().toLowerCase();
+  const shown = needle
+    ? users.filter((u) =>
+        [u.username, u.code, u.country, u.fullName, enclosureView(u.enclosure)?.name]
+          .some((v) => (v || "").toLowerCase().includes(needle)))
+    : users;
+
+  const unsorted = users.filter((u) => !u.enclosure).length;
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-line bg-surface/60 backdrop-blur">
+      <div className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-2.5">
+        <span className="text-sm font-bold text-ink">Backers</span>
+        {unsorted > 0 && (
+          <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-bold text-amber-400">
+            {unsorted} not sorted yet
+          </span>
+        )}
+        <input
+          value={q} onChange={(e) => setQ(e.target.value)}
+          placeholder="Search name, code, country, enclosure…"
+          className="ml-auto w-full max-w-xs rounded-lg border border-line bg-canvas px-3 py-1.5 text-sm text-ink outline-none focus:border-primary"
+        />
+        <button onClick={onRefresh} className="rounded-lg border border-line bg-canvas px-2.5 py-1 text-xs font-bold text-muted hover:text-ink">Refresh</button>
+      </div>
+      <div className="max-h-[420px] overflow-y-auto">
+        <table className="w-full text-left text-sm">
+          <thead className="sticky top-0 bg-surface text-[11px] uppercase tracking-wide text-muted">
+            <tr>
+              <th className="px-4 py-2">Backer</th>
+              <th className="px-4 py-2">Enclosure</th>
+              <th className="px-4 py-2">Code</th>
+              <th className="px-4 py-2">Joined</th>
+              <th className="px-4 py-2">Login</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.length === 0 && (
+              <tr><td colSpan={5} className="px-4 py-6 text-center text-muted">
+                No backers yet — they appear here once someone redeems a code at /club.
+              </td></tr>
+            )}
+            {users.length > 0 && shown.length === 0 && (
+              <tr><td colSpan={5} className="px-4 py-6 text-center text-muted">Nothing matches “{q}”.</td></tr>
+            )}
+            {shown.map((u) => {
+              const enc = enclosureView(u.enclosure);
+              return (
+                <tr key={u.id} className="border-t border-line/60">
+                  <td className="px-4 py-2">
+                    <div className="font-bold text-ink">{u.username}</div>
+                    <div className="text-xs text-muted">{u.fullName || "—"}{u.country ? ` · ${u.country}` : ""}</div>
+                  </td>
+                  <td className="px-4 py-2">
+                    {enc
+                      ? <span className="rounded-full px-2 py-0.5 text-xs font-bold"
+                              style={{ background: `${enc.accent}22`, color: enc.accent }}>{enc.name}</span>
+                      : <span className="text-xs font-semibold text-amber-400">not sorted</span>}
+                  </td>
+                  <td className="px-4 py-2 font-mono text-xs text-muted">{u.code || "—"}</td>
+                  <td className="px-4 py-2 tabular-nums text-muted">{new Date(u.created).toLocaleDateString()}</td>
+                  <td className="px-4 py-2 text-xs text-muted">{u.hasPassword ? "code + password" : "code only"}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
 

@@ -43,3 +43,31 @@ export async function mintCodes(passcode: string, count: number, note: string): 
     return { error: "Network hiccup — try again." };
   }
 }
+
+// --- Backers (admin dashboard) ------------------------------------------------------------------
+// The roster deliberately carries no avatars: they are data URLs up to 300KB each, so a list view
+// would pull megabytes it never renders. `hasAvatar` is enough to show a marker.
+
+export interface BackerRow {
+  id: string;
+  username: string;
+  code: string | null;
+  fullName: string | null;
+  country: string | null;
+  enclosure: string | null;
+  created: number;
+  hasPassword: boolean;
+  hasAvatar: boolean;
+}
+
+export async function listBackers(passcode: string): Promise<{ users?: BackerRow[]; error?: string }> {
+  try {
+    const res = await fetch("/api/backer/admin/users", { headers: headers(passcode) });
+    if (res.status === 401) return { error: "That admin passcode isn't right." };
+    if (!res.ok) return { error: "Couldn't load backers — try again." };
+    const data = await res.json();
+    return { users: Array.isArray(data.users) ? data.users : [] };
+  } catch {
+    return { error: "Network hiccup — try again." };
+  }
+}

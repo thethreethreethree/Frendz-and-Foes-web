@@ -217,6 +217,31 @@ export function setBackerEnclosure(id, enclosureId) {
   return { ok: true };
 }
 
+// Founder-only: every backer, for the admin dashboard. Deliberately does NOT return avatars - they
+// are data URLs up to 300KB each, so a hundred backers would be a 30MB response for a list view that
+// only needs to show who exists. The detail view can fetch one. Password material never leaves here.
+export function listBackers() {
+  if (!ready) return [];
+  return db
+    .prepare(`SELECT id, username, code, full_name, country, enclosure, created,
+                     (pw_hash IS NOT NULL) AS has_password,
+                     (avatar IS NOT NULL) AS has_avatar
+              FROM backers ORDER BY created DESC`)
+    .all()
+    .map((r) => ({
+      id: r.id, username: r.username, code: r.code, fullName: r.full_name, country: r.country,
+      enclosure: r.enclosure, created: r.created,
+      hasPassword: !!r.has_password, hasAvatar: !!r.has_avatar,
+    }));
+}
+
+// Founder-only: one backer in full, avatar included, for the detail view.
+export function adminGetBacker(id) {
+  const b = getBacker(id);
+  if (!b) return null;
+  return { ...publicBacker(b), code: b.code, hasAvatar: !!b.avatar, avatar: b.avatar || null };
+}
+
 // --- Sessions: base64url(payload) + "." + HMAC(payload), own cookie ---
 const SESSION_DAYS = 60;
 export const BACKER_COOKIE = "pz_backer";
