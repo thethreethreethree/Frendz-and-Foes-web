@@ -27,7 +27,12 @@ import { registerTelestrationsHandlers } from "./telestrations.js";
 import { registerAfterDarkHandlers } from "./afterdark.js";
 import { hostLine, hostChat, hostReady } from "./host.js";
 import { johnChat, johnReady } from "./john.js";
-import { generateCodes, checkCode, listCodes, backerCodesReady } from "./backerCodes.js";
+import { generateCodes, checkCode, redeemCode, listCodes, backerCodesReady } from "./backerCodes.js";
+import {
+  createBacker, getBacker, findBackerByCode, findBackerByUsername,
+  setBackerPassword, verifyBackerPassword, publicBacker,
+  makeBackerSession, readBackerSession, backerCookie, clearBackerCookie, BACKER_COOKIE, backersReady,
+} from "./backers.js";
 import { getBrand, listBrandSlugs, upsertBrand, deleteBrand, dbReady } from "./db.js";
 import {
   authReady, createUser, authenticate, getUser, makeSession, readSession,
@@ -205,6 +210,64 @@ app.post("/api/backer/codes", (req, res) => {
 app.get("/api/backer/codes", (req, res) => {
   if (!isSuperadmin(req)) return res.status(401).json({ error: "Superadmin only." });
   res.json({ ready: backerCodesReady(), codes: listCodes() });
+});
+
+// --- Backer accounts (the group-chat members) -----------------------------------------------
+// Signup consumes the one-time code and binds it to the new account (the code becomes their login
+// key). After signup they can optionally set a password to log in with username+password too.
+const sessionBacker = (req) => {
+  const tok = parseCookies(req.headers.cookie)[BACKER_COOKIE];
+  const s = tok && readBackerSession(tok);
+  return s ? getBacker(s.uid) : null;
+};
+
+// Rex-run signup: { code, username, fullName, dob, country, avatar? }. Re-checks the code server-side
+// (never trust the client's earlier /check), creates the account, redeems the code, opens a session.
+app.post("/api/backer/signup", (req, res) => {
+  if (rateLimited(req, res, "backersignup", 10, 30 * 60_000)) return; // 10 / 30 min / IP
+  const { code, username, fullName, dob, country, avatar } = req.body || {};
+  if (checkCode(code) !== "valid") {
+    return res.status(403).json({ error: "That backer code isn't valid — it may be wrong or already used." });
+  }
+  const r = createBacker({ code, username, fullName, dob, country, avatar });
+  if (r.error) return res.status(400).json({ error: r.error });
+  const rc = redeemCode(code, r.backer.id); // bind the code to this account (single-use for signup)
+  if (rc.error) return res.status(409).json({ error: rc.error }); // lost a race for the same code
+  res.append("Set-Cookie", backerCookie(makeBackerSession(r.backer.id), isSecure(req)));
+  res.json({ backer: r.backer });
+});
+
+// Login: by CODE (the default key), or by username+password once one has been set.
+app.post("/api/backer/login", (req, res) => {
+  if (rateLimited(req, res, "backerlogin", 15, 10 * 60_000)) return;
+  const { code, username, password } = req.body || {};
+  let b = null;
+  if (code) b = findBackerByCode(code);
+  else if (username && password) {
+    const u = findBackerByUsername(username);
+    if (u && verifyBackerPassword(u.id, password)) b = u;
+  }
+  if (!b) return res.status(401).json({ error: "That didn't match — check your code, or your username and password." });
+  res.append("Set-Cookie", backerCookie(makeBackerSession(b.id), isSecure(req)));
+  res.json({ backer: publicBacker(b) });
+});
+
+app.post("/api/backer/logout", (req, res) => {
+  res.append("Set-Cookie", clearBackerCookie(isSecure(req)));
+  res.json({ ok: true });
+});
+
+app.get("/api/backer/me", (req, res) => {
+  res.json({ backer: publicBacker(sessionBacker(req)), ready: backersReady() });
+});
+
+// Set an optional password after signup (so username+password login works alongside the code).
+app.post("/api/backer/password", (req, res) => {
+  const b = sessionBacker(req);
+  if (!b) return res.status(401).json({ error: "Sign in first." });
+  const r = setBackerPassword(b.id, req.body && req.body.password);
+  if (r.error) return res.status(400).json({ error: r.error });
+  res.json({ ok: true });
 });
 
 app.put("/api/brand/:slug", (req, res) => {

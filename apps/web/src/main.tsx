@@ -9,6 +9,7 @@ import { fetchGate, gamesAreOpen } from "./net/gate";
 import { DisplayRoute } from "./routes/DisplayRoute";
 import { HomeRoute } from "./routes/HomeRoute";
 import { WaitlistRoute } from "./routes/WaitlistRoute";
+import { ClubRoute } from "./routes/ClubRoute";
 import { RexBubble } from "./rex/RexBubble";
 import { ControlRoute } from "./routes/ControlRoute";
 import { PlayerRoute } from "./routes/PlayerRoute";
@@ -29,6 +30,7 @@ function GameGate({ children }: { children: React.ReactElement }) {
 const router = createHashRouter([
   { path: "/", element: <HomeRoute /> },
   { path: "/waitlist", element: <WaitlistRoute /> },
+  { path: "/club", element: <ClubRoute /> },
   { path: "/display", element: <GameGate><DisplayRoute /></GameGate> },
   { path: "/control", element: <GameGate><ControlRoute /></GameGate> },
   { path: "/play", element: <GameGate><PlayerRoute /></GameGate> },
