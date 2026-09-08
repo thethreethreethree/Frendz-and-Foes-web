@@ -199,6 +199,24 @@ silent JS error left the card grid completely empty on one build.
 
 ---
 
+## 8b. The bug wiring the suites up immediately found
+
+`test/auth.test.mjs` had been failing for a while and NOBODY COULD SEE IT, because it sat after the
+hanging `sync.test.mjs` in the old chain. It isolated `AUTH_DIR` only. That was correct before the
+SQLite migration; after it, `AUTH_DIR` controls just the session-secret file and the user records
+live in the database at `DB_PATH` — which the test did not isolate. So it wrote its fixtures into
+the REAL dev database and then failed on its own duplicate-email assertion from the second run on.
+
+Five fixture users and two `brand_owners` rows were removed from `apps/server/data/playzoo.db`
+(every user row in that database was a fixture; `backers` and `brands` were untouched). The test
+now sets `DB_PATH` to a temp file, proven by three consecutive clean runs and by the user count
+staying at 0 across a full `npm test`.
+
+The general lesson, again: **a test that is never run is not a test.** This one had been red for
+days behind a hang, and was quietly corrupting the data it was supposed to be isolated from.
+
+---
+
 ## 9. Open
 
 1. **Generate the art.** Owner's chosen order: backdrops + event beats, one game at a time (~9

@@ -7,7 +7,13 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-process.env.AUTH_DIR = mkdtempSync(join(tmpdir(), "pz-auth-"));
+// Isolate BOTH stores. AUTH_DIR alone is no longer enough: since the SQLite migration it
+// controls only the session-secret file, while the user records live in the database at
+// DB_PATH. Without this the suite writes its users into the real dev database and fails on
+// the duplicate-email assertion from the second run onward.
+const TMP = mkdtempSync(join(tmpdir(), "pz-auth-"));
+process.env.AUTH_DIR = TMP;
+process.env.DB_PATH = join(TMP, "playzoo.db");
 process.env.AUTH_SECRET = "test-secret-fixed";
 const auth = await import("../apps/server/auth.js");
 
