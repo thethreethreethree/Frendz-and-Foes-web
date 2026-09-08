@@ -242,6 +242,18 @@ export function adminGetBacker(id) {
   return { ...publicBacker(b), code: b.code, hasAvatar: !!b.avatar, avatar: b.avatar || null };
 }
 
+// Founder-only: clear a backer's password so they fall back to logging in with their CODE. This is
+// the recovery path for "I forgot my password" - it does NOT set a new one, because the founder
+// choosing someone's password would mean knowing it. Their code still works, so they are never
+// locked out. Recorded in the audit log: it is an admin acting on someone else's account.
+export function adminClearPassword(id) {
+  if (!ready) return { error: "No such account." };
+  if (!getBacker(id)) return { error: "No such account." };
+  db.prepare("UPDATE backers SET pw_salt = NULL, pw_hash = NULL WHERE id = ?").run(id);
+  logEvent("admin.password_cleared", id);
+  return { ok: true };
+}
+
 // --- Sessions: base64url(payload) + "." + HMAC(payload), own cookie ---
 const SESSION_DAYS = 60;
 export const BACKER_COOKIE = "pz_backer";

@@ -32,7 +32,7 @@ import {
   createBacker, getBacker, findBackerByCode, findBackerByUsername,
   setBackerPassword, verifyBackerPassword, setBackerEnclosure, updateBacker, publicBacker,
   makeBackerSession, readBackerSession, backerCookie, clearBackerCookie, BACKER_COOKIE, backersReady,
-  listBackers, adminGetBacker,
+  listBackers, adminGetBacker, adminClearPassword,
 } from "./backers.js";
 import { sortQuestions, sortInto } from "./sorting.js";
 import { getEnclosure } from "./enclosures.js";
@@ -229,6 +229,29 @@ app.get("/api/backer/admin/users", (req, res) => {
 // Founder-only: one backer in full, including their avatar.
 app.get("/api/backer/admin/users/:id", (req, res) => {
   if (!isSuperadmin(req)) return res.status(401).json({ error: "Superadmin only." });
+  const b = adminGetBacker(req.params.id);
+  if (!b) return res.status(404).json({ error: "No such account." });
+  res.json({ user: b });
+});
+
+// Founder-only: edit a backer. Only the fields the founder may legitimately change - a username
+// (someone picked something unusable) and clearing a password (the forgot-password path). Enclosure
+// is NOT editable here: it is the outcome of the sorting quiz, and quietly overriding it would make
+// the quiz a lie. Profile fields belong to the backer.
+app.post("/api/backer/admin/users/:id", (req, res) => {
+  if (!isSuperadmin(req)) return res.status(401).json({ error: "Superadmin only." });
+  const { username, clearPassword } = req.body || {};
+  // Check existence FIRST: without this an unknown id fell through to updateBacker's generic
+  // "No such account." and was reported as 400 (bad request) instead of 404 (no such thing).
+  if (!adminGetBacker(req.params.id)) return res.status(404).json({ error: "No such account." });
+  if (clearPassword) {
+    const r = adminClearPassword(req.params.id);
+    if (r.error) return res.status(404).json({ error: r.error });
+  }
+  if (username !== undefined) {
+    const r = updateBacker(req.params.id, { username });
+    if (r.error) return res.status(400).json({ error: r.error });
+  }
   const b = adminGetBacker(req.params.id);
   if (!b) return res.status(404).json({ error: "No such account." });
   res.json({ user: b });

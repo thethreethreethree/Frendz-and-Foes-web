@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { type BackerRow, type CodeRow, listBackers, listCodes, mintCodes } from "../net/founder";
+import {
+  type BackerDetail, type BackerRow, type CodeRow,
+  editBacker, getBackerDetail, listBackers, listCodes, mintCodes,
+} from "../net/founder";
 import { enclosureView } from "../backer/enclosures";
 
 // The founder admin page (/founder) — a hidden tool for you, not backers. Paste the admin passcode
@@ -19,6 +22,7 @@ export function FounderRoute() {
   const [authed, setAuthed] = useState(false);
   const [rows, setRows] = useState<CodeRow[]>([]);
   const [users, setUsers] = useState<BackerRow[]>([]);
+  const [openId, setOpenId] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -96,7 +100,15 @@ export function FounderRoute() {
           <button onClick={lock} className="ml-auto text-sm font-semibold text-muted hover:text-ink">Lock</button>
         </div>
 
-        <BackersCard users={users} onRefresh={() => refreshBackers()} />
+        <BackersCard users={users} onRefresh={() => refreshBackers()} onOpen={setOpenId} />
+
+        {openId && (
+          <BackerDetailCard
+            passcode={passcode} id={openId}
+            onClose={() => setOpenId(null)}
+            onChanged={() => refreshBackers()}
+          />
+        )}
 
         <MintCard passcode={passcode} onMinted={refresh} />
 
@@ -135,7 +147,8 @@ export function FounderRoute() {
 // The backer roster. This is the question you open the founder page asking - who is actually in? -
 // so it sits above minting. Search covers username, code, country and enclosure in one box rather
 // than a filter row: with a few hundred backers you are looking for one person, not slicing a table.
-function BackersCard({ users, onRefresh }: { users: BackerRow[]; onRefresh: () => void }) {
+function BackersCard({ users, onRefresh, onOpen }:
+  { users: BackerRow[]; onRefresh: () => void; onOpen: (id: string) => void }) {
   const [q, setQ] = useState("");
   const needle = q.trim().toLowerCase();
   const shown = needle
@@ -185,7 +198,8 @@ function BackersCard({ users, onRefresh }: { users: BackerRow[]; onRefresh: () =
             {shown.map((u) => {
               const enc = enclosureView(u.enclosure);
               return (
-                <tr key={u.id} className="border-t border-line/60">
+                <tr key={u.id} onClick={() => onOpen(u.id)}
+                    className="cursor-pointer border-t border-line/60 transition hover:bg-line/30">
                   <td className="px-4 py-2">
                     <div className="font-bold text-ink">{u.username}</div>
                     <div className="text-xs text-muted">{u.fullName || "—"}{u.country ? ` · ${u.country}` : ""}</div>
@@ -205,6 +219,112 @@ function BackersCard({ users, onRefresh }: { users: BackerRow[]; onRefresh: () =
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+// One backer in full. Fetched on open rather than carried in the roster, because the avatar is a
+// data URL up to 300KB and the list would haul one per row for a column it never renders.
+//
+// Only two actions, deliberately. Renaming covers "they picked something unusable". Clearing a
+// password is the forgot-password path - it does NOT set a new one, because the founder choosing
+// someone's password would mean knowing it; their backer code still logs them in, so nobody gets
+// locked out. Enclosure is shown but NOT editable: it is the outcome of the sorting quiz, and
+// quietly overriding it would make the quiz a lie.
+function BackerDetailCard({ passcode, id, onClose, onChanged }: {
+  passcode: string; id: string; onClose: () => void; onChanged: () => void;
+}) {
+  const [user, setUser] = useState<BackerDetail | null>(null);
+  const [name, setName] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    setUser(null); setErr(null); setNote(null);
+    getBackerDetail(passcode, id).then((r) => {
+      if (!live) return;
+      if (r.error) { setErr(r.error); return; }
+      setUser(r.user || null);
+      setName(r.user?.username || "");
+    });
+    return () => { live = false; };
+  }, [passcode, id]);
+
+  async function save(patch: { username?: string; clearPassword?: boolean }, ok: string) {
+    setBusy(true); setErr(null); setNote(null);
+    const r = await editBacker(passcode, id, patch);
+    setBusy(false);
+    if (r.error) { setErr(r.error); return; }
+    setUser(r.user || null);
+    setName(r.user?.username || "");
+    setNote(ok);
+    onChanged();
+  }
+
+  const enc = enclosureView(user?.enclosure ?? null);
+  const renamed = !!user && name.trim() !== "" && name.trim() !== user.username;
+
+  return (
+    <div className="rounded-2xl border border-primary/50 bg-surface/70 p-5 backdrop-blur">
+      <div className="flex items-center gap-3">
+        <span className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Backer</span>
+        <button onClick={onClose} className="ml-auto text-sm font-semibold text-muted hover:text-ink">Close</button>
+      </div>
+
+      {!user && !err && <p className="mt-3 text-sm text-muted">Loading…</p>}
+      {err && !user && <p className="mt-3 text-sm font-semibold text-red-400">{err}</p>}
+
+      {user && (
+        <>
+          <div className="mt-4 flex flex-wrap items-start gap-4">
+            {user.avatar
+              ? <img src={user.avatar} alt={`${user.username}'s profile picture`}
+                     className="h-20 w-20 shrink-0 rounded-full border border-line object-cover" />
+              : <div className="grid h-20 w-20 shrink-0 place-items-center rounded-full border border-dashed border-line text-xs text-muted">
+                  no photo
+                </div>}
+            <div className="min-w-0">
+              <div className="ff-title text-xl font-extrabold text-ink">{user.username}</div>
+              <div className="text-sm text-muted">
+                {user.fullName || "—"}{user.country ? ` · ${user.country}` : ""}
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                {enc
+                  ? <span className="rounded-full px-2 py-0.5 font-bold"
+                          style={{ background: `${enc.accent}22`, color: enc.accent }}>{enc.name}</span>
+                  : <span className="font-semibold text-amber-400">not sorted yet</span>}
+                <span className="rounded-full border border-line px-2 py-0.5 font-mono text-muted">{user.code || "no code"}</span>
+                <span className="text-muted">joined {new Date(user.created).toLocaleDateString()}</span>
+                <span className="text-muted">{user.hasPassword ? "code + password" : "code only"}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-5 flex flex-wrap items-end gap-3 border-t border-line pt-4">
+            <label className="flex-1 text-sm font-bold text-ink">Username
+              <input value={name} onChange={(e) => setName(e.target.value)}
+                className="mt-1 block w-full rounded-xl border border-line bg-canvas px-3 py-2 text-ink outline-none focus:border-primary" />
+            </label>
+            <button onClick={() => save({ username: name.trim() }, "Username updated.")}
+              disabled={busy || !renamed}
+              className="rounded-xl bg-gradient-to-br from-primary to-accent px-4 py-2.5 font-display font-extrabold text-white transition active:scale-95 disabled:opacity-40">
+              {busy ? "Saving…" : "Rename"}
+            </button>
+            <button
+              onClick={() => save({ clearPassword: true }, "Password cleared — they can still log in with their code.")}
+              disabled={busy || !user.hasPassword}
+              title={user.hasPassword ? "They log in with their code until they set a new one" : "No password set"}
+              className="rounded-xl border border-line bg-canvas px-4 py-2.5 text-sm font-bold text-muted transition hover:text-ink disabled:opacity-40">
+              Clear password
+            </button>
+          </div>
+
+          {note && <p className="mt-2 text-sm font-semibold text-teal-400">{note}</p>}
+          {err && <p className="mt-2 text-sm font-semibold text-red-400">{err}</p>}
+        </>
+      )}
     </div>
   );
 }

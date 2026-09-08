@@ -71,3 +71,48 @@ export async function listBackers(passcode: string): Promise<{ users?: BackerRow
     return { error: "Network hiccup — try again." };
   }
 }
+
+// One backer in full, avatar included — the detail view. Separate from the roster on purpose: the
+// list omits avatars so it stays small, and this fetches the heavy field only for the row you opened.
+export interface BackerDetail extends Omit<BackerRow, "fullName" | "country"> {
+  fullName: string | null;
+  country: string | null;
+  dob?: string | null;
+  avatar: string | null;
+}
+
+export async function getBackerDetail(passcode: string, id: string): Promise<{ user?: BackerDetail; error?: string }> {
+  try {
+    const res = await fetch(`/api/backer/admin/users/${encodeURIComponent(id)}`, { headers: headers(passcode) });
+    if (res.status === 401) return { error: "That admin passcode isn't right." };
+    if (res.status === 404) return { error: "That account no longer exists." };
+    if (!res.ok) return { error: "Couldn't load that backer." };
+    const data = await res.json();
+    return { user: data.user };
+  } catch {
+    return { error: "Network hiccup — try again." };
+  }
+}
+
+// Edit a backer. Only what the founder may legitimately change: rename, or clear a forgotten
+// password (which does NOT set a new one — their backer code still logs them in, so they are never
+// locked out, and the founder never knows anyone's password).
+export async function editBacker(
+  passcode: string,
+  id: string,
+  patch: { username?: string; clearPassword?: boolean },
+): Promise<{ user?: BackerDetail; error?: string }> {
+  try {
+    const res = await fetch(`/api/backer/admin/users/${encodeURIComponent(id)}`, {
+      method: "POST",
+      headers: headers(passcode),
+      body: JSON.stringify(patch),
+    });
+    if (res.status === 401) return { error: "That admin passcode isn't right." };
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) return { error: data.error || "Couldn't save that change." };
+    return { user: data.user };
+  } catch {
+    return { error: "Network hiccup — try again." };
+  }
+}
