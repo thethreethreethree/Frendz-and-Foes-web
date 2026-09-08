@@ -14,7 +14,7 @@ import { createServer } from "node:http";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { existsSync, readdirSync } from "node:fs";
-import { createHash, timingSafeEqual } from "node:crypto";
+import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import express from "express";
 import { Server } from "socket.io";
 // Murder Mystery: The Villagers — the 100-character roster with item-set card art. This replaced the
@@ -805,7 +805,7 @@ io.on("connection", (socket) => {
     registerAfterDarkHandlers(io, socket, rooms);
   }
 
-  socket.on("join", ({ room, role, teamId }) => {
+  socket.on("join", ({ room, role, teamId, hostToken }) => {
     if (!gamesOpen) { socket.emit("locked", { waitlist: true }); return; }
     if (typeof room !== "string" || !room) return;
     // Only the hosting surfaces are gated: a "player" phone has no account and never will.
@@ -818,6 +818,30 @@ io.on("connection", (socket) => {
       }
     }
     code = room.toUpperCase();
+    // --- Host claim ------------------------------------------------------------------------
+    // `role` is declared by the client, so it cannot decide who may WRITE game state. The first
+    // socket to claim host for a room is issued a secret token; after that, only a socket holding
+    // that token can be the host. Without this, any page that guessed a room code could emit "sync"
+    // and overwrite a live game.
+    //
+    // The token OUTLIVES the socket on purpose: a host whose phone drops needs to reclaim the room
+    // on reconnect, and releasing the claim on disconnect would hand it to whoever asked next.
+    if (role === "host") {
+      const r0 = getRoom(code);
+      if (!r0.hostToken) {
+        r0.hostToken = randomBytes(16).toString("hex");
+        socket.data.isHost = true;
+        socket.emit("host:token", { room: code, token: r0.hostToken });
+      } else if (typeof hostToken === "string" && hostToken === r0.hostToken) {
+        socket.data.isHost = true;                       // the real host, back after a reconnect
+      } else {
+        // Not the host. Joined as a spectator rather than refused outright: a second screen opening
+        // the control page is a normal mistake, and it should show the game, not an error.
+        socket.data.isHost = false;
+        socket.emit("host:denied", { room: code });
+        role = "spectator";
+      }
+    }
     socket.data.role = role || "display";
     socket.data.teamId = typeof teamId === "string" ? teamId : null;
     socket.data.code = code;
@@ -836,14 +860,17 @@ io.on("connection", (socket) => {
   // the rest of the app), so a client could still claim role:"host". What it DOES prevent is a
   // legitimate non-host phone (answerer/viewer/player) accidentally clobbering room state via "sync".
   socket.on("sync", (snapshot) => {
-    if (!code || socket.data.role !== "host") return;
+    // socket.data.isHost is set by the server when the host claim was VALIDATED above. The old
+    // check read socket.data.role, which the client sets itself - so it stopped honest mistakes
+    // but not a page that simply said role:"host".
+    if (!code || !socket.data.isHost) return;
     const r = getRoom(code);
     r.snapshot = snapshot;
     socket.to(code).emit("sync", snapshot);
   });
 
   socket.on("pulse", (pulse) => {
-    if (!code || socket.data.role !== "host") return;
+    if (!code || !socket.data.isHost) return;
     socket.to(code).emit("pulse", pulse);
   });
 

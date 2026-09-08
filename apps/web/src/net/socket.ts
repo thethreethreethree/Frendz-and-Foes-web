@@ -150,12 +150,38 @@ export function getSocket(): Socket {
   return _socket;
 }
 
+// The host's proof that this room is theirs.
+//
+// `role` is declared by the client, so the server cannot take it as authority for WRITING game
+// state - any page could say role:"host" and overwrite a live game. The server issues a token to
+// the first socket that claims a room, and only a socket presenting it may sync afterwards.
+//
+// sessionStorage, not localStorage: it survives the reload or reconnect a host actually hits, and
+// dies with the tab rather than lingering on a shared venue laptop after the night ends.
+const hostKey = (room: string) => `pz_host_${room.toUpperCase()}`;
+
+function readHostToken(room: string): string | undefined {
+  try { return sessionStorage.getItem(hostKey(room)) || undefined; } catch { return undefined; }
+}
+
 export function joinRoom(room: string, role: Role, teamId?: string): Socket {
   const s = getSocket();
-  const doJoin = () => s.emit("join", { room, role, teamId });
+  const doJoin = () => s.emit("join", { room, role, teamId, hostToken: readHostToken(room) });
+
+  // Issued once, on the first claim. Stored so a reconnect can prove it is the same host.
+  s.off("host:token");
+  s.on("host:token", ({ room: r, token }: { room: string; token: string }) => {
+    try { sessionStorage.setItem(hostKey(r), token); } catch { /* private mode: the live socket still works */ }
+  });
+
   if (s.connected) doJoin();
   s.on("connect", doJoin); // rejoin automatically after any reconnect
   return s;
+}
+
+/** True if this tab holds the host claim for a room — for a UI that wants to say "viewing only". */
+export function hasHostClaim(room: string): boolean {
+  return !!readHostToken(room);
 }
 
 /** Answerer → host: submit the team's guess for the host to judge. No-op unless joined as answerer. */
