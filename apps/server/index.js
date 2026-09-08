@@ -40,7 +40,7 @@ import {
 } from "./backers.js";
 import { sortQuestions, sortInto } from "./sorting.js";
 import { getEnclosure } from "./enclosures.js";
-import { canAccess, getMessages, addMessage, addRexMessage, addJohnMessage, roomMeta, ROOM_IDS } from "./chat.js";
+import { canAccess, getMessages, addMessage, addRexMessage, addJohnMessage, roomMeta, ROOM_IDS, chatStats } from "./chat.js";
 import { initBanter, noteMessage as banterNote, forceScene } from "./banter.js";
 import { addressedCharacter, ensureTag } from "./mentions.js";
 import { getBrand, listBrandSlugs, upsertBrand, deleteBrand, dbReady } from "./db.js";
@@ -253,6 +253,14 @@ app.get("/api/backer/subscription", (req, res) => {
 app.get("/api/backer/admin/subscriptions", (req, res) => {
   if (!isSuperadmin(req)) return res.status(401).json({ error: "Superadmin only." });
   res.json({ subscriptions: listSubscriptions(), plans: PLANS });
+});
+
+// Founder-only: chat volume per room. Deliberately counts only - never message CONTENT. The founder
+// can moderate through the room itself; a dashboard that quietly exposes private enclosure chat to
+// an admin is a different product from the one that was promised to backers.
+app.get("/api/backer/admin/chat", (req, res) => {
+  if (!isSuperadmin(req)) return res.status(401).json({ error: "Superadmin only." });
+  res.json(chatStats());
 });
 
 // Founder-only: set a backer's subscription by hand. This exists BEFORE Stripe so tiers can be

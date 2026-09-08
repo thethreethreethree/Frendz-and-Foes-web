@@ -75,7 +75,11 @@ console.log("\n--- status handling ---");
 subs.setSubscription("b4", { plan: "zoo-pass", status: "trialing", currentPeriodEnd: Date.now() + DAY });
 check("trialing is entitled", subs.entitlementsFor("b4").active, true);
 subs.setSubscription("b5", { plan: "zoo-pass", status: "past_due", currentPeriodEnd: Date.now() + DAY });
-check("past_due does NOT grant access (no grace period)", subs.entitlementsFor("b5").active, false);
+// Owner's call: a card that simply expired keeps playing while Stripe retries.
+check("past_due keeps access (grace period)", subs.entitlementsFor("b5").active, true);
+// But the grace cannot outlive the PERIOD - otherwise a failed payment would grant access forever.
+subs.setSubscription("b5b", { plan: "zoo-pass", status: "past_due", currentPeriodEnd: Date.now() - DAY });
+check("past_due past its period end is cut off", subs.entitlementsFor("b5b").active, false);
 subs.setSubscription("b6", { plan: "zoo-pass", status: "canceled", currentPeriodEnd: Date.now() + DAY });
 check("canceled is not entitled", subs.entitlementsFor("b6").active, false);
 

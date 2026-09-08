@@ -38,10 +38,12 @@ export const PLAN_IDS = Object.keys(PLANS);
 
 // Statuses mirror Stripe's own vocabulary so a webhook maps across with no translation table.
 export const STATUSES = ["none", "active", "trialing", "past_due", "canceled"];
-// Only these grant access. past_due does NOT - a failed payment cuts access immediately rather
-// than granting a grace period. That is a business decision, not a technical one, and it is the
-// stricter of the two: add "past_due" here to give a retry window instead.
-const ENTITLED = new Set(["active", "trialing"]);
+// Which statuses grant access. past_due IS included - the owner's call (2026-09-08): a backer whose
+// card simply expired keeps playing while Stripe retries, because that is the common real case and
+// cutting them off mid-month over a card renewal is worse than a few unpaid days. Access still ends
+// the moment the PERIOD expires, which entitlementsFor() checks independently, so this grace cannot
+// run forever. Remove "past_due" to cut access the instant a payment fails.
+const ENTITLED = new Set(["active", "trialing", "past_due"]);
 
 const rowToSub = (r) => (r ? {
   id: r.id, backerId: r.backer_id, plan: r.plan, status: r.status,

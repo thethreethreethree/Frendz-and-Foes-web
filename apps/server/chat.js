@@ -177,3 +177,23 @@ function push(roomId, msg) {
     console.error("[ff-server] chat write failed:", err?.message || err);
   }
 }
+
+// Founder-only: how much is actually in each room. This exists so that "the chat migrated fine and
+// is simply empty" can be told apart from "the chat is broken" - from outside they look identical,
+// which is exactly how a silent failure survives a deploy check.
+export function chatStats() {
+  if (!ready) return { ready: false, rooms: [] };
+  const rows = db.prepare(
+    "SELECT room, COUNT(*) AS n, MAX(at) AS last FROM messages GROUP BY room",
+  ).all();
+  const by = Object.fromEntries(rows.map((r) => [r.room, r]));
+  return {
+    ready: true,
+    total: rows.reduce((a, r) => a + r.n, 0),
+    rooms: ROOM_IDS.map((id) => ({
+      id, name: roomMeta(id)?.name || id,
+      messages: by[id]?.n || 0,
+      lastAt: by[id]?.last || null,
+    })),
+  };
+}
