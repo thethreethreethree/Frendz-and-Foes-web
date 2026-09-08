@@ -77,3 +77,26 @@ export async function backerSetPassword(password: string): Promise<{ ok?: boolea
 export async function backerLogout(): Promise<void> {
   try { await fetch("/api/backer/logout", { method: "POST", credentials: "include" }); } catch { /* ignore */ }
 }
+
+// ---- The Sorting ----
+export interface SortAnswer { text: string; quip: string }
+export interface SortQuestion { q: string; answers: SortAnswer[] }
+// The enclosure object the server returns after sorting (from apps/server/enclosures.js).
+export interface EnclosureResult {
+  id: string; name: string; temperament: string; motto: string; accent: string; banner: string; blurb: string;
+}
+
+export async function fetchSortQuestions(): Promise<SortQuestion[]> {
+  try {
+    const res = await fetch("/api/backer/sort/questions", { credentials: "include" });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data.questions) ? data.questions : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function submitSort(answers: number[]): Promise<{ enclosure?: EnclosureResult; alreadySorted?: boolean; error?: string }> {
+  return postJson("/api/backer/sort", { answers });
+}

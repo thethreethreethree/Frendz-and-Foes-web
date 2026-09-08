@@ -30,9 +30,11 @@ import { johnChat, johnReady } from "./john.js";
 import { generateCodes, checkCode, redeemCode, listCodes, backerCodesReady } from "./backerCodes.js";
 import {
   createBacker, getBacker, findBackerByCode, findBackerByUsername,
-  setBackerPassword, verifyBackerPassword, publicBacker,
+  setBackerPassword, verifyBackerPassword, setBackerEnclosure, publicBacker,
   makeBackerSession, readBackerSession, backerCookie, clearBackerCookie, BACKER_COOKIE, backersReady,
 } from "./backers.js";
+import { sortQuestions, sortInto } from "./sorting.js";
+import { getEnclosure } from "./enclosures.js";
 import { getBrand, listBrandSlugs, upsertBrand, deleteBrand, dbReady } from "./db.js";
 import {
   authReady, createUser, authenticate, getUser, makeSession, readSession,
@@ -268,6 +270,27 @@ app.post("/api/backer/password", (req, res) => {
   const r = setBackerPassword(b.id, req.body && req.body.password);
   if (r.error) return res.status(400).json({ error: r.error });
   res.json({ ok: true });
+});
+
+// --- The Sorting: Rex's 5 questions -> one of the four enclosures ----------------------------
+// Questions (display + Rex quips) are served from the server; the answer->enclosure mapping and the
+// tally live server-side so the result is authoritative (nobody hand-picks their house).
+app.get("/api/backer/sort/questions", (req, res) => {
+  if (!sessionBacker(req)) return res.status(401).json({ error: "Sign in first." });
+  res.json({ questions: sortQuestions() });
+});
+
+// Submit answers -> assign + return the enclosure. Sorting is once: a sorted backer gets their
+// existing enclosure back (alreadySorted), never re-rolled.
+app.post("/api/backer/sort", (req, res) => {
+  const b = sessionBacker(req);
+  if (!b) return res.status(401).json({ error: "Sign in first." });
+  if (b.enclosure) return res.json({ enclosure: getEnclosure(b.enclosure), alreadySorted: true });
+  const encId = sortInto(req.body && req.body.answers);
+  if (!encId) return res.status(400).json({ error: "Those answers didn't come through — give it another go." });
+  const r = setBackerEnclosure(b.id, encId);
+  if (r.error) return res.status(400).json({ error: r.error });
+  res.json({ enclosure: getEnclosure(encId) });
 });
 
 app.put("/api/brand/:slug", (req, res) => {

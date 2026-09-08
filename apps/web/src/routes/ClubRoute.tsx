@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { AvatarCropper } from "../backer/AvatarCropper";
 import { COUNTRIES } from "../backer/countries";
+import { RexSays } from "../backer/RexBits";
+import { SortingFlow } from "../backer/SortingFlow";
+import { enclosureView } from "../backer/enclosures";
 import {
   type Backer, backerMe, checkBackerCode, backerSignup, backerLogin, backerLogout, backerSetPassword,
 } from "../net/backer";
@@ -9,30 +12,7 @@ import {
 // The backers-only club, hosted by Rex. It's the front door to the (upcoming) enclosure chats: a
 // backer signs up with their one-time code — Rex CHATS to check the code, then a Rex-framed FORM
 // collects the profile (croppable avatar, name, DOB, country, username). The code is their login key;
-// they can add a password later. Signed-in members land on a "you're in" state (sorting + chat next).
-
-function RexFace({ size = 56 }: { size?: number }) {
-  const [ok, setOk] = useState(true);
-  const dim = { width: size, height: size } as const;
-  if (!ok) return <span style={dim} className="grid shrink-0 place-items-center rounded-full border-2 border-primary bg-surface text-2xl">🦁</span>;
-  return (
-    <span style={dim} className="grid shrink-0 place-items-center overflow-hidden rounded-full border-2 border-primary bg-gradient-to-br from-primary to-accent">
-      <img src="/crew/rex-cutout.png" alt="Rex" style={{ width: size - 4, height: size - 4 }} className="object-cover" onError={() => setOk(false)} />
-    </span>
-  );
-}
-
-function RexSays({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex items-end gap-3">
-      <RexFace />
-      <div className="relative max-w-md rounded-2xl rounded-bl-sm border border-primary/50 bg-surface/90 px-4 py-3 shadow-lg backdrop-blur">
-        <div className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-primary">Rex · your zookeeper</div>
-        <div className="mt-1 font-display text-lg font-bold leading-snug text-ink" style={{ textWrap: "balance" }}>{children}</div>
-      </div>
-    </div>
-  );
-}
+// they can add a password later. Once signed in, Rex SORTS them into one of the four enclosures.
 
 export function ClubRoute() {
   const [loading, setLoading] = useState(true);
@@ -51,7 +31,7 @@ export function ClubRoute() {
         {loading ? (
           <div className="mt-24 text-center text-muted">Rex is checking the guest list…</div>
         ) : me ? (
-          <SignedIn me={me} onOut={() => setMe(null)} />
+          <SignedIn me={me} onOut={() => setMe(null)} onSorted={(id) => setMe({ ...me, enclosure: id })} />
         ) : (
           <Gate onIn={setMe} />
         )}
@@ -251,44 +231,92 @@ function LoginPanel({ onIn, toSignup }: { onIn: (b: Backer) => void; toSignup: (
   );
 }
 
-// ---- Signed-in landing ----
-function SignedIn({ me, onOut }: { me: Backer; onOut: () => void }) {
+// ---- Signed-in landing: unsorted → sorting → sorted ----
+function SignedIn({ me, onOut, onSorted }: { me: Backer; onOut: () => void; onSorted: (id: string) => void }) {
   const [showPw, setShowPw] = useState(false);
+  const [sorting, setSorting] = useState(false);
+  const enc = enclosureView(me.enclosure);
+
+  if (sorting) return <SortingFlow onDone={(id) => { onSorted(id); setSorting(false); }} />;
+
+  // Not sorted yet — Rex wants to sort you. This is the obvious next action, not a dead end.
+  if (!me.enclosure) {
+    return (
+      <div className="mt-8 flex flex-col gap-6">
+        <RexSays>You're in, <b>{me.username}</b>. But before you run wild — I need to know which enclosure you belong in. Five questions. Ready when you are. 🦁</RexSays>
+        <ProfileCard me={me} enc={null} />
+        <button
+          onClick={() => setSorting(true)}
+          className="rounded-2xl bg-gradient-to-br from-primary to-accent px-7 py-4 text-center font-display text-xl font-extrabold text-white shadow-[0_16px_40px_-12px_rgb(var(--c-primary)/0.6)] transition hover:-translate-y-0.5 active:scale-95"
+        >
+          🎲 Let Rex sort me
+        </button>
+        {!me.hasPassword && <PasswordCard showPw={showPw} setShowPw={setShowPw} />}
+        <LogoutButton onOut={onOut} />
+      </div>
+    );
+  }
+
+  // Sorted — show the enclosure with pride. (House + General chats are the next build.)
   return (
     <div className="mt-8 flex flex-col gap-6">
-      <RexSays>You're in, <b>{me.username}</b>. Welcome to the club — the enclosures and the chats open soon. Sit tight; I'll be sorting you shortly. 🦁</RexSays>
-
-      <div className="flex items-center gap-4 rounded-2xl border border-line bg-surface/60 p-5 backdrop-blur">
-        {me.avatar
-          ? <img src={me.avatar} alt="" className="h-20 w-20 shrink-0 rounded-full border-2 border-primary object-cover" />
-          : <div className="grid h-20 w-20 shrink-0 place-items-center rounded-full border-2 border-primary bg-canvas text-3xl">🦁</div>}
-        <div className="min-w-0">
-          <div className="ff-title truncate text-2xl font-extrabold">{me.username}</div>
-          <div className="truncate text-sm text-muted">{me.fullName} · {me.country}</div>
-          <div className="mt-1 inline-block rounded-full border border-line bg-canvas/70 px-3 py-1 text-xs font-semibold text-muted">
-            Enclosure: {me.enclosure ? me.enclosure : "not sorted yet — coming soon"}
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-dashed border-line bg-surface/40 p-5 text-sm text-muted">
-        <div className="font-bold text-ink">What's next</div>
-        <p className="mt-1">Rex will sort you into one of the four enclosures with a few (silly) questions, then the enclosure chats + the General room open up. You're on the list.</p>
-      </div>
-
-      {!me.hasPassword && (
-        <div className="rounded-2xl border border-line bg-surface/60 p-5 backdrop-blur">
-          {showPw ? <SetPassword /> : (
-            <button onClick={() => setShowPw(true)} className="text-sm font-bold text-primary hover:underline">
-              + Add a password (so you can log in without your code)
-            </button>
-          )}
+      <RexSays>Welcome home, <b>{me.username}</b> — {enc?.name} suits you. The chats open soon; save your best material. 🦁</RexSays>
+      {enc && (
+        <div
+          className="flex flex-col items-center gap-3 rounded-3xl border p-6 text-center"
+          style={{ borderColor: enc.accent, background: `radial-gradient(120% 100% at 50% 0%, ${enc.accent}22, transparent 70%)` }}
+        >
+          <div className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: enc.accent }}>Your enclosure</div>
+          <img src={enc.banner} alt={enc.name} className="w-44" style={{ filter: `drop-shadow(0 0 20px ${enc.accent}66)` }} />
+          <div className="ff-title text-2xl font-extrabold">{enc.name}</div>
+          <div className="font-display text-sm font-bold" style={{ color: enc.accent }}>"{enc.motto}"</div>
         </div>
       )}
+      <ProfileCard me={me} enc={enc} />
+      <div className="rounded-2xl border border-dashed border-line bg-surface/40 p-5 text-sm text-muted">
+        <div className="font-bold text-ink">What's next</div>
+        <p className="mt-1">Your enclosure chat + the General room (The Watering Hole) open soon. You're sorted and on the list.</p>
+      </div>
+      {!me.hasPassword && <PasswordCard showPw={showPw} setShowPw={setShowPw} />}
+      <LogoutButton onOut={onOut} />
+    </div>
+  );
+}
 
-      <button onClick={async () => { await backerLogout(); onOut(); }} className="self-start text-sm font-semibold text-muted hover:text-ink">
-        Log out
-      </button>
+function ProfileCard({ me, enc }: { me: Backer; enc: ReturnType<typeof enclosureView> }) {
+  return (
+    <div className="flex items-center gap-4 rounded-2xl border border-line bg-surface/60 p-5 backdrop-blur">
+      {me.avatar
+        ? <img src={me.avatar} alt="" className="h-20 w-20 shrink-0 rounded-full border-2 border-primary object-cover" />
+        : <div className="grid h-20 w-20 shrink-0 place-items-center rounded-full border-2 border-primary bg-canvas text-3xl">🦁</div>}
+      <div className="min-w-0">
+        <div className="ff-title truncate text-2xl font-extrabold">{me.username}</div>
+        <div className="truncate text-sm text-muted">{me.fullName} · {me.country}</div>
+        <div className="mt-1 inline-block rounded-full border px-3 py-1 text-xs font-semibold"
+          style={enc ? { borderColor: enc.accent, color: enc.accent } : { borderColor: "rgb(var(--c-line))", color: "rgb(var(--c-muted))" }}>
+          {enc ? `${enc.emoji} ${enc.name}` : "Not sorted yet"}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LogoutButton({ onOut }: { onOut: () => void }) {
+  return (
+    <button onClick={async () => { await backerLogout(); onOut(); }} className="self-start text-sm font-semibold text-muted hover:text-ink">
+      Log out
+    </button>
+  );
+}
+
+function PasswordCard({ showPw, setShowPw }: { showPw: boolean; setShowPw: (v: boolean) => void }) {
+  return (
+    <div className="rounded-2xl border border-line bg-surface/60 p-5 backdrop-blur">
+      {showPw ? <SetPassword /> : (
+        <button onClick={() => setShowPw(true)} className="text-sm font-bold text-primary hover:underline">
+          + Add a password (so you can log in without your code)
+        </button>
+      )}
     </div>
   );
 }
