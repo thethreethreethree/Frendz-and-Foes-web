@@ -14,6 +14,7 @@
 import { addJohnMessage, addRexMessage } from "./chat.js";
 import { ensureTag } from "./mentions.js";
 
+import { stripStageDirections } from "./speech.js";
 const KEY = process.env.DEEPSEEK_API_KEY || process.env.HOST_API_KEY || "";
 const API_URL = process.env.HOST_API_URL || "https://api.deepseek.com/chat/completions";
 const MODEL = process.env.HOST_MODEL || "deepseek-chat";
@@ -160,6 +161,7 @@ async function genLine(who, sceneText, dir) {
     const data = await res.json();
     let t = String(data?.choices?.[0]?.message?.content || "").replace(/\s+/g, " ").trim();
     t = t.replace(/^["']+|["']+$/g, "").replace(/^(john|rex)\s*:/i, "").trim();
+    t = stripStageDirections(t);
     return t || dir.canned();
   } catch {
     return dir.canned();

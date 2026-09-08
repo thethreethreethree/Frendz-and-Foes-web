@@ -5,6 +5,7 @@
 // Kickstarter. Same DeepSeek backend as Rex, its own persona. Degrades to canned lines with no key /
 // on error. Text-first + role-tagged so a future 11Labs voice can speak him.
 
+import { stripStageDirections } from "./speech.js";
 const KEY = process.env.DEEPSEEK_API_KEY || process.env.HOST_API_KEY || "";
 const API_URL = process.env.HOST_API_URL || "https://api.deepseek.com/chat/completions";
 const MODEL = process.env.HOST_MODEL || "deepseek-chat";
@@ -82,7 +83,10 @@ async function chatCompletion(messages) {
   });
   if (!res.ok) throw new Error(`john provider ${res.status}`);
   const data = await res.json();
-  return String(data?.choices?.[0]?.message?.content || "").replace(/\s+/g, " ").trim();
+  const text = String(data?.choices?.[0]?.message?.content || "").replace(/\s+/g, " ").trim();
+  // John narrates his own tantrums in asterisks despite the prompt forbidding it; strip it so the
+  // bubble reads clean and a future voice never speaks the narration. See speech.js.
+  return stripStageDirections(text);
 }
 
 // Returns { reply, source: "ai"|"canned" }. Never throws.

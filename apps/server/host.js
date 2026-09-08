@@ -7,6 +7,7 @@
 
 import { REX_KNOWLEDGE } from "./rexKnowledge.js";
 
+import { stripStageDirections } from "./speech.js";
 const KEY = process.env.DEEPSEEK_API_KEY || process.env.HOST_API_KEY || "";
 const API_URL = process.env.HOST_API_URL || "https://api.deepseek.com/chat/completions";
 const MODEL = process.env.HOST_MODEL || "deepseek-chat";
@@ -88,7 +89,9 @@ async function callModel(payload) {
   const data = await res.json();
   const text = data?.choices?.[0]?.message?.content || "";
   // Strip stray quotes/markdown the model sometimes adds; keep it to one clean line.
-  return String(text).replace(/^["'“”]+|["'“”]+$/g, "").replace(/\s+/g, " ").trim();
+  return stripStageDirections(
+    String(text).replace(/^["'“”]+|["'“”]+$/g, "").replace(/\s+/g, " ").trim()
+  );
 }
 
 // Returns { line, source: "ai"|"canned" }. Never throws.
@@ -140,7 +143,7 @@ async function chatCompletion(messages) {
   if (!res.ok) throw new Error(`host provider ${res.status}`);
   const data = await res.json();
   const text = data?.choices?.[0]?.message?.content || "";
-  return String(text).replace(/\s+/g, " ").trim();
+  return stripStageDirections(String(text).replace(/\s+/g, " ").trim());
 }
 
 // Returns { reply, source: "ai"|"canned" }. Never throws.
