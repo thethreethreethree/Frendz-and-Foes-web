@@ -22,4 +22,5 @@ console.log("[ff-server] env:", JSON.stringify({
   adminPasscodeLen: (process.env.ADMIN_PASSCODE || "").length,
   signupsOpen: process.env.SIGNUPS_OPEN === "true",
   gamesOpen: process.env.GAMES_OPEN === "true",
+  enforceEntitlements: process.env.ENFORCE_ENTITLEMENTS === "true",
 }));

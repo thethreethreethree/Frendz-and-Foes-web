@@ -115,5 +115,23 @@ check("unmappable event reports an error",
 // "no plan", never a guessed one.
 check("unmapped price yields no plan", subs.getSubscription("b8").plan, null);
 
+console.log("");
+console.log("--- the Stripe price map comes from the ENVIRONMENT ---");
+{
+  // Connecting Stripe must not require a code edit, so the map is parsed from STRIPE_PRICE_MAP.
+  // A fresh module instance is needed because it is read once at import.
+  process.env.STRIPE_PRICE_MAP = "price_a:zoo-pass, price_c:head-keeper , price_b:not-a-real-plan";
+  const fresh = await import(SRV + "subscriptions.js?pricemap");
+  check("valid entries mapped", fresh.STRIPE_PRICE_TO_PLAN, { price_a: "zoo-pass", price_c: "head-keeper" });
+  // A typo naming a plan that does not exist must be DROPPED, not accepted: otherwise a real paid
+  // subscription would arrive with plan: null and grant nothing.
+  check("a bad plan name is dropped", Object.keys(fresh.STRIPE_PRICE_TO_PLAN).includes("price_b"), false);
+  const st = fresh.stripeStatus();
+  check("status reports the unmapped plan", st.unmappedPlans, ["founding-animal"]);
+  check("status never leaks the secret", Object.keys(st).includes("webhookSecret"), false);
+  check("not ready without a webhook secret", st.ready, false);
+  delete process.env.STRIPE_PRICE_MAP;
+}
+
 console.log(`\n${fails === 0 ? "ALL PASS" : fails + " FAILURE(S)"}`);
 process.exit(fails === 0 ? 0 : 1);

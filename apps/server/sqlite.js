@@ -10,7 +10,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, statSync } from "node:fs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(__dirname, "data");
@@ -164,6 +164,31 @@ export function logEvent(type, actorId = null, data = null) {
     db.prepare("INSERT INTO events (ts, type, actor_id, data) VALUES (?, ?, ?, ?)")
       .run(Date.now(), String(type), actorId ?? null, data ? JSON.stringify(data) : null);
   } catch { /* swallow */ }
+}
+
+// Which JSON->SQLite migrations have run, and whether the legacy file is still on disk.
+//
+// Exists so the legacy files can be retired on EVIDENCE rather than on memory. Deleting a backup
+// because you think a migration ran is how data disappears; this says which ones are provably done.
+// Note that a separate deployment (Render) has its OWN database and may not have migrated yet, so
+// "done here" is not "done everywhere" - check each environment.
+export function legacyStatus(files) {
+  return Object.entries(files).map(([key, path]) => {
+    let exists = false, bytes = 0;
+    try {
+      const st = statSync(path);
+      exists = true; bytes = st.size;
+    } catch { /* not there */ }
+    const row = db.prepare("SELECT value, at FROM meta WHERE key = ?").get("migrated:" + key);
+    return {
+      key, path, exists, bytes,
+      migrated: !!row,
+      migratedAt: row?.at ?? null,
+      detail: (() => { try { return row?.value ? JSON.parse(row.value) : null; } catch { return null; } })(),
+      // Only safe to remove once the migration is recorded AND the data is actually in the table.
+      safeToRemove: !!row && exists,
+    };
+  });
 }
 
 // Read the append-only audit log, newest first. Founder-only upstream.

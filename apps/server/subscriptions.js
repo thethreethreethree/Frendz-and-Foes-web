@@ -123,12 +123,40 @@ export function entitlementsFor(backerId) {
 // The owner drops their existing Stripe integration in around these. Nothing here calls Stripe; each
 // function is the seam where it will.
 
-// Map a Stripe price/product id to one of our plans. Left EMPTY on purpose: these ids come from the
-// owner's Stripe account and inventing placeholders would look configured while silently matching
-// nothing. Fill it in when the account is connected.
-export const STRIPE_PRICE_TO_PLAN = {
-  // "price_xxx": "zoo-pass",
-};
+// Map a Stripe price id to one of our plans. Read from the ENVIRONMENT, not hardcoded: price ids
+// come from the owner's Stripe account, and connecting Stripe should not require editing code.
+//
+//   STRIPE_PRICE_MAP="price_abc:zoo-pass,price_def:founding-animal,price_ghi:head-keeper"
+//
+// An entry naming a plan that does not exist is dropped with a warning rather than silently
+// accepted - a typo here would otherwise mean paid subscriptions arriving with no plan attached.
+export const STRIPE_PRICE_TO_PLAN = (() => {
+  const raw = process.env.STRIPE_PRICE_MAP || "";
+  const out = {};
+  for (const pair of raw.split(",")) {
+    const [price, plan] = pair.split(":").map((x) => (x || "").trim());
+    if (!price || !plan) continue;
+    if (!PLANS[plan]) {
+      console.error(`[ff-server] STRIPE_PRICE_MAP: "${plan}" is not a plan - ignoring ${price}`);
+      continue;
+    }
+    out[price] = plan;
+  }
+  return out;
+})();
+
+// What is actually configured, for the founder dashboard. Never returns the secret itself.
+export function stripeStatus() {
+  const mapped = new Set(Object.values(STRIPE_PRICE_TO_PLAN));
+  return {
+    webhookSecretSet: !!process.env.STRIPE_WEBHOOK_SECRET,
+    priceMap: STRIPE_PRICE_TO_PLAN,
+    mappedPlans: [...mapped],
+    // A plan with no price id can never be granted by Stripe - it would arrive as plan: null.
+    unmappedPlans: PLAN_IDS.filter((id) => !mapped.has(id)),
+    ready: !!process.env.STRIPE_WEBHOOK_SECRET && mapped.size > 0,
+  };
+}
 
 // The single door a Stripe webhook comes through. Call it from the webhook route once signature
 // verification is in place - verification belongs in the route, because it needs the raw body.

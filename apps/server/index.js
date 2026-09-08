@@ -28,9 +28,10 @@ import { registerAfterDarkHandlers } from "./afterdark.js";
 import { hostLine, hostChat, hostReady } from "./host.js";
 import { johnChat, johnReady } from "./john.js";
 import { generateCodes, checkCode, redeemCode, listCodes, revokeCode, backerCodesReady } from "./backerCodes.js";
-import { listEvents, listEventTypes } from "./sqlite.js";
+import { listEvents, listEventTypes, legacyStatus } from "./sqlite.js";
 import {
   PLANS, applyStripeEvent, entitlementsFor, getSubscription, listSubscriptions, setSubscription,
+  stripeStatus,
 } from "./subscriptions.js";
 import { stripeConfigured, verifyStripeSignature } from "./stripe.js";
 import {
@@ -88,7 +89,11 @@ app.get("/healthz", (_req, res) => res.json({ ok: true }));
 // client fails CLOSED (treats games as locked) if this can't be reached, so a launch gate never
 // fails open.
 app.get("/api/status", (_req, res) => {
-  res.json({ gamesOpen: process.env.GAMES_OPEN === "true" });
+  res.json({
+    gamesOpen: process.env.GAMES_OPEN === "true",
+    // So the client can say WHY hosting is refused instead of showing a dead button.
+    enforceEntitlements: process.env.ENFORCE_ENTITLEMENTS === "true",
+  });
 });
 
 // --- Rex, the AI host --------------------------------------------------------------------------
@@ -285,6 +290,37 @@ app.get("/api/backer/admin/subscriptions", (req, res) => {
 app.get("/api/backer/admin/chat", (req, res) => {
   if (!isSuperadmin(req)) return res.status(401).json({ error: "Superadmin only." });
   res.json(chatStats());
+});
+
+// Founder-only: what Stripe configuration is actually in place. Reports presence, NEVER the secret.
+// Exists so "is Stripe connected?" is answerable from the dashboard instead of by guessing - the
+// webhook failing closed looks identical to a webhook nobody has called yet.
+app.get("/api/backer/admin/stripe", (req, res) => {
+  if (!isSuperadmin(req)) return res.status(401).json({ error: "Superadmin only." });
+  res.json(stripeStatus());
+});
+
+// Founder-only: which legacy JSON stores are still on disk, and whether their migration is RECORDED
+// as done. Retiring a backup should rest on evidence, not on remembering that a deploy went fine.
+//
+// Nothing here deletes anything. The files are the only copy of the pre-SQLite data, and a separate
+// deployment (Render) has its own database that may not have migrated - so removal is a deliberate,
+// per-environment act, taken by a human who can see this report.
+app.get("/api/backer/admin/legacy", (req, res) => {
+  if (!isSuperadmin(req)) return res.status(401).json({ error: "Superadmin only." });
+  const authDir = process.env.AUTH_DIR || join(__dirname, "data", "auth");
+  const dataDir = join(authDir, "..");
+  res.json({
+    files: legacyStatus({
+      backers: join(authDir, "backers.json"),
+      codes: join(authDir, "backer-codes.json"),
+      users: join(authDir, "users.json"),
+      brand_owners: join(authDir, "owners.json"),
+      chat: join(dataDir, "chat.json"),
+      brands: process.env.DATA_DIR || join(dataDir, "brands"),
+    }),
+    note: "Nothing is deleted automatically. Each deployment has its own database — check every one.",
+  });
 });
 
 // Founder-only: set a backer's subscription by hand. This exists BEFORE Stripe so tiers can be
@@ -545,6 +581,37 @@ function socketBacker(socket) {
   return s ? getBacker(s.uid) : null;
 }
 
+// Is this socket allowed to HOST a game?
+//
+// Entitlements can only ever gate the HOST. Players join a party by scanning a QR code with no
+// account at all, and `role` is self-declared on the socket - so gating players would be both
+// impossible to enforce and wrong for the product: one person subscribes, their friends play.
+//
+// OFF BY DEFAULT. ENFORCE_ENTITLEMENTS must be explicitly set to "true". Shipping this switched on
+// would lock people out of their own party the moment the games open, before the tiers are even
+// settled; this way the code is in place and the decision to use it stays the owner's.
+//
+// The superadmin passcode always passes - the founder must never be locked out of their own product
+// by a billing rule.
+function hostEntitled(socket) {
+  if (process.env.ENFORCE_ENTITLEMENTS !== "true") return { ok: true, reason: "not enforced" };
+  const pc = socket.handshake?.auth?.adminPasscode || socket.handshake?.headers?.["x-admin-passcode"];
+  if (ADMIN_PASSCODE && pc === ADMIN_PASSCODE) return { ok: true, reason: "superadmin" };
+  const b = socketBacker(socket);
+  if (!b) return { ok: false, reason: "sign-in", error: "Sign in with your backer account to host a game." };
+  const ent = entitlementsFor(b.id);
+  if (!ent.active) {
+    return {
+      ok: false,
+      reason: ent.expired ? "expired" : "no-plan",
+      error: ent.expired
+        ? "Your PlayZoo plan has run out — renew to host another night."
+        : "Hosting needs an active PlayZoo plan. Back the Kickstarter to get one.",
+    };
+  }
+  return { ok: true, reason: "entitled", plan: ent.plan };
+}
+
 // Turn a stored chat message into its client shape, enriching a backer message with the author's
 // current username/avatar/enclosure (so avatar/name changes reflect everywhere; history stays lean).
 function publicMsg(m) {
@@ -670,6 +737,15 @@ io.on("connection", (socket) => {
   socket.on("join", ({ room, role, teamId }) => {
     if (!gamesOpen) { socket.emit("locked", { waitlist: true }); return; }
     if (typeof room !== "string" || !room) return;
+    // Only the hosting surfaces are gated: a "player" phone has no account and never will.
+    if (role === "host" || role === "display") {
+      const gate = hostEntitled(socket);
+      if (!gate.ok) {
+        console.log(`[ff-server] host refused (${gate.reason})`);
+        socket.emit("locked", { entitlement: true, reason: gate.reason, error: gate.error });
+        return;
+      }
+    }
     code = room.toUpperCase();
     socket.data.role = role || "display";
     socket.data.teamId = typeof teamId === "string" ? teamId : null;
