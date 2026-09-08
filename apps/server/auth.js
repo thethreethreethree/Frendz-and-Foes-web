@@ -55,6 +55,7 @@ function importLegacyJson() {
     } else if (!hasMigrated("users") && existsSync(USERS_FILE)) {
       const legacy = JSON.parse(readFileSync(USERS_FILE, "utf8")) || {};
       const rows = Object.values(legacy);
+      if (!rows.length) markMigrated("users", { empty: true });   // present but empty: still done
       if (rows.length) {
         tx(() => {
           const ins = db.prepare(
@@ -76,6 +77,7 @@ function importLegacyJson() {
     } else if (!hasMigrated("brand_owners") && existsSync(OWNERS_FILE)) {
       const legacy = JSON.parse(readFileSync(OWNERS_FILE, "utf8")) || {};
       const entries = Object.entries(legacy);
+      if (!entries.length) markMigrated("brand_owners", { empty: true });   // present but empty: still done
       if (entries.length) {
         tx(() => {
           const ins = db.prepare("INSERT OR IGNORE INTO brand_owners (slug, user_id) VALUES (?, ?)");

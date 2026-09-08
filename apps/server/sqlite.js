@@ -16,6 +16,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(__dirname, "data");
 mkdirSync(DATA_DIR, { recursive: true });
 const DB_PATH = process.env.DB_PATH || join(DATA_DIR, "playzoo.db");
+// Create the directory the DATABASE actually lives in. Only the default data dir was being created,
+// so a DB_PATH pointing anywhere else failed to open - and because index.js imports this module,
+// that killed the whole server at boot instead of degrading. Hit while testing exactly that.
+mkdirSync(dirname(DB_PATH), { recursive: true });
 
 export const db = new DatabaseSync(DB_PATH);
 db.exec("PRAGMA journal_mode = WAL;");

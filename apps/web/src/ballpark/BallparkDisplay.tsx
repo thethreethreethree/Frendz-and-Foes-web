@@ -24,13 +24,19 @@ export function BallparkDisplay({ room }: { room: string }) {
       rex.current = { started: false, revealRound: -1, ended: false };
       return;
     }
-    if (state.phase !== "lobby" && !st.started) {
+    if (!st.started) {          // lobby already returned above
+
       st.started = true;
       say("intro");
     }
     if (state.phase === "reveal" && st.revealRound !== state.round) {
       st.revealRound = state.round;
-      say("reveal", { answer: state.answer, closest: state.winningValue });
+      // Only pass values that EXIST. These are `number | null`, and a null reached the host prompt
+      // as the literal string "null" - Rex would be told the answer was null and could say so.
+      say("reveal", {
+        ...(state.answer != null ? { answer: state.answer } : {}),
+        ...(state.winningValue != null ? { closest: state.winningValue } : {}),
+      });
     }
     if (state.phase === "ended" && !st.ended) {
       st.ended = true;

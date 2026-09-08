@@ -83,6 +83,12 @@ const SFX_TONE: Record<SfxName, "green" | "tang" | "grape" | "sun" | "teal" | "i
   drumroll: "grape",
   applause: "sun",
   swoosh: "ink",
+  // SFX_NAMES gained kill/toll/heartbeat/gong but this map did not, so those four buttons rendered
+  // with tone={undefined}. The type said Record<SfxName, ...>, and the compiler had been saying so.
+  kill: "tang",
+  toll: "grape",
+  heartbeat: "ink",
+  gong: "sun",
 };
 
 // Manual sound-effects board (feature D) — the host plays DJ. Each category has 10 variations;

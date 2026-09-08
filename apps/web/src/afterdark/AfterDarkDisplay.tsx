@@ -26,7 +26,8 @@ export function AfterDarkDisplay({ room }: { room: string }) {
       return;
     }
     const judgeName = state.players.find((p) => p.id === state.judgeId)?.name;
-    if (state.phase !== "lobby" && !st.started) {
+    if (!st.started) {          // lobby already returned above
+
       st.started = true;
       say("intro");
     }

@@ -26,7 +26,8 @@ export function JustOneDisplay({ room }: { room: string }) {
       rex.current = { started: false, revealRound: -1, overRound: -1, ended: false };
       return;
     }
-    if (state.phase !== "lobby" && !st.started) {
+    if (!st.started) {          // lobby already returned above
+
       st.started = true;
       say("intro");
     }
