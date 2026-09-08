@@ -120,7 +120,7 @@ PAGE = """<title>{title}</title>
   :root{{
     --bg:#0a0e18; --card:#141a2c; --card2:#182140;
     --ink:#f4f7ff; --muted:#9aa6c2; --line:#28304a;
-    --accent:{accent}; --accent2:{accent2};
+    --accent:{accent}; --accent2:{accent2}; --ok:#3ddc84;
     --font-d:"Bricolage Grotesque",system-ui,sans-serif;
     --font-b:"Inter",system-ui,sans-serif;
     --mono:ui-monospace,Menlo,Consolas,monospace;
@@ -166,6 +166,20 @@ PAGE = """<title>{title}</title>
   .btn.primary{{background:linear-gradient(120deg,var(--accent),var(--accent2));border:none;color:#0a0e18}}
   .btn.copied{{border-color:var(--accent2);color:var(--accent2)}}
   .btn.sm{{font-size:12px;padding:6px 11px}}
+  .btn.done{{border-color:var(--ok);color:var(--ok);background:rgba(61,220,132,.10)}}
+  .btn.done:hover{{border-color:var(--ok)}}
+  .plabel .acts{{display:flex;align-items:center;gap:8px}}
+  .tick{{display:none;align-items:center;gap:5px;font-family:var(--font-b);font-size:11px;font-weight:800;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--ok);cursor:pointer;
+    border:1px solid rgba(61,220,132,.42);background:rgba(61,220,132,.11);border-radius:999px;padding:4px 10px}}
+  .tick:hover{{background:rgba(61,220,132,.22)}}
+  .tick:focus-visible{{outline:2px solid var(--ok);outline-offset:2px}}
+  .card.done .tick{{display:inline-flex}}
+  .card.done{{border-color:rgba(61,220,132,.45)}}
+  .card.done .num{{-webkit-text-stroke-color:var(--ok)}}
+  .card.done code.prompt{{opacity:.6}}
+  .bar{{width:190px;height:7px;border-radius:999px;background:#0b1020;border:1px solid var(--line);overflow:hidden}}
+  .bar i{{display:block;height:100%;width:0;background:var(--ok);transition:width .25s}}
 
   .groups{{display:flex;flex-direction:column;gap:30px}}
   .grouphead{{display:flex;flex-wrap:wrap;align-items:baseline;gap:12px;margin-bottom:12px}}
@@ -213,10 +227,13 @@ PAGE = """<title>{title}</title>
     <div class="stat"><b>{total}</b><span>finished prompts</span></div>
     <div class="stat"><b>{groupn}</b><span>asset sets</span></div>
     <div class="stat"><b>0</b><span>images today</span></div>
+    <div class="stat"><b id="doneN">0</b><span>copied so far</span></div>
   </div>
   <div class="toolbar">
     <button class="btn primary" id="copyAll">Copy all {total} prompts</button>
-    <span class="count">Every card below is a complete prompt \u2014 nothing to fill in.</span>
+    <div class="bar" aria-hidden="true"><i id="barFill"></i></div>
+    <span class="count" id="progress">Every card below is a complete prompt \u2014 nothing to fill in.</span>
+    <button class="btn" id="resetDone" hidden>Clear all ticks</button>
   </div>
 </div></header>
 
@@ -229,6 +246,9 @@ PAGE = """<title>{title}</title>
       <li>The <b>house style block is already inside every prompt</b>, so the whole set matches.</li>
       <li>Use the <b>aspect ratio</b> named in the prompt, and ask for a <b>transparent PNG</b> where it says so.</li>
       <li>Save each image at the <b>exact file path</b> on its card \u2014 that is where the code will look for it.</li>
+      <li>A card turns <b>green with a \u2713</b> once you copy it and <b>stays that way</b> when you
+          come back, so you can see at a glance what you have already generated. Click the
+          \u2713 on a card to clear it if you copied it by mistake.</li>
       <li>Hand them back and I wire them in.</li>
     </ul>
   </div>
@@ -266,7 +286,7 @@ document.getElementById("groups").innerHTML = groups.map(g => `
     <div class="grid">
       ${{g.items.map(a => {{
         const i = ++idx;
-        return `<div class="card">
+        return `<div class="card" data-id="${{a.file}}">
           <div class="top">
             <div class="num">${{String(i).padStart(2, "0")}}</div>
             <div class="who">
@@ -278,7 +298,10 @@ document.getElementById("groups").innerHTML = groups.map(g => `
           ${{a.note ? `<p class="note">\u201c${{esc(a.note)}}\u201d</p>` : ""}}
           <div class="pwrap">
             <div class="plabel"><span>Complete prompt</span>
-              <button class="btn sm" data-i="${{i - 1}}">Copy</button></div>
+              <span class="acts">
+                <button class="tick" data-undo="${{a.file}}" title="Already copied. Click to clear this tick.">\u2713 Generated</button>
+                <button class="btn sm" data-i="${{i - 1}}">Copy</button>
+              </span></div>
             <code class="prompt">${{esc(a.prompt)}}</code>
           </div>
         </div>`;
@@ -291,24 +314,62 @@ const toast = document.getElementById("toast");
 let tT;
 function ping(m) {{ toast.textContent = m; toast.classList.add("show"); clearTimeout(tT);
   tT = setTimeout(() => toast.classList.remove("show"), 1500); }}
-async function copy(text, btn) {{
+// --- which prompts have already been generated -------------------------------------------------
+// Keyed on the save path, not the card index, so a tick survives a regenerated page.
+// Every localStorage touch is guarded: it throws outright in some private/embedded contexts.
+const KEY = "playzoo-art-done:" + {gid_json};
+let done = new Set();
+try {{ const raw = localStorage.getItem(KEY); if (raw) done = new Set(JSON.parse(raw)); }} catch (_) {{}}
+function persist() {{ try {{ localStorage.setItem(KEY, JSON.stringify([...done])); }} catch (_) {{}} }}
+
+const doneN = document.getElementById("doneN");
+const barFill = document.getElementById("barFill");
+const progress = document.getElementById("progress");
+const resetBtn = document.getElementById("resetDone");
+
+function paint() {{
+  for (const card of document.querySelectorAll(".card[data-id]")) {{
+    const isDone = done.has(card.dataset.id);
+    card.classList.toggle("done", isDone);
+    const b = card.querySelector("[data-i]");
+    if (b) {{ b.textContent = isDone ? "Copy again" : "Copy"; b.classList.toggle("done", isDone); }}
+  }}
+  const n = done.size, t = flat.length;
+  doneN.textContent = n;
+  barFill.style.width = t ? (100 * n / t) + "%" : "0%";
+  progress.textContent = n === 0
+    ? "Every card below is a complete prompt \u2014 nothing to fill in."
+    : n >= t ? "All " + t + " copied. Nothing left to generate."
+             : n + " of " + t + " copied \u2014 remembered on this browser.";
+  resetBtn.hidden = n === 0;
+}}
+
+async function copy(text) {{
   try {{ await navigator.clipboard.writeText(text); }}
   catch {{ const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta);
            ta.select(); document.execCommand("copy"); ta.remove(); }}
-  if (btn) {{ const o = btn.textContent; btn.textContent = "Copied \u2713"; btn.classList.add("copied");
-    setTimeout(() => {{ btn.textContent = o; btn.classList.remove("copied"); }}, 1400); }}
   ping("Copied to clipboard");
 }}
 document.addEventListener("click", e => {{
+  const undo = e.target.closest("[data-undo]");
+  if (undo) {{ done.delete(undo.dataset.undo); persist(); paint(); ping("Tick cleared"); return; }}
   const b = e.target.closest("[data-i]");
-  if (b) {{ copy(flat[+b.dataset.i].prompt, b); }}
+  if (b) {{ const a = flat[+b.dataset.i]; copy(a.prompt); done.add(a.file); persist(); paint(); }}
 }});
+resetBtn.addEventListener("click", () => {{
+  if (!confirm("Clear every tick on this page? The prompts themselves are not affected.")) return;
+  done.clear(); persist(); paint(); ping("All ticks cleared");
+}});
+
+paint();   // render what this browser already remembers, before any click
 document.getElementById("copyAll").addEventListener("click", e => {{
   const NL = String.fromCharCode(10);
   const SEP = NL + NL + "─".repeat(15) + NL + NL;
   copy(flat.map((a, i) =>
     `—— ${{i + 1}}/${{flat.length}} · ${{a.name}} · save as ${{a.file}}` + NL + NL + a.prompt
   ).join(SEP), e.currentTarget);
+  for (const a of flat) done.add(a.file);
+  persist(); paint();
 }});
 </script>
 """
@@ -330,7 +391,7 @@ def build(gid):
     html = PAGE.format(
         title=f"{g['name']} Art Set", name=g["name"], rule=g["rule"], cast=g["cast"], role=g["role"],
         why=g["why"], accent=g["accent"], accent2=g["accent2"], total=total, groupn=len(kinds),
-        assets_json=json.dumps(g["assets"], ensure_ascii=False),
+        gid_json=json.dumps(gid), assets_json=json.dumps(g["assets"], ensure_ascii=False),
         notes_json=json.dumps(NOTES, ensure_ascii=False))
     path = f"{SCRATCH}/art-{gid}.html"
     io.open(path, "w", encoding="utf-8", newline="").write(html)

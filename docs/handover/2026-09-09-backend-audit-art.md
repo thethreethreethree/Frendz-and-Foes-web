@@ -128,7 +128,26 @@ node apps/server/hostToken.test.mjs         # the impostor attack, over real soc
 node apps/server/murderGame.test.mjs        # a real Murder game, over real sockets
 ```
 
-**These are NOT in `npm test`.** Adding them is an open task.
+**These ARE now in `npm test`** (plus an eleventh, `entitlementGate.test.mjs`, which the list
+above had missed). `npm test` is now three named steps so a failure says which layer broke:
+
+```bash
+npm run test:engine   # vitest over packages/engine
+npm run test:server   # the 11 apps/server suites
+npm run test:relay    # the 10 test/ suites
+npm run test:sync     # KNOWN BROKEN, hangs, deliberately outside npm test
+```
+
+These eleven are plain scripts, not `node:test` files, so `node --test` treats each as ONE test
+that passes iff the process exits 0. That is fine — every one of them calls `process.exit(1)` on
+failure, and I proved the runner surfaces it by feeding it a deliberately failing file: the run
+exits 1 and names the file. A suite wired in without that check would be a green light that
+cannot turn red.
+
+**`test/sync.test.mjs` is quarantined** (owner's call). It hangs forever, so leaving it in the
+chain meant `npm test` never terminated and NOTHING after it ran. `--test-timeout` does not help:
+it bounds `test()` callbacks inside a `node:test` file, not a standalone script's process — an 8s
+timeout let a hanging canary run past four minutes. The file carries a banner saying so.
 
 ---
 
@@ -184,8 +203,8 @@ silent JS error left the card grid completely empty on one build.
 
 1. **Generate the art.** Owner's chosen order: backdrops + event beats, one game at a time (~9
    images per game, the biggest visible change per image).
-2. Add the ten `apps/server/*.test.mjs` suites to `npm test`.
-3. Diagnose `test/sync.test.mjs`.
+2. **Diagnose `test/sync.test.mjs`** — now the only thing standing between the relay and any
+   integration coverage. It boots, prints its env line, then stalls before the first assertion.
 4. Connect Stripe: set `STRIPE_WEBHOOK_SECRET` and `STRIPE_PRICE_MAP` on the box.
 5. Kickstarter still shows the OLD story images; the current set is in
    `C:\Users\johns\OneDrive\Documents\PlayZoo Kickstarter Story`.

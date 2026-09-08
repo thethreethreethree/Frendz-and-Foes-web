@@ -1,3 +1,9 @@
+// KNOWN BROKEN — this suite HANGS and never terminates. It is deliberately NOT in
+// `npm test`; run it on its own with `npm run test:sync` (and be ready to Ctrl-C).
+// It boots the server, prints its env line, and then never proceeds. Confirmed
+// pre-existing on 2026-09-09 by reproducing it against an older apps/server/index.js.
+// It is the relay's ONLY integration test, so the relay is uncovered until it is fixed.
+//
 // Integration test for the relay server: snapshot fan-out, late-join catch-up, and pulses.
 // Run with: node --test test/sync.test.mjs
 import { test } from "node:test";

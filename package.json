@@ -11,9 +11,12 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "vitest run && node --test --test-force-exit --test-concurrency=1 test/sync.test.mjs test/villagers2.test.mjs test/murder2.test.mjs test/art.test.mjs test/codenames.test.mjs test/justone.test.mjs test/ballpark.test.mjs test/telestrations.test.mjs test/afterdark.test.mjs test/auth.test.mjs test/host.test.mjs",
-    "test:watch": "vitest",
+    "test": "npm run test:engine && npm run test:server && npm run test:relay",
+    "test:engine": "vitest run",
+    "test:server": "node --test --test-force-exit --test-concurrency=1 apps/server/speech.test.mjs apps/server/productKnowledge.test.mjs apps/server/chat.test.mjs apps/server/subscriptions.test.mjs apps/server/stripe.test.mjs apps/server/auth.test.mjs apps/server/telestrations.test.mjs apps/server/gameLogic.test.mjs apps/server/hostToken.test.mjs apps/server/murderGame.test.mjs apps/server/entitlementGate.test.mjs",
+    "test:relay": "node --test --test-force-exit --test-concurrency=1 test/villagers2.test.mjs test/murder2.test.mjs test/art.test.mjs test/codenames.test.mjs test/justone.test.mjs test/ballpark.test.mjs test/telestrations.test.mjs test/afterdark.test.mjs test/auth.test.mjs test/host.test.mjs",
     "test:sync": "node --test --test-force-exit test/sync.test.mjs",
+    "test:watch": "vitest",
     "typecheck": "tsc -b",
     "dev:web": "npm run dev --workspace @ff/web",
     "dev:server": "node apps/server/index.js",
