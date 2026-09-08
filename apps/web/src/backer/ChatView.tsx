@@ -133,13 +133,16 @@ export function ChatView({ me }: { me: Backer }) {
 function Message({ m, meId, accent }: { m: ChatMessage; meId: string; accent: string }) {
   if (m.rex) {
     return (
-      <div className="flex items-start gap-2.5">
-        <RexDot />
-        <div className="rounded-2xl rounded-bl-sm border border-primary/40 bg-canvas/70 px-3.5 py-2">
-          <div className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-primary">Rex</div>
-          <div className="text-[15px] font-semibold text-ink">{m.text}</div>
-        </div>
-      </div>
+      <CharacterLine name="Rex" img="/crew/rex-cutout.png" emoji="🦁" accent="rgb(var(--c-primary))">
+        {m.text}
+      </CharacterLine>
+    );
+  }
+  if (m.john) {
+    return (
+      <CharacterLine name="John" img="/avatars/raccoon.png" emoji="🦝" accent="#ec4899">
+        {m.text}
+      </CharacterLine>
     );
   }
   const mine = m.author?.id && m.author.id === meId;
@@ -168,12 +171,26 @@ function Avatar({ url, name, accent }: { url: string | null; name: string; accen
   );
 }
 
-function RexDot() {
-  const [ok, setOk] = useState(true);
-  if (!ok) return <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 border-primary bg-surface text-base">🦁</span>;
+// An AI-character line (Rex or John): round avatar + a tinted system bubble, so the banter clearly
+// reads as the characters, not a member.
+function CharacterLine({ name, img, emoji, accent, children }: { name: string; img: string; emoji: string; accent: string; children: React.ReactNode }) {
   return (
-    <span className="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-full border-2 border-primary bg-gradient-to-br from-primary to-accent">
-      <img src="/crew/rex-cutout.png" alt="Rex" className="h-7 w-7 object-cover" onError={() => setOk(false)} />
+    <div className="flex items-start gap-2.5">
+      <CharacterDot img={img} emoji={emoji} accent={accent} />
+      <div className="rounded-2xl rounded-bl-sm border bg-canvas/70 px-3.5 py-2" style={{ borderColor: `${accent}66` }}>
+        <div className="text-[0.6rem] font-bold uppercase tracking-[0.16em]" style={{ color: accent }}>{name}</div>
+        <div className="text-[15px] font-semibold text-ink">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function CharacterDot({ img, emoji, accent }: { img: string; emoji: string; accent: string }) {
+  const [ok, setOk] = useState(true);
+  if (!ok) return <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 bg-surface text-base" style={{ borderColor: accent }}>{emoji}</span>;
+  return (
+    <span className="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-full border-2" style={{ borderColor: accent }}>
+      <img src={img} alt="" className="h-full w-full object-cover" onError={() => setOk(false)} />
     </span>
   );
 }

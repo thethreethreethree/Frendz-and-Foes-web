@@ -35,7 +35,8 @@ import {
 } from "./backers.js";
 import { sortQuestions, sortInto } from "./sorting.js";
 import { getEnclosure } from "./enclosures.js";
-import { canAccess, getMessages, addMessage, addRexMessage } from "./chat.js";
+import { canAccess, getMessages, addMessage, addRexMessage, ROOM_IDS } from "./chat.js";
+import { initBanter, noteMessage as banterNote, forceScene } from "./banter.js";
 import { getBrand, listBrandSlugs, upsertBrand, deleteBrand, dbReady } from "./db.js";
 import {
   authReady, createUser, authenticate, getUser, makeSession, readSession,
@@ -213,6 +214,15 @@ app.post("/api/backer/codes", (req, res) => {
 app.get("/api/backer/codes", (req, res) => {
   if (!isSuperadmin(req)) return res.status(401).json({ error: "Superadmin only." });
   res.json({ ready: backerCodesReady(), codes: listCodes() });
+});
+
+// Founder-only: manually kick off a John banter scene in a room (for testing / a nudge). Normally
+// scenes fire on their own, occasionally, in rooms with a live audience.
+app.post("/api/backer/banter", (req, res) => {
+  if (!isSuperadmin(req)) return res.status(401).json({ error: "Superadmin only." });
+  const roomId = req.body && req.body.roomId;
+  if (!ROOM_IDS.includes(roomId)) return res.status(400).json({ error: "Unknown room." });
+  res.json({ started: forceScene(roomId) });
 });
 
 // --- Backer accounts (the group-chat members) -----------------------------------------------
@@ -406,6 +416,7 @@ function socketBacker(socket) {
 // current username/avatar/enclosure (so avatar/name changes reflect everywhere; history stays lean).
 function publicMsg(m) {
   if (m.rex) return { id: m.id, at: m.at, text: m.text, rex: true };
+  if (m.john) return { id: m.id, at: m.at, text: m.text, john: true };
   const b = getBacker(m.backerId);
   return {
     id: m.id, at: m.at, text: m.text,
@@ -454,6 +465,7 @@ io.on("connection", (socket) => {
     }
     if (r.error) return socket.emit("chat:error", { error: r.error });
     io.to(`chat:${roomId}`).emit("chat:msg", { roomId, message: publicMsg(r.message) });
+    banterNote(roomId, b.username); // feed the banter engine (who's active + joined an in-progress scene)
   });
 
   // Pre-launch lockdown (see GET /api/status). Until GAMES_OPEN=true, NO game room can be created
@@ -558,6 +570,9 @@ io.on("connection", (socket) => {
     }
   });
 });
+
+// Start the John/Rex banter engine — it occasionally runs a scene in a live room (see banter.js).
+initBanter({ io, publicMsg, roomIds: ROOM_IDS });
 
 httpServer.listen(PORT, () => {
   console.log(`[ff-server] relay listening on http://localhost:${PORT}`);

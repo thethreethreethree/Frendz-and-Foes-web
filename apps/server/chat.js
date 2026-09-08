@@ -104,6 +104,13 @@ export function addRexMessage(roomId, text) {
   return msg;
 }
 
+// Add a John (the raccoon) line — used by the banter engine when he crashes a room.
+export function addJohnMessage(roomId, text) {
+  const msg = { id: mkId(), at: Date.now(), text: String(text || ""), john: true };
+  push(roomId, msg);
+  return msg;
+}
+
 function push(roomId, msg) {
   const arr = store[roomId] || (store[roomId] = []);
   arr.push(msg);

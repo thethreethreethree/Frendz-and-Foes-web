@@ -16,6 +16,7 @@ export interface ChatMessage {
   at: number;
   text: string;
   rex?: boolean;
+  john?: boolean;
   author?: ChatAuthor;
 }
 
