@@ -15,6 +15,8 @@ import { addJohnMessage, addRexMessage } from "./chat.js";
 import { ensureTag } from "./mentions.js";
 
 import { stripStageDirections } from "./speech.js";
+import { JOHN_PERSONA } from "./john.js";
+import { REX_PERSONA } from "./host.js";
 const KEY = process.env.DEEPSEEK_API_KEY || process.env.HOST_API_KEY || "";
 const API_URL = process.env.HOST_API_URL || "https://api.deepseek.com/chat/completions";
 const MODEL = process.env.HOST_MODEL || "deepseek-chat";
@@ -133,15 +135,16 @@ const SCENE_RULES =
   "This is a short, funny bit inside a party-app group chat. Keep it PG-13 and playful — no slurs, no " +
   "real hate. Output ONLY the character's next single chat message: 1-2 short sentences, in character, " +
   "no name prefix, no quotation marks, at most one emoji.";
-const REX_SYS =
-  "You are REX, the sardonic AI zookeeper who runs PlayZoo. Dry, quick, world-weary but warm. John the " +
-  "raccoon is like your chaotic little brother: you rib him mercilessly and love calling him a 'trash " +
-  "panda' to wind him up, but you'd never admit you're fond of him.";
-const JOHN_SYS =
-  "You are JOHN, a fast-talking schemer raccoon — cheeky, razor-witty, always three moves ahead and " +
-  "working an angle. Rex is your sibling; you bicker constantly but secretly adore him. You DESPISE being " +
-  "called a 'trash panda', but from Rex it's just brotherly needling so it's mock-outrage, not real rage. " +
-  "You can't help trying to sell people worthless junk as rare treasure.";
+// The banter scenes use the CANONICAL personas, imported - not local copies. They used to be two
+// short summaries written here, which had already drifted from the real ones (they described Rex as
+// an "AI zookeeper" while his own persona calls him a human zookeeper) and meant any persona edit
+// silently missed the banter scenes. Only the sibling dynamic stays local, because it exists nowhere
+// else: it is specific to Rex and John playing off each other rather than talking to a visitor.
+const SIBLINGS =
+  "SCENE RELATIONSHIP: Rex and John are siblings who bicker constantly and would never admit they " +
+  "are fond of each other. Rex ribs John mercilessly and enjoys calling him a 'trash panda' purely " +
+  "to wind him up. Coming from REX specifically, that lands as brotherly needling, so John's " +
+  "reaction here is MOCK-outrage played for the room - not the real fury he shows a stranger.";
 
 async function genLine(who, sceneText, dir) {
   if (!KEY) return dir.canned();
@@ -152,7 +155,7 @@ async function genLine(who, sceneText, dir) {
       body: JSON.stringify({
         model: MODEL, max_tokens: 120, temperature: 1.0,
         messages: [
-          { role: "system", content: (who === "john" ? JOHN_SYS : REX_SYS) + "\n\n" + SCENE_RULES },
+          { role: "system", content: (who === "john" ? JOHN_PERSONA : REX_PERSONA) + "\n\n" + SIBLINGS + "\n\n" + SCENE_RULES },
           { role: "user", content: `Conversation so far:\n${sceneText || "(nothing yet)"}\n\n[Now write ${who === "john" ? "JOHN" : "REX"}'s next message. ${dir.text}]` },
         ],
       }),

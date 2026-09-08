@@ -76,7 +76,7 @@ export function RexBubble() {
           <div ref={scroller} className="flex-1 space-y-2.5 overflow-y-auto px-3 py-3">
             {messages.map((m, i) => (
               <div key={i} className={`flex items-end gap-2 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                {m.role === "assistant" && <RexFace size={26} />}
+                {m.role === "assistant" && <RexFace size={44} />}
                 <div
                   className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-[14px] leading-snug ${
                     m.role === "user"
@@ -90,7 +90,7 @@ export function RexBubble() {
             ))}
             {busy && (
               <div className="flex items-end gap-2">
-                <RexFace size={26} />
+                <RexFace size={44} />
                 <div className="rounded-2xl rounded-bl-sm bg-surface px-3.5 py-2.5">
                   <span className="inline-flex gap-1">
                     <Dot /> <Dot /> <Dot />

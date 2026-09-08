@@ -137,7 +137,7 @@ export function AskJohnRoute() {
           <div ref={scroller} className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
             {messages.map((m, i) => (
               <div key={i} className={`flex items-end gap-2 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                {m.role === "assistant" && <JohnFace size={26} />}
+                {m.role === "assistant" && <JohnFace size={44} />}
                 <div
                   className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-[15px] leading-snug ${
                     m.role === "user"
@@ -151,7 +151,7 @@ export function AskJohnRoute() {
             ))}
             {busy && (
               <div className="flex items-end gap-2">
-                <JohnFace size={26} />
+                <JohnFace size={44} />
                 <div className="rounded-2xl rounded-bl-sm bg-raised px-3.5 py-2.5">
                   <span className="inline-flex gap-1">
                     <Dot /> <Dot /> <Dot />

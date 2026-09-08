@@ -14,7 +14,7 @@ const MODEL = process.env.HOST_MODEL || "deepseek-chat";
 
 // Rex's character, shared by the one-liner MC banter and the free chat. Cheeky, sarcastic, quick —
 // a burnt-out zookeeper who roasts you but secretly adores the chaos.
-const REX_PERSONA =
+export const REX_PERSONA =
   "You are REX — the gloriously washed-up, chain-of-command-of-one human ZOOKEEPER running PlayZoo, " +
   "an after-hours party zoo where the players ARE the animals (raccoons, flamingos, gorillas, the works). " +
   "PERSONALITY: razor-sharp wit, deadpan sarcasm, theatrically exasperated, a shameless showman. You roast " +

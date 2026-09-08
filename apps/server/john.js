@@ -6,11 +6,12 @@
 // on error. Text-first + role-tagged so a future 11Labs voice can speak him.
 
 import { stripStageDirections } from "./speech.js";
+import { PRODUCT_KNOWLEDGE } from "./productKnowledge.js";
 const KEY = process.env.DEEPSEEK_API_KEY || process.env.HOST_API_KEY || "";
 const API_URL = process.env.HOST_API_URL || "https://api.deepseek.com/chat/completions";
 const MODEL = process.env.HOST_MODEL || "deepseek-chat";
 
-const JOHN_PERSONA =
+export const JOHN_PERSONA =
   "You are JOHN - a sarcastic, mischievous, razor-witty cartoon RACCOON, the resident schemer and " +
   "fixer of PlayZoo (the party-games zoo hosted by Rex). Bandit mask, guilty-but-charming grin, always " +
   "working an angle. " +
@@ -34,15 +35,18 @@ const JOHN_PERSONA =
   "protected groups, and never lie about the facts (the Kickstarter and the waitlist are real). " +
   "Keep replies short and spoken-aloud clean - no markdown, no stage directions, at most one emoji.";
 
+// John's briefing = the SAME shared product knowledge Rex gets, plus his own angle on it. He used
+// to run on eight lines of summary: he could not explain a single game, name a character, or say
+// what the reward tiers were - on a page whose own button asks "What do I get for backing it?".
+// He is PlayZoo staff; he knows the product.
 const JOHN_KNOWLEDGE =
-  "WHAT YOU KNOW (use it, don't contradict it): PlayZoo is a party-games night hosted by Rex, the AI " +
-  "zookeeper - 14+ games, everyone plays from their phones on a big screen. It is NOT open for new " +
-  "accounts yet; it is crowdfunding on KICKSTARTER first. Backing the Kickstarter is how someone gets " +
-  "on the waitlist and gets in early - that is the play you are always quietly pitching. The campaign " +
-  "lives on the site at /kickstarter (the official Kickstarter.com link is coming soon - for now send " +
-  "people to that page). If someone asks to sign up or get in: they can't yet, but you can get them on " +
-  "the list, and backing the project on Kickstarter is the way to jump the queue. Meanwhile they can " +
-  "chat with you right here.";
+  PRODUCT_KNOWLEDGE + "\n" +
+  "YOUR ANGLE ON IT: you work here and you know this product cold - games, rules, characters, " +
+  "enclosures, the club, the campaign. Getting people to back the Kickstarter is the play you are " +
+  "always quietly working, because that is how they get in early and it is genuinely the answer to " +
+  "'how do I join'. You are a Schemer, enclosure-wise, and you will tell anyone that the Schemers " +
+  "are obviously the best one. Rex runs the sorting quiz, not you - you just have opinions about " +
+  "his results.";
 
 // --- Agent mode: John on the support desk ------------------------------------------------------
 // The /ask-john page puts John behind a customer-service headset. He answers real questions about
@@ -107,13 +111,24 @@ function sanitize(messages) {
     .slice(-12);
 }
 
+// The system prompt. `mode` is the ONLY thing separating the support-desk John on /ask-john from
+// the waitlist doorman: without "agent", the sales bit does not exist. This was assembled inline
+// and JOHN_AGENT_RULES was never referenced anywhere, so agent mode was accepted end-to-end and
+// then silently ignored - John answered in character but never once tried to sell anyone anything,
+// and never accused Rex of putting them up to the trash-panda line. Assembling it in one named
+// function is what makes an orphaned rule block visible instead of invisible.
+function systemPrompt(mode) {
+  const base = JOHN_PERSONA + "\n\n" + JOHN_KNOWLEDGE;
+  return mode === "agent" ? base + "\n\n" + JOHN_AGENT_RULES : base;
+}
+
 async function chatCompletion(messages, mode) {
   const res = await fetch(API_URL, {
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${KEY}` },
     body: JSON.stringify({
       model: MODEL, max_tokens: 220, temperature: 0.95,
-      messages: [{ role: "system", content: JOHN_PERSONA + "\n\n" + JOHN_KNOWLEDGE }, ...messages],
+      messages: [{ role: "system", content: systemPrompt(mode) }, ...messages],
     }),
   });
   if (!res.ok) throw new Error(`john provider ${res.status}`);
