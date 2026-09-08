@@ -106,7 +106,7 @@ function Reveal({ enclosure, onDone }: { enclosure: EnclosureResult; onDone: (id
   const accent = enclosure.accent || view?.accent || "#8b5cf6";
   return (
     <div className="mt-8 flex flex-col items-center gap-6 text-center">
-      <RexSays>Hah. I've seen enough. You, my friend, are a <b>{enclosure.name}</b> through and through. 🦁</RexSays>
+      <RexSays>Hah. I've seen enough. You, my friend, are <b>{enclosure.name}</b> through and through. 🦁</RexSays>
       <div
         className="ff-rise flex w-full max-w-sm flex-col items-center gap-4 rounded-3xl border p-6"
         style={{ borderColor: accent, background: `radial-gradient(120% 100% at 50% 0%, ${accent}22, transparent 70%)` }}
