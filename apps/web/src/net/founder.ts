@@ -6,9 +6,10 @@ export interface CodeRow {
   code: string;
   note: string;
   created: number;
-  state: "valid" | "used";
+  state: "valid" | "used" | "revoked";
   redeemedBy: string | null;
   redeemedAt: number | null;
+  revokedAt?: number | null;
 }
 
 function headers(passcode: string) {
@@ -112,6 +113,48 @@ export async function editBacker(
     const data = await res.json().catch(() => ({}));
     if (!res.ok) return { error: data.error || "Couldn't save that change." };
     return { user: data.user };
+  } catch {
+    return { error: "Network hiccup — try again." };
+  }
+}
+
+// Take an unredeemed code out of circulation, or put it back. A REDEEMED code cannot be revoked —
+// it is somebody's login key — and the server refuses with a message saying so.
+export async function setCodeRevoked(passcode: string, code: string, revoked: boolean): Promise<{ codes?: CodeRow[]; error?: string }> {
+  try {
+    const res = await fetch("/api/backer/codes/revoke", {
+      method: "POST", headers: headers(passcode), body: JSON.stringify({ code, revoked }),
+    });
+    if (res.status === 401) return { error: "That admin passcode isn't right." };
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) return { error: data.error || "Couldn't change that code." };
+    return { codes: data.codes };
+  } catch {
+    return { error: "Network hiccup — try again." };
+  }
+}
+
+// --- Audit log ----------------------------------------------------------------------------------
+export interface EventRow {
+  id: number;
+  ts: number;
+  type: string;
+  actorId: string | null;
+  data: Record<string, unknown> | null;
+}
+
+export async function listEvents(passcode: string, opts: { limit?: number; before?: number; type?: string } = {})
+  : Promise<{ events?: EventRow[]; types?: { type: string; count: number }[]; error?: string }> {
+  try {
+    const q = new URLSearchParams();
+    if (opts.limit) q.set("limit", String(opts.limit));
+    if (opts.before) q.set("before", String(opts.before));
+    if (opts.type) q.set("type", opts.type);
+    const res = await fetch(`/api/backer/admin/events?${q}`, { headers: headers(passcode) });
+    if (res.status === 401) return { error: "That admin passcode isn't right." };
+    if (!res.ok) return { error: "Couldn't load the audit log." };
+    const data = await res.json();
+    return { events: data.events || [], types: data.types || [] };
   } catch {
     return { error: "Network hiccup — try again." };
   }

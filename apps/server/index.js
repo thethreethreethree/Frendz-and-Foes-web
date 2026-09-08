@@ -27,7 +27,8 @@ import { registerTelestrationsHandlers } from "./telestrations.js";
 import { registerAfterDarkHandlers } from "./afterdark.js";
 import { hostLine, hostChat, hostReady } from "./host.js";
 import { johnChat, johnReady } from "./john.js";
-import { generateCodes, checkCode, redeemCode, listCodes, backerCodesReady } from "./backerCodes.js";
+import { generateCodes, checkCode, redeemCode, listCodes, revokeCode, backerCodesReady } from "./backerCodes.js";
+import { listEvents, listEventTypes } from "./sqlite.js";
 import {
   createBacker, getBacker, findBackerByCode, findBackerByUsername,
   setBackerPassword, verifyBackerPassword, setBackerEnclosure, updateBacker, publicBacker,
@@ -218,6 +219,23 @@ app.post("/api/backer/codes", (req, res) => {
 app.get("/api/backer/codes", (req, res) => {
   if (!isSuperadmin(req)) return res.status(401).json({ error: "Superadmin only." });
   res.json({ ready: backerCodesReady(), codes: listCodes() });
+});
+
+// Founder-only: take an unredeemed code out of circulation (or put it back). Body { code, revoked }.
+app.post("/api/backer/codes/revoke", (req, res) => {
+  if (!isSuperadmin(req)) return res.status(401).json({ error: "Superadmin only." });
+  const { code, revoked } = req.body || {};
+  const r = revokeCode(code, revoked !== false);
+  if (r.error) return res.status(400).json({ error: r.error });
+  res.json({ ok: true, codes: listCodes() });
+});
+
+// Founder-only: the append-only audit log. ?limit&before&type — `before` pages by id, not offset,
+// so a page cannot shift while new events are being written.
+app.get("/api/backer/admin/events", (req, res) => {
+  if (!isSuperadmin(req)) return res.status(401).json({ error: "Superadmin only." });
+  const { limit, before, type } = req.query || {};
+  res.json({ events: listEvents({ limit, before, type: type || null }), types: listEventTypes() });
 });
 
 // Founder-only: the backer roster for the admin dashboard. Avatars are excluded (see listBackers).

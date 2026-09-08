@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  type BackerDetail, type BackerRow, type CodeRow,
-  editBacker, getBackerDetail, listBackers, listCodes, mintCodes,
+  type BackerDetail, type BackerRow, type CodeRow, type EventRow,
+  editBacker, getBackerDetail, listBackers, listCodes, listEvents, mintCodes, setCodeRevoked,
 } from "../net/founder";
 import { enclosureView } from "../backer/enclosures";
 
@@ -112,35 +112,93 @@ export function FounderRoute() {
 
         <MintCard passcode={passcode} onMinted={refresh} />
 
+        <CodesCard passcode={passcode} rows={rows} setRows={setRows} onRefresh={refresh} />
+
+        <AuditCard passcode={passcode} />
+      </div>
+    </Shell>
+  );
+}
+
+// Every code and what happened to it, filterable, with revoke. Revoke only ever applies to an
+// UNREDEEMED code: a redeemed one is somebody's login key and pulling it would lock a real backer
+// out of their account, so the server refuses and says to remove the account instead.
+function CodesCard({ passcode, rows, setRows, onRefresh }: {
+  passcode: string; rows: CodeRow[]; setRows: (r: CodeRow[]) => void; onRefresh: () => void;
+}) {
+  const [filter, setFilter] = useState<"all" | "valid" | "used" | "revoked">("all");
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const valid = rows.filter((r) => r.state === "valid");
+  const shown = filter === "all" ? rows : rows.filter((r) => r.state === filter);
+  const counts = {
+    all: rows.length,
+    valid: valid.length,
+    used: rows.filter((r) => r.state === "used").length,
+    revoked: rows.filter((r) => r.state === "revoked").length,
+  };
+
+  async function toggle(code: string, revoked: boolean) {
+    setBusy(code); setErr(null);
+    const r = await setCodeRevoked(passcode, code, revoked);
+    setBusy(null);
+    if (r.error) { setErr(r.error); return; }
+    if (r.codes) setRows(r.codes);
+  }
+
+  const pill = (s: CodeRow["state"]) =>
+    s === "valid" ? "bg-teal-500/15 text-teal-400"
+    : s === "revoked" ? "bg-red-500/15 text-red-400"
+    : "bg-muted/15 text-muted";
+
+  return (
         <div className="overflow-hidden rounded-2xl border border-line bg-surface/60 backdrop-blur">
-          <div className="flex items-center gap-2 border-b border-line px-4 py-2.5">
+          <div className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-2.5">
             <span className="text-sm font-bold text-ink">All codes</span>
-            <button onClick={refresh} className="ml-auto rounded-lg border border-line bg-canvas px-2.5 py-1 text-xs font-bold text-muted hover:text-ink">Refresh</button>
+            <div className="flex flex-wrap gap-1">
+              {(["all", "valid", "used", "revoked"] as const).map((f) => (
+                <button key={f} onClick={() => setFilter(f)}
+                  className={`rounded-lg px-2 py-0.5 text-xs font-bold transition ${
+                    filter === f ? "bg-primary text-white" : "border border-line bg-canvas text-muted hover:text-ink"}`}>
+                  {f} {counts[f]}
+                </button>
+              ))}
+            </div>
+            <button onClick={onRefresh} className="ml-auto rounded-lg border border-line bg-canvas px-2.5 py-1 text-xs font-bold text-muted hover:text-ink">Refresh</button>
             <CopyButton label="Copy valid" text={valid.map((r) => r.code).join("\n")} />
           </div>
+          {err && <p className="border-b border-line px-4 py-2 text-sm font-semibold text-red-400">{err}</p>}
           <div className="max-h-[420px] overflow-y-auto">
             <table className="w-full text-left text-sm">
               <thead className="sticky top-0 bg-surface text-[11px] uppercase tracking-wide text-muted">
-                <tr><th className="px-4 py-2">Code</th><th className="px-4 py-2">State</th><th className="px-4 py-2">Note</th><th className="px-4 py-2">Redeemed</th></tr>
+                <tr><th className="px-4 py-2">Code</th><th className="px-4 py-2">State</th><th className="px-4 py-2">Note</th><th className="px-4 py-2">Redeemed</th><th className="px-4 py-2"></th></tr>
               </thead>
               <tbody>
-                {rows.length === 0 && <tr><td colSpan={4} className="px-4 py-6 text-center text-muted">No codes yet — mint some above.</td></tr>}
-                {rows.map((r) => (
+                {rows.length === 0 && <tr><td colSpan={5} className="px-4 py-6 text-center text-muted">No codes yet — mint some above.</td></tr>}
+                {rows.length > 0 && shown.length === 0 && <tr><td colSpan={5} className="px-4 py-6 text-center text-muted">No {filter} codes.</td></tr>}
+                {shown.map((r) => (
                   <tr key={r.code} className="border-t border-line/60">
-                    <td className="px-4 py-2 font-mono font-bold text-ink">{r.code}</td>
+                    <td className={`px-4 py-2 font-mono font-bold ${r.state === "revoked" ? "text-muted line-through" : "text-ink"}`}>{r.code}</td>
                     <td className="px-4 py-2">
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${r.state === "valid" ? "bg-teal-500/15 text-teal-400" : "bg-muted/15 text-muted"}`}>{r.state}</span>
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${pill(r.state)}`}>{r.state}</span>
                     </td>
                     <td className="px-4 py-2 text-muted">{r.note || "—"}</td>
                     <td className="px-4 py-2 tabular-nums text-muted">{r.redeemedAt ? new Date(r.redeemedAt).toLocaleDateString() : "—"}</td>
+                    <td className="px-4 py-2 text-right">
+                      {r.state === "used"
+                        ? <span className="text-xs text-muted">in use</span>
+                        : <button onClick={() => toggle(r.code, r.state !== "revoked")} disabled={busy === r.code}
+                            className="rounded-lg border border-line bg-canvas px-2 py-0.5 text-xs font-bold text-muted transition hover:text-ink disabled:opacity-40">
+                            {busy === r.code ? "…" : r.state === "revoked" ? "Restore" : "Revoke"}
+                          </button>}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </div>
-      </div>
-    </Shell>
   );
 }
 
@@ -325,6 +383,83 @@ function BackerDetailCard({ passcode, id, onClose, onChanged }: {
           {err && <p className="mt-2 text-sm font-semibold text-red-400">{err}</p>}
         </>
       )}
+    </div>
+  );
+}
+
+// The append-only audit log — the system's own record of what happened. Reads the events table that
+// signup, redeem, sort, mint, revoke and admin actions all write to.
+//
+// Pages by `before` (an id), not an offset: ids only increase, so a page cannot shift under you
+// while new events are being written. The type filter is built from the data rather than a hardcoded
+// list, so a new event type shows up here the moment something writes one.
+function AuditCard({ passcode }: { passcode: string }) {
+  const [events, setEvents] = useState<EventRow[]>([]);
+  const [types, setTypes] = useState<{ type: string; count: number }[]>([]);
+  const [type, setType] = useState<string>("");
+  const [err, setErr] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  async function load(reset: boolean) {
+    setBusy(true); setErr(null);
+    const before = reset || events.length === 0 ? undefined : events[events.length - 1].id;
+    const r = await listEvents(passcode, { limit: 50, before, type: type || undefined });
+    setBusy(false);
+    if (r.error) { setErr(r.error); return; }
+    const batch = r.events || [];
+    setTypes(r.types || []);
+    setEvents(reset ? batch : [...events, ...batch]);
+    setDone(batch.length < 50);
+  }
+
+  useEffect(() => { void load(true); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [passcode, type]);
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-line bg-surface/60 backdrop-blur">
+      <div className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-2.5">
+        <span className="text-sm font-bold text-ink">Audit log</span>
+        <span className="text-xs text-muted">everything the system recorded, newest first</span>
+        <select value={type} onChange={(e) => setType(e.target.value)}
+          className="ml-auto rounded-lg border border-line bg-canvas px-2 py-1 text-xs text-ink outline-none focus:border-primary">
+          <option value="">all types</option>
+          {types.map((t) => <option key={t.type} value={t.type}>{t.type} ({t.count})</option>)}
+        </select>
+        <button onClick={() => load(true)} disabled={busy}
+          className="rounded-lg border border-line bg-canvas px-2.5 py-1 text-xs font-bold text-muted hover:text-ink disabled:opacity-40">
+          Refresh
+        </button>
+      </div>
+      {err && <p className="border-b border-line px-4 py-2 text-sm font-semibold text-red-400">{err}</p>}
+      <div className="max-h-[420px] overflow-y-auto">
+        {events.length === 0 && !busy && (
+          <p className="px-4 py-6 text-center text-sm text-muted">
+            Nothing recorded yet. Signups, redeems, sorting and admin actions all land here.
+          </p>
+        )}
+        <ul className="divide-y divide-line/60">
+          {events.map((e) => (
+            <li key={e.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-2 text-sm">
+              <span className="font-mono text-xs font-bold text-primary">{e.type}</span>
+              {e.actorId && <span className="font-mono text-xs text-muted">{e.actorId}</span>}
+              {e.data && Object.keys(e.data).length > 0 && (
+                <span className="text-xs text-muted">
+                  {Object.entries(e.data).map(([k, v]) => `${k}: ${String(v)}`).join(" · ")}
+                </span>
+              )}
+              <span className="ml-auto shrink-0 tabular-nums text-xs text-muted">
+                {new Date(e.ts).toLocaleString()}
+              </span>
+            </li>
+          ))}
+        </ul>
+        {!done && events.length > 0 && (
+          <button onClick={() => load(false)} disabled={busy}
+            className="w-full border-t border-line px-4 py-2 text-xs font-bold text-muted hover:text-ink disabled:opacity-40">
+            {busy ? "Loading…" : "Load older"}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

@@ -29,6 +29,8 @@ let ready = false;
 try {
   const m = await import("./sqlite.js");
   db = m.db; logEvent = m.logEvent; tx = m.tx;
+  // revoked_at is newer than the table, so an already-live database needs it added explicitly.
+  m.ensureColumn("backer_codes", "revoked_at", "INTEGER");
   ready = true;
 } catch (err) {
   console.error("[ff-server] backer-code store DISABLED:", err?.message || err);
@@ -109,8 +111,11 @@ export function generateCodes(count = 1, note = "") {
 // 'valid' (exists + unused), 'used' (already redeemed), or 'unknown' (not a real code).
 export function checkCode(code) {
   if (!ready) return "unknown";
-  const rec = db.prepare("SELECT redeemed_by FROM backer_codes WHERE code_norm = ?").get(normalize(code));
+  const rec = db.prepare("SELECT redeemed_by, revoked_at FROM backer_codes WHERE code_norm = ?").get(normalize(code));
   if (!rec) return "unknown";
+  // A revoked code reports as 'unknown', not 'revoked': the public endpoint must not confirm that a
+  // code ever existed. The founder list still shows its real state.
+  if (rec.revoked_at) return "unknown";
   return rec.redeemed_by ? "used" : "valid";
 }
 
@@ -121,11 +126,12 @@ export function checkCode(code) {
 export function redeemCode(code, userId) {
   if (!ready) return { error: "Code store unavailable." };
   const key = normalize(code);
-  const rec = db.prepare("SELECT redeemed_by FROM backer_codes WHERE code_norm = ?").get(key);
-  if (!rec) return { error: "That backer code isn't one of ours." };
+  const rec = db.prepare("SELECT redeemed_by, revoked_at FROM backer_codes WHERE code_norm = ?").get(key);
+  if (!rec || rec.revoked_at) return { error: "That backer code isn't one of ours." };
   if (rec.redeemed_by) return { error: "That backer code has already been used." };
   const res = db
-    .prepare("UPDATE backer_codes SET redeemed_by = ?, redeemed_at = ? WHERE code_norm = ? AND redeemed_by IS NULL")
+    .prepare(`UPDATE backer_codes SET redeemed_by = ?, redeemed_at = ?
+              WHERE code_norm = ? AND redeemed_by IS NULL AND revoked_at IS NULL`)
     .run(userId, Date.now(), key);
   if (!res.changes) return { error: "That backer code has already been used." };
   logEvent("codes.redeem", userId, { code: key });
@@ -136,10 +142,31 @@ export function redeemCode(code, userId) {
 export function listCodes() {
   if (!ready) return [];
   return db
-    .prepare("SELECT code, note, created, redeemed_by, redeemed_at FROM backer_codes ORDER BY created DESC")
+    .prepare(`SELECT code, note, created, redeemed_by, redeemed_at, revoked_at
+              FROM backer_codes ORDER BY created DESC`)
     .all()
     .map((r) => ({
       code: r.code, note: r.note, created: r.created,
-      state: r.redeemed_by ? "used" : "valid", redeemedBy: r.redeemed_by, redeemedAt: r.redeemed_at,
+      // 'used' wins over 'revoked': what actually happened to it matters more than an admin flag.
+      state: r.redeemed_by ? "used" : r.revoked_at ? "revoked" : "valid",
+      redeemedBy: r.redeemed_by, redeemedAt: r.redeemed_at, revokedAt: r.revoked_at ?? null,
     }));
+}
+
+// Founder-only: take an unredeemed code out of circulation, and put it back.
+//
+// A code that has ALREADY been redeemed cannot be revoked - it is somebody's login key, and pulling
+// it would lock a real backer out of their own account. Kill the account instead if that is the
+// intent. Nothing is deleted either way: the row stays, so the audit trail and the "who had which
+// code" history survive, which is the whole point of an append-only record.
+export function revokeCode(code, revoked = true) {
+  if (!ready) return { error: "Code store unavailable." };
+  const key = normalize(code);
+  const rec = db.prepare("SELECT redeemed_by, revoked_at FROM backer_codes WHERE code_norm = ?").get(key);
+  if (!rec) return { error: "That backer code isn't one of ours." };
+  if (rec.redeemed_by) return { error: "That code is already tied to an account - remove the account instead." };
+  db.prepare("UPDATE backer_codes SET revoked_at = ? WHERE code_norm = ?")
+    .run(revoked ? Date.now() : null, key);
+  logEvent(revoked ? "codes.revoke" : "codes.restore", null, { code: key });
+  return { ok: true };
 }

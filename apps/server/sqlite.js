@@ -73,12 +73,57 @@ CREATE TABLE IF NOT EXISTS events (
 CREATE INDEX IF NOT EXISTS idx_events_type ON events(type);
 `);
 
+// Add a column to an existing table if it is missing.
+//
+// CREATE TABLE IF NOT EXISTS above only builds tables that do not exist yet: a database already
+// live on the box keeps its ORIGINAL columns forever, so a new field added to the schema literally
+// never appears there. Every column added after first deploy has to come through here.
+export function ensureColumn(table, column, decl) {
+  try {
+    const cols = db.prepare(`PRAGMA table_info(${table})`).all().map((c) => c.name);
+    if (cols.includes(column)) return false;
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${decl}`);
+    console.log(`[ff-server] schema: added ${table}.${column}`);
+    logEvent("schema.add_column", null, { table, column });
+    return true;
+  } catch (err) {
+    console.error(`[ff-server] could not add ${table}.${column}:`, err?.message || err);
+    return false;
+  }
+}
+
 // Record an event. Best-effort — audit logging must never break a request.
 export function logEvent(type, actorId = null, data = null) {
   try {
     db.prepare("INSERT INTO events (ts, type, actor_id, data) VALUES (?, ?, ?, ?)")
       .run(Date.now(), String(type), actorId ?? null, data ? JSON.stringify(data) : null);
   } catch { /* swallow */ }
+}
+
+// Read the append-only audit log, newest first. Founder-only upstream.
+//
+// `before` pages backwards by id rather than by offset: ids only ever increase, so a page cannot
+// shift under you while new events are being written - which OFFSET paging would allow.
+export function listEvents({ limit = 100, before = null, type = null } = {}) {
+  const n = Math.max(1, Math.min(500, Number(limit) || 100));
+  const where = [];
+  const args = [];
+  if (before) { where.push("id < ?"); args.push(Number(before)); }
+  if (type)   { where.push("type = ?"); args.push(String(type)); }
+  const sql = `SELECT id, ts, type, actor_id, data FROM events
+               ${where.length ? "WHERE " + where.join(" AND ") : ""}
+               ORDER BY id DESC LIMIT ${n}`;
+  return db.prepare(sql).all(...args).map((r) => ({
+    id: r.id, ts: r.ts, type: r.type, actorId: r.actor_id,
+    data: (() => { try { return r.data ? JSON.parse(r.data) : null; } catch { return null; } })(),
+  }));
+}
+
+// The distinct event types actually present, for the filter - built from the data rather than a
+// hardcoded list, so a new event type appears in the UI the moment something writes one.
+export function listEventTypes() {
+  return db.prepare("SELECT type, COUNT(*) AS n FROM events GROUP BY type ORDER BY type").all()
+    .map((r) => ({ type: r.type, count: r.n }));
 }
 
 // True once the DB is open (it is, by the time this module finished importing).
