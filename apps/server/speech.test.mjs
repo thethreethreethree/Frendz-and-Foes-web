@@ -32,6 +32,18 @@ const CASES = [
   ["underscore, long", "That is _the real deal here_, pal.", "That is the real deal here, pal."],
   ["opens with an action verb but is emphasis", "Pal, *check this out*, 97% authentic.", "Pal, check this out, 97% authentic."],
 
+  // --- square brackets: the notation the model switched to once asterisks were cleaned up ---
+  // Stripped unconditionally - nobody speaks in square brackets, so there is no emphasis meaning to
+  // protect. This is the exact line the owner reported on 2026-09-08.
+  ["bracket narration, line opener", "[Leaning back, a satisfied smirk on his face.] Don't mention it.", "Don't mention it."],
+  ["bracket narration, mid-line", "Let him wonder. [Pause, then a sly grin.] Oh, and before you go.", "Let him wonder. Oh, and before you go."],
+  ["bracket narration, no full stop inside", "You sure? [Holds up a crumpled napkin] Genuine dumpster napkin.", "You sure? Genuine dumpster napkin."],
+  ["bracket narration is the whole line", "[shrugs]", ""],
+
+  // --- parentheses: only action-verb ones are narration; real asides survive ---
+  ["paren narration", "Sure. (leans back) What else?", "Sure. What else?"],
+  ["paren aside is kept", "It is authentic (and I mean it), pal.", "It is authentic (and I mean it), pal."],
+
   // --- delivery that must survive untouched ---
   ["ellipses are load-bearing", "Well... I mean... maybe.", "Well... I mean... maybe."],
   ["plain line", "Do NOT buy it.", "Do NOT buy it."],
