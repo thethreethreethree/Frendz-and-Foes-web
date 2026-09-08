@@ -4,6 +4,7 @@ import { useRexHost, RexBanner } from "../host/RexHost";
 import { ViewCanvas } from "./PictionaryCanvas";
 import { Logo } from "../display/Logo";
 import { getBrand } from "../brand/theme";
+import { useBackdrop } from "../display/gameArt";
 import type { WordGamePublic } from "@ff/engine";
 
 // Display (TV) for "Quick Draw". Renders the live drawing big + timer/scores. Never the word.
@@ -43,9 +44,16 @@ export function PictionaryDisplay() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pub.phase, pub.round, pub.activeIdx, say]);
 
+  // Backdrop art, if it has been generated yet. Must be called before the early
+  // returns below -- it is a hook. Falls back to the .ff-backdrop gradient.
+  const bg = useBackdrop(
+    "quickdraw",
+    pub.phase === "setup" ? "bg-lobby" : pub.phase === "playing" ? "bg-drawing" : "bg-reveal",
+  );
+
   if (pub.phase === "setup") {
     return (
-      <div className="ff-backdrop grid h-full w-full place-items-center p-8 text-center text-ink">
+      <div style={bg} className="ff-backdrop grid h-full w-full place-items-center p-8 text-center text-ink">
         <div className="flex flex-col items-center gap-3">
           <Logo className="text-5xl" />
           <div className="ff-title text-3xl text-muted">{label}</div>
@@ -57,7 +65,7 @@ export function PictionaryDisplay() {
 
   if (pub.phase === "playing") {
     return (
-      <div className="ff-backdrop relative flex h-full w-full flex-col gap-3 overflow-hidden p-5 text-ink">
+      <div style={bg} className="ff-backdrop relative flex h-full w-full flex-col gap-3 overflow-hidden p-5 text-ink">
         <div className="flex items-center justify-between">
           <div className="ff-title text-3xl" style={{ color: active?.color }}>{active?.name} is drawing</div>
           <div className="flex items-center gap-6">
@@ -74,7 +82,7 @@ export function PictionaryDisplay() {
 
   // ready / turnover / ended
   return (
-    <div className="ff-backdrop relative flex h-full w-full flex-col items-center justify-center gap-5 p-8 text-center text-ink">
+    <div style={bg} className="ff-backdrop relative flex h-full w-full flex-col items-center justify-center gap-5 p-8 text-center text-ink">
       {pub.phase === "ready" && (<><div className="text-lg font-semibold uppercase tracking-widest text-muted">Get ready</div><div className="ff-title text-7xl" style={{ color: active?.color }}>{active?.name}</div><p className="text-lg text-muted">Pick a drawer — watch the screen and shout guesses!</p></>)}
       {pub.phase === "turnover" && (<><div className="ff-title text-6xl">Time!</div><div className="text-2xl font-semibold" style={{ color: active?.color }}>{active?.name} got {pub.lastReview.filter((e) => e.result === "got").length}</div>
         {pub.lastReview.length > 0 && <div className="flex flex-wrap justify-center gap-2">{pub.lastReview.map((e, i) => <span key={i} className={`rounded-full px-3 py-1 text-lg font-semibold ${e.result === "got" ? "bg-success text-white" : "bg-surface text-muted line-through"}`} style={e.result === "got" ? {} : { border: "1px solid rgb(var(--c-line))" }}>{e.word}</span>)}</div>}</>)}
