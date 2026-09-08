@@ -1,13 +1,18 @@
 // The backer chats — five rooms: one per enclosure + a General room everyone shares. Backers-only,
 // and a backer can reach ONLY their own enclosure room + General (enforced by canAccess, checked on
-// the socket). Messages persist (so a room isn't empty on return) in a small JSON store, capped per
-// room. Rex is "present": each room seeds with a Rex welcome, and Rex speaks up when the moderation
-// filter trips (handled in the socket layer). Storage mirrors the other stores (tiny JSON + atomic
-// rename); fail-safe to in-memory if the disk write can't happen.
+// the socket). Rex is "present": each room seeds with a Rex welcome, and Rex speaks up when the
+// moderation filter trips (handled in the socket layer).
+//
+// STORAGE: SQLite (`messages` in sqlite.js), migrated from the old chat.json. That JSON store was
+// rewritten IN FULL on every single send - O(all messages) per message, and a torn write would have
+// taken the whole room's history with it. Now it is one INSERT per message.
+//
+// The legacy chat.json is auto-imported on first boot if the table is empty, and is NOT deleted -
+// it stays as backup. Exports and message shapes are unchanged, so the socket layer needs no edits.
 
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { mkdirSync, readFileSync, writeFileSync, renameSync, existsSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import { ENCLOSURES, ENCLOSURE_IDS, GENERAL_ROOM } from "./enclosures.js";
 import { screen } from "./moderation.js";
@@ -35,37 +40,79 @@ const REX_WELCOME = {
   schemers: "The Schemers' back room. I'm counting the silverware. 🦁",
 };
 
+let db = null;
+let logEvent = () => {};
+let tx = (fn) => fn();
 let ready = false;
-try { mkdirSync(DATA_DIR, { recursive: true }); ready = true; }
-catch (err) { console.error("[ff-server] chat store DISABLED:", err?.message || err); }
+try {
+  const m = await import("./sqlite.js");
+  db = m.db; logEvent = m.logEvent; tx = m.tx;
+  ready = true;
+} catch (err) {
+  console.error("[ff-server] chat store DISABLED:", err?.message || err);
+}
 export const chatReady = () => ready;
 
-function load() {
-  try { return existsSync(CHAT_FILE) ? JSON.parse(readFileSync(CHAT_FILE, "utf8")) : {}; } catch { return {}; }
+function mkId() { return "m" + randomBytes(8).toString("hex"); }
+
+// Row -> the exact message shape the socket layer and the client already expect. Rex and John lines
+// carry a boolean flag rather than a speaker string, because that is what the client renders on.
+function rowToMsg(r) {
+  const msg = { id: r.id, at: r.at, text: r.text };
+  if (r.speaker === "rex") msg.rex = true;
+  else if (r.speaker === "john") msg.john = true;
+  else msg.backerId = r.backer_id;
+  return msg;
 }
-function save() {
+
+// --- One-time migration of the legacy chat.json --------------------------------------------------
+// Only when the table is empty, in a transaction, so it is idempotent and can never half-import.
+function importLegacyJson() {
   if (!ready) return;
   try {
-    const tmp = CHAT_FILE + ".tmp";
-    writeFileSync(tmp, JSON.stringify(store, null, 2), "utf8");
-    renameSync(tmp, CHAT_FILE);
-  } catch (err) { console.error("[ff-server] chat save failed:", err?.message || err); }
-}
-
-// store: roomId -> [ msg ]. msg = { id, at, text, backerId } OR a Rex line { id, at, text, rex:true }.
-const store = load();
-
-// Seed each room with Rex's welcome if it has no history yet.
-let seeded = false;
-for (const id of ROOM_IDS) {
-  if (!store[id] || store[id].length === 0) {
-    store[id] = [{ id: mkId(), at: Date.now(), text: REX_WELCOME[id] || "Welcome. 🦁", rex: true }];
-    seeded = true;
+    if (db.prepare("SELECT COUNT(*) AS n FROM messages").get().n > 0) return;
+    if (!existsSync(CHAT_FILE)) return;
+    const legacy = JSON.parse(readFileSync(CHAT_FILE, "utf8")) || {};
+    let n = 0;
+    tx(() => {
+      const ins = db.prepare(
+        "INSERT OR IGNORE INTO messages (id, room, at, text, speaker, backer_id) VALUES (?, ?, ?, ?, ?, ?)",
+      );
+      for (const [room, arr] of Object.entries(legacy)) {
+        for (const m of arr || []) {
+          ins.run(
+            m.id || mkId(), room, Number(m.at) || Date.now(), String(m.text || ""),
+            m.rex ? "rex" : m.john ? "john" : "backer",
+            m.rex || m.john ? null : (m.backerId ?? null),
+          );
+          n += 1;
+        }
+      }
+    });
+    if (n) {
+      console.log(`[ff-server] migrated ${n} chat message(s) from JSON into SQLite`);
+      logEvent("migrate.chat", null, { count: n, from: "chat.json" });
+    }
+  } catch (err) {
+    console.error("[ff-server] chat JSON migration FAILED:", err?.message || err);
   }
 }
-if (seeded) save();
+importLegacyJson();
 
-function mkId() { return "m" + randomBytes(8).toString("hex"); }
+// Seed each room with Rex's welcome if it has no history yet, so a room never opens empty.
+if (ready) {
+  try {
+    const count = db.prepare("SELECT COUNT(*) AS n FROM messages WHERE room = ?");
+    const ins = db.prepare(
+      "INSERT INTO messages (id, room, at, text, speaker, backer_id) VALUES (?, ?, ?, ?, 'rex', NULL)",
+    );
+    for (const id of ROOM_IDS) {
+      if (count.get(id).n === 0) ins.run(mkId(), id, Date.now(), REX_WELCOME[id] || "Welcome. 🦁");
+    }
+  } catch (err) {
+    console.error("[ff-server] chat seeding failed:", err?.message || err);
+  }
+}
 
 // A backer reaches General always, and their OWN enclosure room only.
 export function canAccess(backer, roomId) {
@@ -81,8 +128,11 @@ export function roomsFor(backer) {
 }
 
 export function getMessages(roomId, limit = 60) {
-  const arr = store[roomId] || [];
-  return arr.slice(-limit);
+  if (!ready) return [];
+  const n = Math.max(1, Math.min(500, Number(limit) || 60));
+  // Newest N by index, then flipped back into reading order - the old slice(-limit) semantics.
+  return db.prepare("SELECT * FROM messages WHERE room = ? ORDER BY at DESC, rowid DESC LIMIT ?")
+    .all(roomId, n).reverse().map(rowToMsg);
 }
 
 // Add a backer message. Returns { message } or { blocked, reason } if moderation trips.
@@ -112,8 +162,18 @@ export function addJohnMessage(roomId, text) {
 }
 
 function push(roomId, msg) {
-  const arr = store[roomId] || (store[roomId] = []);
-  arr.push(msg);
-  if (arr.length > MAX_PER_ROOM) arr.splice(0, arr.length - MAX_PER_ROOM);
-  save();
+  if (!ready) return;
+  try {
+    db.prepare("INSERT INTO messages (id, room, at, text, speaker, backer_id) VALUES (?, ?, ?, ?, ?, ?)")
+      .run(msg.id, roomId, msg.at, msg.text,
+           msg.rex ? "rex" : msg.john ? "john" : "backer",
+           msg.rex || msg.john ? null : (msg.backerId ?? null));
+    // Keep history lean, same cap as before - but trim only the overflow rather than rewriting
+    // the room. The subquery picks the ids to keep, so the delete never touches a recent message.
+    db.prepare(`DELETE FROM messages WHERE room = ? AND id NOT IN (
+                  SELECT id FROM messages WHERE room = ? ORDER BY at DESC, rowid DESC LIMIT ?)`)
+      .run(roomId, roomId, MAX_PER_ROOM);
+  } catch (err) {
+    console.error("[ff-server] chat write failed:", err?.message || err);
+  }
 }

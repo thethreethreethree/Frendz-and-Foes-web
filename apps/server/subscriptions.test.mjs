@@ -1,0 +1,115 @@
+// Subscriptions + entitlements test.  Run:  node apps/server/subscriptions.test.mjs
+//
+// Covers the parts that will be load-bearing the moment the games open: that entitlements are
+// derived rather than trusted (an expired period must NOT keep granting access just because a
+// webhook was missed), that plan facts match the campaign, and that a Stripe event maps in.
+//
+// Self-contained: its own throwaway database under the OS temp directory.
+import { rmSync, mkdirSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+const SEP = String.fromCharCode(92);
+const SRV = "file:///" + HERE.split(SEP).join("/").split(" ").join("%20") + "/";
+const TMP = join(tmpdir(), "playzoo-subs-test");
+rmSync(TMP, { recursive: true, force: true });
+mkdirSync(join(TMP, "auth"), { recursive: true });
+process.env.AUTH_DIR = join(TMP, "auth");
+process.env.DB_PATH = join(TMP, "playzoo.db");
+
+const subs = await import(SRV + "subscriptions.js");
+const { PRODUCT_KNOWLEDGE } = await import(SRV + "productKnowledge.js");
+
+let fails = 0;
+const check = (label, got, want) => {
+  const ok = JSON.stringify(got) === JSON.stringify(want);
+  if (!ok) fails++;
+  console.log(`${ok ? "PASS" : "FAIL"}  ${label}`);
+  if (!ok) console.log(`        got:  ${JSON.stringify(got)}\n        want: ${JSON.stringify(want)}`);
+};
+
+const DAY = 86400_000;
+
+console.log("\n--- the plans match the campaign ---");
+check("three plans", subs.PLAN_IDS, ["zoo-pass", "founding-animal", "head-keeper"]);
+for (const id of subs.PLAN_IDS) {
+  const p = subs.PLANS[id];
+  // The characters quote these prices to backers; if they drift apart, one of them is lying.
+  check(`${id} price ${p.price} matches the briefing`, PRODUCT_KNOWLEDGE.includes(p.price), true);
+  check(`${id} name matches the briefing`, PRODUCT_KNOWLEDGE.includes(p.name), true);
+}
+check("head-keeper unlocks everything", subs.PLANS["head-keeper"].games, "all");
+check("zoo-pass is 6 months", subs.PLANS["zoo-pass"].months, 6);
+
+console.log("\n--- no subscription means no entitlements ---");
+const none = subs.entitlementsFor("bNOBODY");
+check("inactive", none.active, false);
+check("no games", none.games, 0);
+check("status none", none.status, "none");
+check("no custom characters", none.customCharacters, 0);
+
+console.log("\n--- an active subscription grants its plan ---");
+subs.setSubscription("b1", { plan: "head-keeper", status: "active", currentPeriodEnd: Date.now() + 30 * DAY });
+const hk = subs.entitlementsFor("b1");
+check("active", hk.active, true);
+check("all games", hk.allGames, true);
+check("two custom characters", hk.customCharacters, 2);
+check("plan name", hk.planName, "Head Keeper");
+
+subs.setSubscription("b2", { plan: "zoo-pass", status: "active", currentPeriodEnd: Date.now() + 30 * DAY });
+check("zoo-pass grants five games", subs.entitlementsFor("b2").games, 5);
+check("zoo-pass is not all-games", subs.entitlementsFor("b2").allGames, false);
+
+console.log("\n--- EXPIRY IS DERIVED, not trusted from the status column ---");
+// The important one: a missed or late webhook must not leave someone entitled forever.
+subs.setSubscription("b3", { plan: "head-keeper", status: "active", currentPeriodEnd: Date.now() - DAY });
+const stale = subs.entitlementsFor("b3");
+check("status still says active", subs.getSubscription("b3").status, "active");
+check("but entitlements are NOT active", stale.active, false);
+check("and it is flagged expired", stale.expired, true);
+check("no games granted", stale.games, 0);
+
+console.log("\n--- status handling ---");
+subs.setSubscription("b4", { plan: "zoo-pass", status: "trialing", currentPeriodEnd: Date.now() + DAY });
+check("trialing is entitled", subs.entitlementsFor("b4").active, true);
+subs.setSubscription("b5", { plan: "zoo-pass", status: "past_due", currentPeriodEnd: Date.now() + DAY });
+check("past_due does NOT grant access (no grace period)", subs.entitlementsFor("b5").active, false);
+subs.setSubscription("b6", { plan: "zoo-pass", status: "canceled", currentPeriodEnd: Date.now() + DAY });
+check("canceled is not entitled", subs.entitlementsFor("b6").active, false);
+
+console.log("\n--- one row per backer ---");
+subs.setSubscription("b1", { plan: "zoo-pass", status: "active", currentPeriodEnd: Date.now() + DAY });
+check("updating does not create a second row",
+  subs.listSubscriptions().filter((s) => s.backerId === "b1").length, 1);
+check("the plan actually changed", subs.getSubscription("b1").plan, "zoo-pass");
+
+console.log("\n--- refusals ---");
+check("unknown plan refused", !!subs.setSubscription("b7", { plan: "gold", status: "active" }).error, true);
+check("unknown status refused", !!subs.setSubscription("b7", { plan: "zoo-pass", status: "vibing" }).error, true);
+check("no backer refused", !!subs.setSubscription("", {}).error, true);
+
+console.log("\n--- Stripe wiring point ---");
+const ev = {
+  type: "customer.subscription.updated",
+  data: { object: {
+    id: "sub_123", customer: "cus_123", status: "active",
+    current_period_end: Math.floor((Date.now() + 60 * DAY) / 1000),
+    metadata: { backerId: "b8" },
+  } },
+};
+const applied = subs.applyStripeEvent(ev);
+check("event applied", !!applied.subscription, true);
+check("stripe sub id stored", subs.getSubscription("b8").stripeSubId, "sub_123");
+check("period end converted from seconds to ms",
+  subs.getSubscription("b8").currentPeriodEnd > Date.now() + 59 * DAY, true);
+check("unrelated event ignored", subs.applyStripeEvent({ type: "invoice.paid", data: { object: {} } }).ignored, true);
+check("unmappable event reports an error",
+  !!subs.applyStripeEvent({ type: "customer.subscription.updated", data: { object: {} } }).error, true);
+// No price map is configured yet, so a real Stripe price cannot resolve to a plan - which must mean
+// "no plan", never a guessed one.
+check("unmapped price yields no plan", subs.getSubscription("b8").plan, null);
+
+console.log(`\n${fails === 0 ? "ALL PASS" : fails + " FAILURE(S)"}`);
+process.exit(fails === 0 ? 0 : 1);

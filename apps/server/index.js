@@ -30,6 +30,9 @@ import { johnChat, johnReady } from "./john.js";
 import { generateCodes, checkCode, redeemCode, listCodes, revokeCode, backerCodesReady } from "./backerCodes.js";
 import { listEvents, listEventTypes } from "./sqlite.js";
 import {
+  PLANS, entitlementsFor, getSubscription, listSubscriptions, setSubscription,
+} from "./subscriptions.js";
+import {
   createBacker, getBacker, findBackerByCode, findBackerByUsername,
   setBackerPassword, verifyBackerPassword, setBackerEnclosure, updateBacker, publicBacker,
   makeBackerSession, readBackerSession, backerCookie, clearBackerCookie, BACKER_COOKIE, backersReady,
@@ -236,6 +239,32 @@ app.get("/api/backer/admin/events", (req, res) => {
   if (!isSuperadmin(req)) return res.status(401).json({ error: "Superadmin only." });
   const { limit, before, type } = req.query || {};
   res.json({ events: listEvents({ limit, before, type: type || null }), types: listEventTypes() });
+});
+
+// A backer's own subscription + what it entitles them to. Entitlements are DERIVED here rather than
+// read from a column, so an expired period stops granting access even if a webhook was missed.
+app.get("/api/backer/subscription", (req, res) => {
+  const sess = readBackerSession(req.cookies?.[BACKER_COOKIE]);
+  if (!sess) return res.status(401).json({ error: "Not signed in." });
+  res.json({ subscription: getSubscription(sess.uid), entitlements: entitlementsFor(sess.uid) });
+});
+
+// Founder-only: every subscription, and the plan catalogue behind them.
+app.get("/api/backer/admin/subscriptions", (req, res) => {
+  if (!isSuperadmin(req)) return res.status(401).json({ error: "Superadmin only." });
+  res.json({ subscriptions: listSubscriptions(), plans: PLANS });
+});
+
+// Founder-only: set a backer's subscription by hand. This exists BEFORE Stripe so tiers can be
+// honoured manually - Kickstarter rewards are fulfilled by hand at first - and afterwards as the
+// override for when a payment provider and reality disagree. Recorded in the audit log either way.
+app.post("/api/backer/admin/subscriptions/:id", (req, res) => {
+  if (!isSuperadmin(req)) return res.status(401).json({ error: "Superadmin only." });
+  if (!adminGetBacker(req.params.id)) return res.status(404).json({ error: "No such account." });
+  const { plan, status, currentPeriodEnd } = req.body || {};
+  const r = setSubscription(req.params.id, { plan: plan || null, status: status || "none", currentPeriodEnd: currentPeriodEnd || null });
+  if (r.error) return res.status(400).json({ error: r.error });
+  res.json({ subscription: r.subscription, entitlements: entitlementsFor(req.params.id) });
 });
 
 // Founder-only: the backer roster for the admin dashboard. Avatars are excluded (see listBackers).

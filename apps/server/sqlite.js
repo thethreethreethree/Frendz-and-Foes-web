@@ -62,6 +62,19 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 );
 CREATE INDEX IF NOT EXISTS idx_sub_backer ON subscriptions(backer_id);
 
+-- Backer chat. One row per message, replacing a JSON blob that was rewritten IN FULL on every
+-- single send: that was O(all messages) per message, and a partial write would have taken the whole
+-- room's history with it. speaker is 'backer' | 'rex' | 'john'; backer_id is NULL for the characters.
+CREATE TABLE IF NOT EXISTS messages (
+  id        TEXT PRIMARY KEY,
+  room      TEXT NOT NULL,
+  at        INTEGER NOT NULL,
+  text      TEXT NOT NULL,
+  speaker   TEXT NOT NULL DEFAULT 'backer',
+  backer_id TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_messages_room_at ON messages(room, at);
+
 -- Append-only audit log. Never UPDATE/DELETE — record what happened.
 CREATE TABLE IF NOT EXISTS events (
   id       INTEGER PRIMARY KEY AUTOINCREMENT,
