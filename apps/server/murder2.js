@@ -462,6 +462,14 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
         m.winner = "town";
         awardScores(m);
         announce(code, { type: "end", winner: "town", caught: caught?.name });
+      } else if (alivePlayers(m).filter((p) => !isMurderer(m, p.id)).length === 0) {
+        // The town voted out its own last villager. The murderer win was only ever checked after a
+        // KILL, so this deadlocked: no villagers left to kill means the kill target can never be
+        // reached and the game never ends. Same failure the kill path already guards against.
+        m.phase = "ended";
+        m.winner = "murderers";
+        awardScores(m);
+        announce(code, { type: "end", winner: "murderers" });
       } else {
         m.phase = "playing";
         announce(code, { type: "vote-caught", caught: caught?.name, remaining: murderersAlive(m) });

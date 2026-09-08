@@ -78,5 +78,26 @@ check("a single guess wins by default", winningValue([99], 50), 99);
 check("no guesses at all yields no winner, not Infinity", winningValue([], 50), null);
 check("and it is not Infinity", winningValue([], 50) === Infinity, false);
 
+// --- Murder Mystery: the game must always be able to END ------------------------------------------
+// The murderer win was only checked after a KILL. Votes also remove players, so a town that voted
+// out its own last villagers left a game with nobody to kill and no way to finish.
+function outcomeAfterElimination({ murderersAlive, villagersAlive }) {
+  if (murderersAlive === 0) return "town";
+  if (villagersAlive === 0) return "murderers";   // nobody left to kill: it cannot continue
+  return "continue";
+}
+
+console.log("");
+console.log("--- Murder Mystery: a vote must not deadlock the game ---");
+check("catching the last murderer wins it for the town",
+  outcomeAfterElimination({ murderersAlive: 0, villagersAlive: 3 }), "town");
+check("an ordinary wrong vote continues",
+  outcomeAfterElimination({ murderersAlive: 1, villagersAlive: 2 }), "continue");
+// THE BUG: this used to fall through to "continue" forever.
+check("voting out the LAST villager ends it for the murderers",
+  outcomeAfterElimination({ murderersAlive: 2, villagersAlive: 0 }), "murderers");
+check("the town winning takes priority when both hit zero",
+  outcomeAfterElimination({ murderersAlive: 0, villagersAlive: 0 }), "town");
+
 console.log(`\n${fails === 0 ? "ALL PASS" : fails + " FAILURE(S)"}`);
 process.exit(fails === 0 ? 0 : 1);
