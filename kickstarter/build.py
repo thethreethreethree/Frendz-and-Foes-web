@@ -70,6 +70,7 @@ def build(mode):
 
     hero    = jpg("bg/home.jpg", 1400, 82)
     rexfull = png("crew/rex-full.png", 560)
+    johndesk = jpg("bg/john-desk.jpg", 900, 82)
 
     games = '<div class="games">\n'
     for slug,label,line in GAMES:
@@ -91,7 +92,7 @@ def build(mode):
 
     body = open(os.path.join(HERE, "body.html"), encoding="utf-8").read()
     return (body.replace("{{HERO}}", hero).replace("{{REX_FULL}}", rexfull)
-                .replace("{{GAMES_GRID}}", games).replace("{{CAST_GRID}}", cast)
+                .replace("{{JOHN_DESK}}", johndesk).replace("{{GAMES_GRID}}", games).replace("{{CAST_GRID}}", cast)
                 .replace("{{TIERS}}", tiers))
 
 def wrap(body):

@@ -82,8 +82,10 @@ app.post("/api/rex-chat", async (req, res) => {
 // John, the schemer — hosts the pre-launch waitlist and subtly pitches the Kickstarter. Same shape
 // as Rex's chat, his own persona. Body: { room?, messages: [{role, content}] }.
 app.post("/api/john-chat", async (req, res) => {
-  const { room, messages } = req.body || {};
-  const out = await johnChat({ room, messages });
+  // `mode: "agent"` puts John on the support desk (the /ask-john page): same persona, plus the
+  // help-them-then-try-to-sell-them-rubbish rules. Absent = the plain waitlist doorman John.
+  const { room, messages, mode } = req.body || {};
+  const out = await johnChat({ room, messages, mode });
   res.json({ ...out, ready: johnReady() });
 });
 

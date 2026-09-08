@@ -134,6 +134,14 @@
   .morebar{display:flex;flex-wrap:wrap;align-items:baseline;gap:.4rem 1rem;margin:1.4rem 0 0;
            border:2px dashed var(--violet);border-radius:14px;padding:1rem 1.2rem;
            background:color-mix(in oklab,var(--violet) 10%,var(--raised))}
+  .quoteby{display:block;margin-top:.6rem;font-family:var(--mono);font-size:.74rem;letter-spacing:.1em;
+           text-transform:uppercase;color:var(--pink)}
+  .askbar{margin-top:1.4rem;display:flex;flex-wrap:wrap;align-items:center;gap:.5rem 1rem;
+          border:1px dashed var(--violet);border-radius:14px;padding:1rem 1.2rem;background:rgba(139,92,246,.07)}
+  .askbar b{font-family:var(--display);font-weight:800;color:var(--violet);font-size:1.15rem;white-space:nowrap}
+  .askbar span{color:var(--muted);font-size:.98rem;flex:1 1 300px;line-height:1.45}
+  .askbar code{font-family:var(--mono);font-size:.9rem;color:var(--lime);background:rgba(163,230,53,.1);
+               border-radius:8px;padding:.35rem .6rem;white-space:nowrap}
   .morebar b{font-family:var(--display);font-weight:800;color:var(--violet);font-size:1.15rem;white-space:nowrap}
   .morebar span{color:var(--muted);font-size:.98rem;flex:1 1 300px;line-height:1.45}
 
@@ -199,6 +207,7 @@
         <a href="#venues">08 Venues</a>
         <a href="#money">09 Money</a>
         <a href="#back">10 Back it</a>
+        <a href="#john">11 Ask John</a>
       </nav>
     </div>
     <div class="switch" role="group" aria-label="Preview ground">
@@ -339,6 +348,32 @@
       </div>
     </div>
   </section>
+
+  <!-- 11 - Ask John. Placed AFTER the pledge ask on purpose: a visitor who scrolled past the CTA
+       without backing is exactly the person with an unanswered question, and sending them off-site
+       to chat is safe here in a way it would not be immediately before the CTA. Rex's warning is a
+       stitch-up: John despises "trash panda" and will accuse the visitor of being put up to it. -->
+  <section class="block" id="john">
+    <p class="tab">11 · Ask John</p>
+    <div class="blockin">
+      <h2>Still got questions? Go and bother John.</h2>
+      <div class="beat">
+        <img src="{{JOHN_DESK}}" alt="John the raccoon on the PlayZoo support desk at 11:45pm - headset on, phone to his ear, mid-pitch, with a caffeine IV drip beside him.">
+        <div>
+          <p class="lede">"Any questions about PlayZoo? Ask John. He's on the desk all night and he actually knows the answers."</p>
+          <p>"Fair warning though — he'll try to sell you absolute rubbish. A single left sock. Half a bottle cap. 'Limited edition', he'll say. Do <b>NOT</b> buy it."</p>
+          <p class="muted">"Oh, and he loves being called a trash panda. Really makes his night. Tell him I said hello."</p>
+          <span class="quoteby">— Rex, your AI zookeeper</span>
+        </div>
+      </div>
+      <div class="askbar">
+        <b>Talk to John right now</b>
+        <span>He's a real AI character, awake at an unreasonable hour, and he will answer anything you ask about PlayZoo — in between trying to flog you a used napkin.</span>
+        <code>playzoo.snapaweb.com/#/ask-john</code>
+      </div>
+    </div>
+  </section>
+
 
   <footer class="wrap">
     PlayZoo — party games with an AI host · <a href="https://playzoo.snapaweb.com">playzoo.snapaweb.com</a><br>

@@ -61,6 +61,7 @@ SECTIONS = [
     ("venues", "08-venues",                "Venues"),
     ("money",  "09-where-the-money-goes",  "Where the money goes"),
     ("back",   "10-back-us",               "Back us"),
+    ("john",   "11-ask-john",              "Ask John"),
 ]
 
 # Prefer the locally built, fully self-contained preview (all art inlined as
