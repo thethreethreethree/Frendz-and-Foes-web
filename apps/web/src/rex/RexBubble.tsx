@@ -16,6 +16,18 @@ export function RexBubble() {
   const [busy, setBusy] = useState(false);
   const scroller = useRef<HTMLDivElement>(null);
 
+  // Rex stands down on John's support desk. That page IS a conversation with John, and a second AI
+  // host offering a chat in the corner forks a funnel that should have exactly one path - a visitor
+  // who taps Rex there is talking to the wrong character, and the block-11 gag (Rex sending you to
+  // John) collapses the moment Rex is also available. Read the hash directly rather than
+  // useLocation: RexBubble mounts OUTSIDE RouterProvider in main.tsx, so there is no router context.
+  const [hash, setHash] = useState(() => window.location.hash);
+  useEffect(() => {
+    const onHash = () => setHash(window.location.hash);
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+
   useEffect(() => {
     if (open) scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: "smooth" });
   }, [messages, busy, open]);
@@ -35,6 +47,9 @@ export function RexBubble() {
     ]);
     setBusy(false);
   }
+
+  // After every hook, never before - an early return above them would break the hooks order.
+  if (hash.startsWith("#/ask-john")) return null;
 
   return (
     <div className="fixed bottom-4 right-4 z-[9999] flex flex-col items-end gap-3" style={{ fontFamily: "inherit" }}>
