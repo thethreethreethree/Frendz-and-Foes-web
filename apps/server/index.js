@@ -27,6 +27,7 @@ import { registerTelestrationsHandlers } from "./telestrations.js";
 import { registerAfterDarkHandlers } from "./afterdark.js";
 import { hostLine, hostChat, hostReady } from "./host.js";
 import { johnChat, johnReady } from "./john.js";
+import { generateCodes, checkCode, listCodes, backerCodesReady } from "./backerCodes.js";
 import { getBrand, listBrandSlugs, upsertBrand, deleteBrand, dbReady } from "./db.js";
 import {
   authReady, createUser, authenticate, getUser, makeSession, readSession,
@@ -179,6 +180,31 @@ const isSuperadmin = (req) => ADMIN_PASSCODE && req.get("x-admin-passcode") === 
 app.get("/api/brands", (req, res) => {
   if (!isSuperadmin(req)) return res.status(401).json({ error: "Superadmin only." });
   res.json({ ready: dbReady(), brands: listBrandSlugs() });
+});
+
+// --- Backer access codes (backers-only group chat) ------------------------------------------
+// The one-time keys we hand Kickstarter backers. Rex calls /check to authenticate a code before he
+// starts a sign-up; only a genuine, un-redeemed code passes. Minting + the full list are founder-only
+// (superadmin passcode). Redemption happens at account creation (added with the signup flow).
+app.post("/api/backer/check", (req, res) => {
+  if (rateLimited(req, res, "backercode", 20, 10 * 60_000)) return; // 20 tries / 10 min / IP — blunt brute-force guard
+  const state = checkCode(req.body && req.body.code); // 'valid' | 'used' | 'unknown'
+  res.json({ valid: state === "valid", state, ready: backerCodesReady() });
+});
+
+// Founder-only: mint N codes. Body { count, note }. Returns the plain code strings to hand out.
+app.post("/api/backer/codes", (req, res) => {
+  if (!isSuperadmin(req)) return res.status(401).json({ error: "Superadmin only." });
+  const { count, note } = req.body || {};
+  const r = generateCodes(count, note);
+  if (r.error) return res.status(503).json({ error: r.error });
+  res.json({ codes: r.codes });
+});
+
+// Founder-only: list every code + its state (valid/used, who redeemed it).
+app.get("/api/backer/codes", (req, res) => {
+  if (!isSuperadmin(req)) return res.status(401).json({ error: "Superadmin only." });
+  res.json({ ready: backerCodesReady(), codes: listCodes() });
 });
 
 app.put("/api/brand/:slug", (req, res) => {
