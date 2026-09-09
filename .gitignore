@@ -22,3 +22,6 @@ bot-solo.mjs
 
 # Promo source art, rebuilt from "GRAPHIC ASSETS/" by tools/promo/prep_assets.py (113MB).
 tools/promo/src/
+
+# Rendered promo videos. Large binaries, rebuilt by tools/promo/build_promo.py; delivered as files.
+tools/promo/*.mp4
