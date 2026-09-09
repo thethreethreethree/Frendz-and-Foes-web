@@ -8,6 +8,7 @@
 import { REX_KNOWLEDGE } from "./rexKnowledge.js";
 
 import { stripStageDirections } from "./speech.js";
+import { BREVITY_RULE, CHAT_MAX_TOKENS } from "./voice.js";
 const KEY = process.env.DEEPSEEK_API_KEY || process.env.HOST_API_KEY || "";
 const API_URL = process.env.HOST_API_URL || "https://api.deepseek.com/chat/completions";
 const MODEL = process.env.HOST_MODEL || "deepseek-chat";
@@ -137,9 +138,16 @@ async function chatCompletion(messages) {
     headers: { "content-type": "application/json", authorization: `Bearer ${KEY}` },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 220,
+      max_tokens: CHAT_MAX_TOKENS,
       temperature: 0.95,
-      messages: [{ role: "system", content: REX_PERSONA + "\n\n" + REX_KNOWLEDGE }, ...messages],
+      // Rex's free chat had NO length rule at all -- only the persona and the product knowledge --
+      // which is why it ran long while the in-game one-liners (which DO have ONE_LINER_RULE) stayed
+      // tight. Placed right after the persona, ahead of the knowledge block, for the same reason as
+      // in john.js: a length rule buried under several hundred words of product facts loses.
+      messages: [
+        { role: "system", content: REX_PERSONA + "\n\n" + BREVITY_RULE + "\n\n" + REX_KNOWLEDGE },
+        ...messages,
+      ],
     }),
   });
   if (!res.ok) throw new Error(`host provider ${res.status}`);

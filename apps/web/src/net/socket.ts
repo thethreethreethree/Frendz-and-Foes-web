@@ -5,6 +5,7 @@ import { io, type Socket } from "socket.io-client";
 import type { GameState, BingoState, TriviaState, OffLimitsPublic, WordGamePublic, MonikersPublic } from "@ff/engine";
 import type { Announcement } from "../store/gameStore";
 import type { SfxName } from "../audio/sfx";
+import { resolveSlug } from "../brand/resolve";
 
 // "answerer"/"viewer" are per-team phone roles for Frendz and Foes: one answerer submits the
 // team's guess (upstream, host-judged), the rest are view-only. Both carry a teamId on join.
@@ -170,7 +171,11 @@ function readHostToken(room: string): string | undefined {
 // than losing the night entirely.
 export function joinRoom(room: string, role: Role, teamId?: string, game?: string): Socket {
   const s = getSocket();
-  const doJoin = () => s.emit("join", { room, role, teamId, game, hostToken: readHostToken(room) });
+  // The brand slug rides along so the server can attribute the night to a VENUE. Without it every
+  // session is unattributed and a venue's own activity figures are permanently empty — the same
+  // shape of gap as the game slug, which was also "sent by nobody" until it was needed.
+  const doJoin = () =>
+    s.emit("join", { room, role, teamId, game, brand: resolveSlug(), hostToken: readHostToken(room) });
 
   // Issued once, on the first claim. Stored so a reconnect can prove it is the same host.
   s.off("host:token");

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getSocket } from "../net/socket";
 import { loadJoPlayer, saveJoPlayer, joJoin, joSync, type JoState, type JoYou } from "../net/justone";
+import { resolveSlug } from "../brand/resolve";
 
 // Shared hook for all Solo Clue surfaces. Players join by name (auto-rejoin with stored id+token);
 // host/display watch via jo:sync. `word` arrives on the private jo:word channel and is null for the
@@ -18,7 +19,7 @@ export function useJustOne(room: string, role: "host" | "display" | "player") {
         const st = loadJoPlayer(room);
         if (st.name) joJoin(room, st.name, st.avatar, st.id, st.rejoinToken);
       } else {
-        s.emit("join", { room, role, game: "justone" });
+        s.emit("join", { room, role, game: "justone", brand: resolveSlug() });
         joSync(room);
       }
     };

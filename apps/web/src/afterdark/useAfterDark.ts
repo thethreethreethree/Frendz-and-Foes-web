@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getSocket } from "../net/socket";
 import { loadCaPlayer, saveCaPlayer, caJoin, caSync, type CaState, type CaYou } from "../net/afterdark";
+import { resolveSlug } from "../brand/resolve";
 
 // Shared hook for all After Dark surfaces. Players join by name (auto-rejoin); host/display watch via
 // ca:sync. ca:you carries the player's private hand + whether they're the judge this round.
@@ -13,7 +14,7 @@ export function useAfterDark(room: string, role: "host" | "display" | "player") 
     const s = getSocket();
     const enter = () => {
       if (role === "player") { const st = loadCaPlayer(room); if (st.name) caJoin(room, st.name, st.avatar, st.id, st.rejoinToken); }
-      else { s.emit("join", { room, role, game: "afterdark" }); caSync(room); }
+      else { s.emit("join", { room, role, game: "afterdark", brand: resolveSlug() }); caSync(room); }
     };
     const onState = (st: CaState) => setState(st);
     const onYou = (y: CaYou) => setYou(y);

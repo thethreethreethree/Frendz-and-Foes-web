@@ -46,6 +46,7 @@ let FUL = null;
 let SES = null;
 let STAFF = null;
 let PICKS = null;
+let VEN = null;
 try {
   SQL = await import("./sqlite.js");
   SUBS = await import("./subscriptions.js");
@@ -59,6 +60,8 @@ try {
   await STAFF.initStaff();
   PICKS = await import("./gamePicks.js");
   await PICKS.initGamePicks();
+  VEN = await import("./venues.js");
+  await VEN.initVenues();
   // A crash or a deploy restart leaves sessions with ended = NULL forever, which both blocks the
   // next night in that room (partial unique index) and counts a dead night as live in every figure.
   SES.closeStaleSessions();
@@ -808,6 +811,47 @@ app.get("/api/backer/admin/picks", (req, res) => {
   res.json({ ready: true, picks, tally, backers: new Set(picks.map((p) => p.backer_id)).size });
 });
 
+// --- Venues: a venue as a customer (Phase 5) ---------------------------------------------------
+// Revenue and nights are QUERIED from payments and game_sessions on every call, never stored, so a
+// venue's figures cannot drift away from what actually happened.
+app.get("/api/backer/admin/venues", (req, res) => {
+  if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
+  if (!reqCan(req, "money")) return res.status(403).json({ error: "Your account cannot see this." });
+  if (needDb(res)) return;
+  if (!VEN || !VEN.venuesReady()) {
+    return res.status(503).json({ ready: false, error: "The database is unavailable right now." });
+  }
+  const list = VEN.listVenues({ status: req.query.status || null });
+  res.json({ ready: list.ready, venues: list.venues, summary: VEN.venueSummary() });
+});
+
+app.post("/api/backer/admin/venues", (req, res) => {
+  if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
+  if (!reqCan(req, "money")) return res.status(403).json({ error: "Your account cannot see this." });
+  if (needDb(res)) return;
+  if (!VEN || !VEN.venuesReady()) {
+    return res.status(503).json({ error: "The database is unavailable right now." });
+  }
+  const b = req.body || {};
+  const r = VEN.saveVenue(b.slug, {
+    legalName: b.legalName, contactName: b.contactName, contactEmail: b.contactEmail,
+    plan: b.plan, priceCents: b.priceCents, status: b.status, notes: b.notes,
+  });
+  if (r.error) return res.status(400).json({ error: r.error });
+  res.json(r);
+});
+
+// Roll a venue on a month. Separate from editing on purpose: taking a payment is an event, not a
+// field change, and it must not happen as a side effect of correcting a contact name.
+app.post("/api/backer/admin/venues/:slug/renew", (req, res) => {
+  if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
+  if (!reqCan(req, "money")) return res.status(403).json({ error: "Your account cannot see this." });
+  if (needDb(res) || !VEN) return;
+  const r = VEN.renewVenue(req.params.slug);
+  if (r.error) return res.status(400).json({ error: r.error });
+  res.json(r);
+});
+
 app.get("/api/backer/admin/legacy", (req, res) => {
   if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
   if (needDb(res)) return;
@@ -1310,7 +1354,7 @@ io.on("connection", (socket) => {
     registerAfterDarkHandlers(io, socket, rooms);
   }
 
-  socket.on("join", ({ room, role, teamId, hostToken, game }) => {
+  socket.on("join", ({ room, role, teamId, hostToken, game, brand }) => {
     if (!gamesOpen) { socket.emit("locked", { waitlist: true }); return; }
     if (typeof room !== "string" || !room) return;
     // Only the hosting surfaces are gated: a "player" phone has no account and never will.
@@ -1328,7 +1372,13 @@ io.on("connection", (socket) => {
     // "game started" moment across fourteen games -- the first hosting join is the closest honest
     // proxy. startSession is idempotent per live room, so the repetition costs nothing.
     if (SES && (role === "host" || role === "display")) {
-      try { SES.startSession(code, { game: typeof game === "string" ? game : null }); }
+      // brandSlug is what makes per-venue usage possible at all. Without it every night is
+      // unattributed and a venue's own activity figures are permanently empty. "default" is the
+      // unbranded site, so it is stored as null rather than as a venue nobody is billing.
+      try {
+        const slug = typeof brand === "string" && brand !== "default" ? brand : null;
+        SES.startSession(code, { game: typeof game === "string" ? game : null, brandSlug: slug });
+      }
       catch (err) { console.error("[ff-server] session start failed:", err?.message || err); }
     }
 

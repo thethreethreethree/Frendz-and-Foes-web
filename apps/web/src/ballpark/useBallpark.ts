@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getSocket } from "../net/socket";
 import { loadBpPlayer, saveBpPlayer, bpJoin, bpSync, type BpState, type BpYou } from "../net/ballpark";
+import { resolveSlug } from "../brand/resolve";
 
 // Shared hook for all Ballpark surfaces. Players join by name (auto-rejoin); host/display watch via
 // bp:sync. The question is public; the answer + individual guesses/bets are withheld in state until
@@ -17,7 +18,7 @@ export function useBallpark(room: string, role: "host" | "display" | "player") {
         const st = loadBpPlayer(room);
         if (st.name) bpJoin(room, st.name, st.avatar, st.id, st.rejoinToken);
       } else {
-        s.emit("join", { room, role, game: "ballpark" });
+        s.emit("join", { room, role, game: "ballpark", brand: resolveSlug() });
         bpSync(room);
       }
     };

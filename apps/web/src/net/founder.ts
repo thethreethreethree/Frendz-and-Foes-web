@@ -447,3 +447,72 @@ export async function listPicks(passcode: string): Promise<PickTally> {
     return await res.json();
   } catch { return { ready: false, tally: {}, backers: 0, error: "Network hiccup — try again." }; }
 }
+
+// --- Venues: a venue as a customer (Phase 5) ----------------------------------------------------
+// revenue_cents and nights are DERIVED server-side from payments and game_sessions on every call.
+// They are not columns on the venue, so they cannot drift from what happened.
+export type VenueRow = {
+  slug: string;
+  legal_name: string | null;
+  contact_name: string | null;
+  contact_email: string | null;
+  plan: string | null;
+  price_cents: number | null;
+  status: string;
+  started: number | null;
+  renews: number | null;
+  notes: string | null;
+  revenue_cents: number;
+  nights: number;
+  last_night: number | null;
+  biggest: number;
+};
+
+export type VenueSummary = {
+  byStatus: Record<string, number>;
+  mrrCents: number;
+  total: number;
+  dueSoon: number;
+  overdue: number;
+};
+
+export const VENUE_STATUSES = ["prospect", "trial", "active", "paused", "churned"] as const;
+
+export async function listVenues(passcode: string): Promise<{
+  venues?: VenueRow[]; summary?: VenueSummary; ready?: boolean; error?: string;
+}> {
+  try {
+    const res = await fetch("/api/backer/admin/venues", { headers: headers(passcode) });
+    if (res.status === 403) return { ready: false, error: "Your account cannot see this." };
+    if (res.status === 503) return { ready: false, venues: [], error: "The database is unavailable right now." };
+    if (!res.ok) return { error: "Couldn't load venues — try again." };
+    const d = await res.json();
+    return { ...d, ready: d.ready !== false };
+  } catch { return { error: "Network hiccup — try again." }; }
+}
+
+export async function saveVenue(passcode: string, body: {
+  slug: string; legalName?: string; contactName?: string; contactEmail?: string;
+  plan?: string; priceCents?: number; status?: string; notes?: string;
+}): Promise<{ venue?: VenueRow; error?: string }> {
+  try {
+    const res = await fetch("/api/backer/admin/venues", {
+      method: "POST", headers: { ...headers(passcode), "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) return { error: d.error || "Couldn't save that venue." };
+    return d;
+  } catch { return { error: "Network hiccup — try again." }; }
+}
+
+export async function renewVenue(passcode: string, slug: string): Promise<{ venue?: VenueRow; error?: string }> {
+  try {
+    const res = await fetch(`/api/backer/admin/venues/${encodeURIComponent(slug)}/renew`, {
+      method: "POST", headers: headers(passcode),
+    });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) return { error: d.error || "Couldn't renew that venue." };
+    return d;
+  } catch { return { error: "Network hiccup — try again." }; }
+}

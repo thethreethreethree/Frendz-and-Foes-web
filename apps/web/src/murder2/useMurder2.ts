@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { getSocket } from "../net/socket";
+import { resolveSlug } from "../brand/resolve";
 import {
   loadPlayer2, savePlayer2, m2Join,
   type V2State, type V2You, type V2Announce,
@@ -23,7 +24,7 @@ export function useMurder2(room: string, role: "host" | "display" | "player") {
         const st = loadPlayer2(room);
         if (st.name) m2Join(room, st.name, st.avatar, st.id, st.rejoinToken);
       } else {
-        s.emit("join", { room, role, game: "murder" });
+        s.emit("join", { room, role, game: "murder", brand: resolveSlug() });
       }
     };
     const onState = (st: V2State) => setState(st);

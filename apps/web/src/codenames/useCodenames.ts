@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getSocket } from "../net/socket";
 import { loadCnPlayer, saveCnPlayer, cnJoin, cnSync, type CnState, type CnYou } from "../net/codenames";
+import { resolveSlug } from "../brand/resolve";
 
 // Shared hook for all Cover Ops surfaces. host/display watch via cn:sync (+ generic join so the host
 // gets the host role); a player joins by name and auto-rejoins with its stored id + token to recover
@@ -19,7 +20,7 @@ export function useCodenames(room: string, role: "host" | "display" | "player") 
         const st = loadCnPlayer(room);
         if (st.name) cnJoin(room, st.name, st.avatar, st.id, st.rejoinToken);
       } else {
-        s.emit("join", { room, role, game: "codenames" }); // sets host/display role + joins the room
+        s.emit("join", { room, role, game: "codenames", brand: resolveSlug() }); // sets host/display role + joins the room
         cnSync(room);
       }
     };

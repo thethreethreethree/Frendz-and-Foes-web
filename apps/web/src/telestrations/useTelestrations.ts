@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getSocket } from "../net/socket";
 import { loadTePlayer, saveTePlayer, teJoin, teSync, type TeState, type TeYou } from "../net/telestrations";
+import { resolveSlug } from "../brand/resolve";
 
 // Shared hook for all Sketch Relay surfaces. Players join by name (auto-rejoin); host/display watch
 // via te:sync. te:you carries the player's private prompt for the current turn.
@@ -13,7 +14,7 @@ export function useTelestrations(room: string, role: "host" | "display" | "playe
     const s = getSocket();
     const enter = () => {
       if (role === "player") { const st = loadTePlayer(room); if (st.name) teJoin(room, st.name, st.avatar, st.id, st.rejoinToken); }
-      else { s.emit("join", { room, role, game: "telestrations" }); teSync(room); }
+      else { s.emit("join", { room, role, game: "telestrations", brand: resolveSlug() }); teSync(room); }
     };
     const onState = (st: TeState) => setState(st);
     const onYou = (y: TeYou) => setYou(y);

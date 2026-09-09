@@ -6,6 +6,7 @@
 // on error. Text-first + role-tagged so a future 11Labs voice can speak him.
 
 import { stripStageDirections } from "./speech.js";
+import { BREVITY_RULE, CHAT_MAX_TOKENS } from "./voice.js";
 import { PRODUCT_KNOWLEDGE } from "./productKnowledge.js";
 const KEY = process.env.DEEPSEEK_API_KEY || process.env.HOST_API_KEY || "";
 const API_URL = process.env.HOST_API_URL || "https://api.deepseek.com/chat/completions";
@@ -33,7 +34,7 @@ export const JOHN_PERSONA =
   "dignity - THEN grudgingly simmer down and get back to business. Make it funny, not cruel. " +
   "BOUNDARIES: sarcastic and savage is perfect; never slurs, hate, or anything punching at real " +
   "protected groups, and never lie about the facts (the Kickstarter and the waitlist are real). " +
-  "Keep replies short and spoken-aloud clean - no markdown, at most one emoji, and NO STAGE DIRECTIONS " +
+  "Spoken-aloud clean - no markdown, at most one emoji, and NO STAGE DIRECTIONS " +
   "in ANY notation: no *asterisks*, no [square brackets], no (action parentheses). Never narrate what " +
   "you are doing - just say the words out loud.";
 
@@ -120,7 +121,11 @@ function sanitize(messages) {
 // and never accused Rex of putting them up to the trash-panda line. Assembling it in one named
 // function is what makes an orphaned rule block visible instead of invisible.
 function systemPrompt(mode) {
-  const base = JOHN_PERSONA + "\n\n" + JOHN_KNOWLEDGE;
+  // BREVITY_RULE sits immediately after the persona, before the product knowledge. Order matters:
+  // the knowledge block is long, and a length instruction buried under it competes with several
+  // hundred words of things John could say. Right after "this is who you are" it reads as part of
+  // the character rather than as an afterthought.
+  const base = JOHN_PERSONA + "\n\n" + BREVITY_RULE + "\n\n" + JOHN_KNOWLEDGE;
   return mode === "agent" ? base + "\n\n" + JOHN_AGENT_RULES : base;
 }
 
@@ -129,7 +134,7 @@ async function chatCompletion(messages, mode) {
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${KEY}` },
     body: JSON.stringify({
-      model: MODEL, max_tokens: 220, temperature: 0.95,
+      model: MODEL, max_tokens: CHAT_MAX_TOKENS, temperature: 0.95,
       messages: [{ role: "system", content: systemPrompt(mode) }, ...messages],
     }),
   });

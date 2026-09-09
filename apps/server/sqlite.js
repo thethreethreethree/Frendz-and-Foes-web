@@ -264,6 +264,40 @@ CREATE TABLE IF NOT EXISTS game_picks (
   UNIQUE(backer_id, game)
 );
 CREATE INDEX IF NOT EXISTS idx_picks_backer ON game_picks(backer_id);
+
+-- A venue as a CUSTOMER. Phase 5 of docs/business-backend-design.md.
+--
+-- brands already existed and holds a venue's THEMING -- colours, fonts, game labels. It has no
+-- idea who the venue is: no contact, no contract, no plan, no billing. The campaign sells this
+-- directly ("Bars, weddings, launches, and office parties... a fully branded PlayZoo"), so the
+-- product could be themed for a venue but not sold to one.
+--
+-- Keyed by the SAME slug as brands, deliberately. One venue, one slug, one theme -- rather than an
+-- id pair that can drift apart and leave a venue whose branding belongs to somebody else.
+--
+-- WHAT IS NOT HERE, AND WHY: no revenue column, no session count, no usage total. Money is already
+-- in payments carrying brand_slug, and nights are in game_sessions carrying brand_slug, so both
+-- are QUERIES over data that already exists. A stored total is a number that can drift away from
+-- what actually happened, which is the whole reason the ledger works the way it does.
+--
+-- plan is a MONTHLY subscription -- the owner's decision, 2026-09-09, recorded in
+-- docs/business-backend-design.md §7.1 -- so renews is a monthly date.
+CREATE TABLE IF NOT EXISTS venues (
+  slug          TEXT PRIMARY KEY,   -- same slug as brands.slug
+  legal_name    TEXT,
+  contact_name  TEXT,
+  contact_email TEXT,
+  plan          TEXT,               -- monthly plan id, or null while a prospect
+  price_cents   INTEGER,            -- MINOR UNITS, like every other money column here
+  status        TEXT NOT NULL DEFAULT 'prospect',  -- prospect|trial|active|paused|churned
+  started       INTEGER,
+  renews        INTEGER,            -- next monthly renewal
+  notes         TEXT,
+  created       INTEGER NOT NULL,
+  updated       INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_venues_status ON venues(status);
+CREATE INDEX IF NOT EXISTS idx_venues_renews ON venues(renews);
 `);
 
 // Who performed an action, when it was a member of staff rather than a backer.
