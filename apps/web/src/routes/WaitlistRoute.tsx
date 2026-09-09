@@ -84,7 +84,11 @@ export function WaitlistRoute() {
             <span className="text-sm font-bold text-ink">Chat with John</span>
             <span className="ml-auto text-[11px] font-semibold uppercase tracking-wide text-muted">While you wait</span>
           </div>
-          <div ref={scroller} className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
+          {/* min-h keeps the conversation readable on a phone. As pure flex-1 this pane measured
+              32px tall on a 375px-wide screen -- 5% of the viewport, with 222px of messages hidden
+              -- because the copy above it took everything. The page scrolls; the chat should not
+              be squeezed to nothing. */}
+          <div ref={scroller} className="min-h-[14rem] flex-1 space-y-3 overflow-y-auto px-4 py-4 sm:min-h-0">
             {messages.map((m, i) => (
               <div key={i} className={`flex items-end gap-2 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                 {m.role === "assistant" && <JohnFace size={26} />}

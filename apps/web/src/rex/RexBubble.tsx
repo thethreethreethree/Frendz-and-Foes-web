@@ -49,7 +49,9 @@ export function RexBubble() {
   }
 
   // After every hook, never before - an early return above them would break the hooks order.
-  if (hash.startsWith("#/ask-john")) return null;
+  // /waitlist is John's page too -- the same reasoning, and on a phone the bubble physically sat on
+  // top of his chat: 82% of the Send button at 390px and 412px wide, and over the message text.
+  if (hash.startsWith("#/ask-john") || hash.startsWith("#/waitlist")) return null;
 
   return (
     <div className="fixed bottom-4 right-4 z-[9999] flex flex-col items-end gap-3" style={{ fontFamily: "inherit" }}>

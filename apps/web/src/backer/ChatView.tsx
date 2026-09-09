@@ -107,15 +107,23 @@ export function ChatView({ me }: { me: Backer }) {
       </div>
 
       {/* composer */}
-      <div className="flex items-end gap-2 border-t border-line px-3 py-3">
+      {/* pr-24 on small screens keeps Send clear of Rex's fixed 80px bubble (bottom-4 right-4,
+          z-9999). Measured: it covered 55% of Send at 375px wide. Rex BELONGS here -- the club is
+          his room, unlike John's waitlist page where he stands down entirely -- so the composer
+          yields the corner instead. Desktop has room, so the padding drops away at sm. */}
+      <div className="flex items-end gap-2 border-t border-line px-3 py-3 pr-24 sm:pr-3">
         <textarea
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
           rows={1}
           maxLength={1000}
+          // "Message The Watering Hole…" wraps to two lines in a one-row textarea and the second
+          // line is CLIPPED -- it read "Message The Watering" with the rest cut off at 375px. The
+          // room is already named twice in the tabs directly above, so the short form loses nothing.
           placeholder={`Message ${activeTab.name}…`}
-          className="max-h-28 flex-1 resize-none rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-[15px] text-ink outline-none focus:border-primary"
+          title={`Message ${activeTab.name}`}
+          className="max-h-28 flex-1 resize-none truncate whitespace-nowrap rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-[15px] text-ink outline-none focus:border-primary"
         />
         <button
           onClick={send}
