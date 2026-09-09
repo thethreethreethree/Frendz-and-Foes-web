@@ -8,6 +8,8 @@ import { codenamesJoinUrl, controllerUrl } from "../net/room";
 import { getBrand } from "../brand/theme";
 import { AvatarBadge } from "../net/avatars";
 import type { CnState, CnTeam } from "../net/codenames";
+import { useBackdrop } from "../display/gameArt";
+import { BACKDROPS, BEATS, PROPS, AGENTS, artUrl, glow } from "./art";
 
 // Display (TV) for "Cover Ops". Public board only — the secret key never reaches this screen.
 export function CodenamesDisplay({ room }: { room: string }) {
@@ -50,9 +52,13 @@ export function CodenamesDisplay({ room }: { room: string }) {
 
   if (!state) return <Center><p className="text-muted">Connecting…</p></Center>;
 
+  // Backdrop art keyed to the phase. Falls back to the .ff-backdrop gradient until the file exists.
+  const phase = state?.phase === "ended" ? "ended" : state?.phase === "playing" ? "playing" : "lobby";
+  const bg = useBackdrop("coverops", BACKDROPS[phase]);
+
   if (state.phase === "lobby") {
     return (
-      <Center>
+      <Center bg={bg}>
         <Logo className="text-5xl" />
         <div className="ff-title mt-2 text-3xl text-muted">{label}</div>
         <p className="mt-1 text-lg text-muted">Scan to join, pick a team, then the host starts.</p>
@@ -63,16 +69,26 @@ export function CodenamesDisplay({ room }: { room: string }) {
           </div>
           <Roster state={state} />
         </div>
-        <p className="mt-4 text-sm text-muted">Host controller: <span className="font-mono">{controllerUrl(room)}</span></p>
+        <div className="mt-5 flex items-end justify-center gap-3 opacity-90">
+          {[AGENTS.salute, AGENTS.mugshot, AGENTS.sloth].map((a) => (
+            <img key={a} src={artUrl(a)} alt="" aria-hidden className="h-24 w-auto rounded-md" />
+          ))}
+        </div>
+        <p className="mt-1 text-xs uppercase tracking-[0.18em] text-muted">Agents on file</p>
+        <p className="mt-3 text-sm text-muted">Host controller: <span className="font-mono">{controllerUrl(room)}</span></p>
       </Center>
     );
   }
 
   return (
-    <div className="ff-backdrop relative flex h-full w-full flex-col items-center gap-3 overflow-hidden p-4 text-ink">
+    <div style={bg} className="ff-backdrop relative flex h-full w-full flex-col items-center gap-3 overflow-hidden p-4 text-ink">
+      {/* John reacts to the moment, bottom-right, behind the board. */}
+      <BeatCard state={state} />
       {/* Top bar: turn + clue + counts */}
       <div className="flex w-full max-w-4xl items-center justify-between gap-3">
         <TeamCount label="Red" n={state.counts.red} color="#d64550" active={state.turn === "red"} />
+        <img src={artUrl(PROPS.badge)} alt="" aria-hidden className="h-10 w-auto shrink-0"
+             style={{ filter: glow("#8b5cf6", 12) }} title="Spymaster" />
         <div className="flex-1 text-center">
           {state.phase === "ended" ? (
             <div className="ff-title text-3xl" style={{ color: state.winner === "red" ? "#d64550" : "#3b7dd8" }}>
@@ -83,7 +99,14 @@ export function CodenamesDisplay({ room }: { room: string }) {
               <div className="ff-title text-4xl" style={{ color: state.clue.team === "red" ? "#d64550" : "#3b7dd8" }}>
                 {state.clue.word.toUpperCase()} · {state.clue.count}
               </div>
-              <div className="text-sm font-semibold text-muted">{state.clue.remaining} guess{state.clue.remaining === 1 ? "" : "es"} left</div>
+              <div className="mt-1 flex items-center justify-center gap-2 text-sm font-semibold text-muted">
+                <span className="relative inline-grid h-7 w-7 place-items-center">
+                  <img src={artUrl(PROPS.chip)} alt="" aria-hidden className="absolute inset-0 h-full w-full"
+                       style={{ filter: glow("#ec4899", 10) }} />
+                  <span className="relative text-xs font-extrabold text-ink">{state.clue.remaining}</span>
+                </span>
+                guess{state.clue.remaining === 1 ? "" : "es"} left
+              </div>
             </div>
           ) : (
             <div className="ff-title text-3xl" style={{ color: state.turn === "red" ? "#d64550" : "#3b7dd8" }}>
@@ -91,6 +114,8 @@ export function CodenamesDisplay({ room }: { room: string }) {
             </div>
           )}
         </div>
+        <img src={artUrl(PROPS.token)} alt="" aria-hidden className="h-10 w-auto shrink-0"
+             style={{ filter: glow(state.turn === "red" ? "#d64550" : "#3b7dd8", 12) }} title="Turn marker" />
         <TeamCount label="Blue" n={state.counts.blue} color="#3b7dd8" active={state.turn === "blue"} />
       </div>
 
@@ -149,6 +174,29 @@ function Roster({ state }: { state: CnState }) {
   );
 }
 
-function Center({ children }: { children: React.ReactNode }) {
-  return <div className="ff-backdrop grid h-full w-full place-items-center p-6 text-center text-ink"><div className="flex flex-col items-center">{children}</div></div>;
+function Center({ children, bg }: { children: React.ReactNode; bg?: React.CSSProperties }) {
+  return <div style={bg} className="ff-backdrop grid h-full w-full place-items-center p-6 text-center text-ink"><div className="flex flex-col items-center">{children}</div></div>;
+}
+
+// John's reaction card. Which beat shows is derived from state rather than an event feed, so it
+// cannot get out of step with the board: the assassin ends the game on `beat-caught`, an ordinary
+// finish gets the getaway, a fresh clue gets the nose-tap, and a spent clue means someone guessed
+// wrong. It sits behind the board at low opacity so it never fights the words.
+function BeatCard({ state }: { state: CnState }) {
+  let slug: string | null = null;
+  if (state.phase === "ended") slug = state.assassinHit ? BEATS.caught : BEATS.getaway;
+  else if (state.clue && state.clue.remaining === 0) slug = BEATS.shock;
+  else if (state.clue && state.clue.remaining < state.clue.count) slug = BEATS.disaster;
+  else if (state.clue) slug = BEATS.clue;
+  else if (state.counts.red === 0 || state.counts.blue === 0) slug = BEATS.win;
+  if (!slug) return null;
+  return (
+    <img
+      src={artUrl(slug)}
+      alt=""
+      aria-hidden
+      className="pointer-events-none absolute bottom-0 right-0 h-2/5 w-auto opacity-25"
+      style={{ maskImage: "linear-gradient(to left, #000 40%, transparent)", WebkitMaskImage: "linear-gradient(to left, #000 40%, transparent)" }}
+    />
+  );
 }

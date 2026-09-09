@@ -1,0 +1,303 @@
+[
+  {
+    "src": "Spy_briefing_room_background_2K_202609090553.jpeg",
+    "verdict": "applied",
+    "slot": "backdrop",
+    "slug": "bg-lobby",
+    "note": "Empty briefing room, blank projector screen dead centre. Nobody-here-yet state."
+  },
+  {
+    "src": "Briefing_room_party_game_background_2K_202609090600.jpeg",
+    "verdict": "applied",
+    "slot": "backdrop",
+    "slug": "bg-briefing",
+    "note": "Room full of animals mid-party, corkboard and neon. Centre wall left clear for UI."
+  },
+  {
+    "src": "Briefing_room_in_alarm_red_2K_202609090613.jpeg",
+    "verdict": "applied",
+    "slot": "backdrop",
+    "slug": "bg-alarm",
+    "note": "Same room in alarm red, beacon and smoke. The caught/assassin state."
+  },
+  {
+    "src": "Raccoon_reacting_to_clue_2K_202609090723.jpeg",
+    "verdict": "applied",
+    "slot": "beat",
+    "slug": "beat-clue",
+    "note": "John taps his nose, conspiratorial. The signature gesture from his persona."
+  },
+  {
+    "src": "Raccoon_punching_air_joyfully_2K_202609090729.jpeg",
+    "verdict": "applied",
+    "slot": "beat",
+    "slug": "beat-win",
+    "note": "Both fists up, crowd cheering, confetti. Round won."
+  },
+  {
+    "src": "Raccoon_reacting_in_shock_2K_202609090732.jpeg",
+    "verdict": "applied",
+    "slot": "beat",
+    "slug": "beat-shock",
+    "note": "Hand over mouth, scandalised. Open right third for text."
+  },
+  {
+    "src": "Cartoon_raccoon_reacting_in_shock_2K_202609090733.jpeg",
+    "verdict": "applied",
+    "slot": "beat",
+    "slug": "beat-disaster",
+    "note": "Hands on top of head, bloodshot. Social horror, pink burst."
+  },
+  {
+    "src": "Raccoon_reacting_in_terror_2K_202609090734.jpeg",
+    "verdict": "applied",
+    "slot": "beat",
+    "slug": "beat-caught",
+    "note": "Hands at the sides of his head, red explosion. Pairs with bg-alarm."
+  },
+  {
+    "src": "Raccoon_walking_away_with_briefcase_2K_202609090735.jpeg",
+    "verdict": "applied",
+    "slot": "beat",
+    "slug": "beat-getaway",
+    "note": "Strolling off with the briefcase, whistling. Game over, he got away."
+  },
+  {
+    "src": "Brass_token_with_keyhole_2K_202609090713.jpeg",
+    "verdict": "applied",
+    "slot": "prop",
+    "slug": "prop-token",
+    "note": "Brass keyhole token, no text, magenta glow."
+  },
+  {
+    "src": "Enamel_badge_with_eye_motif_2K_202609090719.jpeg",
+    "verdict": "applied",
+    "slot": "prop",
+    "slug": "prop-badge",
+    "note": "Enamel eye badge, violet/teal, the watcher motif."
+  },
+  {
+    "src": "Neon_game_chip_drawn_2K_202609090720.jpeg",
+    "verdict": "applied",
+    "slot": "prop",
+    "slug": "prop-chip",
+    "note": "Dark chip with a pink neon ring and a BLANK centre for a rendered number."
+  },
+  {
+    "src": "Cartoon_animal_agent_saluting_2K_202609090620.jpeg",
+    "verdict": "applied",
+    "slot": "agent",
+    "slug": "agent-salute",
+    "note": "Badger in a violet coat saluting. Chosen over the red-coat take."
+  },
+  {
+    "src": "Cartoon_animal_holding_coffee_card_2K_202609090625.jpeg",
+    "verdict": "applied",
+    "slot": "agent",
+    "slug": "agent-sloth",
+    "note": "Mo the sloth with coffee, deadpan. On-roster character."
+  },
+  {
+    "src": "Spy_dossier_card_silhouette_2K_202609090626.jpeg",
+    "verdict": "applied",
+    "slot": "agent",
+    "slug": "agent-unknown",
+    "note": "Black silhouette, glowing eyes, skull pin. The hidden identity / assassin card."
+  },
+  {
+    "src": "Blank_spy_dossier_card_back_2K_202609090632.jpeg",
+    "verdict": "applied",
+    "slot": "agent",
+    "slug": "agent-mugshot",
+    "note": "Teal tuxedo-badger mugshot plus an EMPTY lime stamp box for a codename."
+  },
+  {
+    "src": "Spy_dossier_card_background_2K_202609090626.jpeg",
+    "verdict": "applied",
+    "slot": "tile",
+    "slug": "tile-01",
+    "note": "Large deliberate blank centre. Best base for app-rendered words."
+  },
+  {
+    "src": "Spy_dossier_card_variant_2K_202609090639.jpeg",
+    "verdict": "applied",
+    "slot": "tile",
+    "slug": "tile-02",
+    "note": "Two pink X stamps and a teal eye shield. No text at all."
+  },
+  {
+    "src": "Spy_dossier_card_design_2K_202609090641.jpeg",
+    "verdict": "applied",
+    "slot": "tile",
+    "slug": "tile-03",
+    "note": "Single clean CLASSIFIED stamp, no gibberish."
+  },
+  {
+    "src": "Spy_dossier_card_variant_2K_202609090638.jpeg",
+    "verdict": "applied",
+    "slot": "tile",
+    "slug": "tile-04",
+    "note": "TOP SECRET plus a violet ? triangle. White bg, not checkerboard."
+  },
+  {
+    "src": "Spy_dossier_card_variant_2K_202609090632.jpeg",
+    "verdict": "applied",
+    "slot": "tile",
+    "slug": "tile-05",
+    "note": "Lime raccoon-in-a-fedora agency emblem. The most on-brand card."
+  },
+  {
+    "src": "Spy_dossier_card_variant_2K_202609090659.jpeg",
+    "verdict": "applied",
+    "slot": "tile",
+    "slug": "tile-06",
+    "note": "Two clean NO stamps, handshake and eye motifs."
+  },
+  {
+    "src": "Spy_dossier_card_variant_2K_202609090657.jpeg",
+    "verdict": "applied",
+    "slot": "tile",
+    "slug": "tile-07",
+    "note": "Teal wolf-in-a-suit agency seal, blocked-out ring lettering."
+  },
+  {
+    "src": "Blank_spy_dossier_card_2K_202609090711.jpeg",
+    "verdict": "applied",
+    "slot": "tile",
+    "slug": "tile-08",
+    "note": "Cleanest blank front: no lettering anywhere, crisp bars."
+  },
+  {
+    "src": "Blank_spy_dossier_card_2K_202609090632.jpeg",
+    "verdict": "applied",
+    "slot": "tile",
+    "slug": "tile-09",
+    "note": "RECEIVED stamp, cream with violet/lime/teal."
+  },
+  {
+    "src": "Blank_spy_dossier_card_back_2K_202609090654.jpeg",
+    "verdict": "applied",
+    "slot": "tile",
+    "slug": "tile-10",
+    "note": "Restrained purple and teal, thick pink glow."
+  },
+  {
+    "src": "Blank_spy_dossier_card_back_2K_202609090712.jpeg",
+    "verdict": "applied",
+    "slot": "tile",
+    "slug": "tile-11",
+    "note": "Left notch, blank teal label bar, amber emblem."
+  },
+  {
+    "src": "Spy_dossier_card_back_2K_202609090634.jpeg",
+    "verdict": "applied",
+    "slot": "tile",
+    "slug": "tile-12",
+    "note": "Stamps with their lettering redacted out. Monochrome."
+  },
+  {
+    "src": "Spy_dossier_card_design_2K_202609090631.jpeg",
+    "verdict": "applied",
+    "slot": "tile",
+    "slug": "tile-13",
+    "note": "Monochrome redacted, clear lower area."
+  },
+  {
+    "src": "Spy_dossier_card_design_2K_202609090642.jpeg",
+    "verdict": "applied",
+    "slot": "tile",
+    "slug": "tile-14",
+    "note": "Bulleted redaction list, teal accent."
+  },
+  {
+    "src": "Spy_dossier_card_variant_2K_202609090633.jpeg",
+    "verdict": "applied",
+    "slot": "tile",
+    "slug": "tile-15",
+    "note": "Cog emblem, paw oval, blank ID-card stamp. No text."
+  },
+  {
+    "src": "Blank_spy-dossier_card_2K_202609090651.jpeg",
+    "verdict": "applied",
+    "slot": "tile",
+    "slug": "tile-16",
+    "note": "Lilac wash, eye/padlock/camera icon row."
+  },
+  {
+    "src": "Blank_spy_dossier_card_2K_202609090653.jpeg",
+    "verdict": "applied",
+    "slot": "tile",
+    "slug": "tile-17",
+    "note": "Torn into three bands, solid violet and pink stamps."
+  },
+  {
+    "src": "Blank_spy_dossier_card_2K_202609090656.jpeg",
+    "verdict": "applied",
+    "slot": "tile",
+    "slug": "tile-18",
+    "note": "Busy sticker-sheet look, scribbled redactions."
+  },
+  {
+    "src": "Blank_spy_dossier_card_back_2K_202609090629.jpeg",
+    "verdict": "applied",
+    "slot": "tile",
+    "slug": "tile-19",
+    "note": "Monochrome, inked-out stamp lettering."
+  },
+  {
+    "src": "Blank_spy_dossier_card_back_2K_202609090659.jpeg",
+    "verdict": "applied",
+    "slot": "tile",
+    "slug": "tile-20",
+    "note": "Sepia, fist/lightbulb/eye/paw icons."
+  },
+  {
+    "src": "Manila_dossier_card_with_stamps_2K_202609090648.jpeg",
+    "verdict": "applied",
+    "slot": "tile",
+    "slug": "tile-21",
+    "note": "Torn in half, six recoloured signature stamps."
+  },
+  {
+    "src": "Manila_folder_card_with_stamps_2K_202609090643.jpeg",
+    "verdict": "applied",
+    "slot": "tile",
+    "slug": "tile-22",
+    "note": "Left notch, full palette stamps."
+  },
+  {
+    "src": "Blank_spy_dossier_card_2K_202609090651.jpeg",
+    "verdict": "rejected",
+    "reason": "TEXT ARTEFACT: lime stamp reads '#a3e635' -- the house-palette hex code printed on the card."
+  },
+  {
+    "src": "Spy_dossier_card_back_design_2K_202609090628.jpeg",
+    "verdict": "rejected",
+    "reason": "TEXT ARTEFACT: stamp reads 'Variant 1 of 25' -- the prompt instruction printed on the card."
+  },
+  {
+    "src": "Spy_dossier_card_variant_2K_202609090640.jpeg",
+    "verdict": "rejected",
+    "reason": "TEXT ARTEFACT: huge 'VARIANT 10 / 25' across the middle, plus the nonsense word 'SERIALIFIED'."
+  },
+  {
+    "src": "Spy_dossier_card_back_design_2K_202609090636.jpeg",
+    "verdict": "rejected",
+    "reason": "TEXT ARTEFACT: 'UNIDENTEY' and 'COMMUCDED' -- prominent misspelled English at the top."
+  },
+  {
+    "src": "Spy_dossier_card_variant_2K_202609090635.jpeg",
+    "verdict": "rejected",
+    "reason": "TEXT ARTEFACT: three separate gibberish glyph blocks, the violet one large and central."
+  },
+  {
+    "src": "Spy_dossier_card_back_design_2K_202609090658.jpeg",
+    "verdict": "rejected",
+    "reason": "IP RISK: circular seal is a large, central eagle mark closely resembling the S.H.I.E.L.D. logo. Owner's call, 2026-09-09."
+  },
+  {
+    "src": "Cartoon_animal_agent_saluting_2K_202609090617.jpeg",
+    "verdict": "rejected",
+    "reason": "DUPLICATE of the violet-coat salute (agent-salute): same badger, same framing. Red coat is off-palette and the peace sign reads worse than a salute."
+  }
+]
