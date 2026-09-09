@@ -43,7 +43,11 @@ SCENES = [
     ("buzzers",        "Cartoon_teams_slamming_game_buzzers",     False),
     ("gameshow",       "Cartoon_animals_at_game_show",            False),
     ("whiteboards",    "Cartoon_animals_playing_guessing",        False),
-    ("charades-zip",   "Cartoon_animal_playing_charades",         False),
+    # Owner-supplied replacement, 2026-09-09. The original charades art drew John with an extra
+    # arm -- he had a raised hand, a hand at his mouth AND two more paws below. The owner spotted it
+    # in the finished video and supplied this redraw. Matched by its own filename, not the old
+    # prefix, so re-running prep cannot silently pull the broken one back in.
+    ("charades-zip",   "Fix_raccoon_arms",                        False),
     ("charades-tower", "Animals_playing_charades_game",           False),
     ("sketch-relay",   "Animals_passing_sketchbooks",             False),
     ("parrot-easel",   "Parrot_drawing_on_easel_pad",             False),
