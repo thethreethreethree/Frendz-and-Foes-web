@@ -42,8 +42,15 @@ INK = (245, 248, 255)
 PINK, VIOLET, TEAL, LIME, AMBER = (236, 72, 153), (139, 92, 246), (45, 212, 191), (163, 230, 53), (245, 158, 11)
 
 FONT_DIR = "C:/Windows/Fonts"
+
+# CALIBRI, at the owner's direction. He overlaid a sample caption on a frame and asked for the font
+# and size to be matched to it, so the size was MEASURED rather than guessed: in his screenshot the
+# video area is ~1800px wide standing in for 1920, a scale of 0.9375. His sample string comes to
+# about 1008px in video coordinates. The same string in my old Arial Bold 62px computes to 853px and
+# measured 853px off the screenshot, which confirms the scale before it is used on his text.
+# 1008px puts his sample at Calibri ~81px bold. Hence an 80px subline, up from 62.
 def font(px, black=True):
-    for name in (("ariblk.ttf", "arialbd.ttf") if black else ("arialbd.ttf", "arial.ttf")):
+    for name in ("calibrib.ttf", "calibri.ttf", "arialbd.ttf"):
         p = os.path.join(FONT_DIR, name)
         if os.path.exists(p):
             return ImageFont.truetype(p, px)
@@ -101,6 +108,14 @@ SHOTS = [
     scene(2.4, "ks-medallion",   "GET IN EARLY",       "backers play first. i decide the rest.",  PINK,  ay=0.50),
     end(4.4,                                           "playzoo.snapaweb.com",                    TEAL),
 ]
+
+# Every shot 15% longer, at the owner's direction: the cut was too fast to sit with, and the new
+# sticker entrances need room to land before the shot is gone. Applied as a MULTIPLIER rather than
+# by rewriting 28 durations, so the rhythm between shots — the 1.4s banners against the 3.8s
+# opener — survives the change instead of being flattened.
+PACE = 1.15
+for _sh in SHOTS:
+    _sh["secs"] = round(_sh["secs"] * PACE, 2)
 
 # Act boundaries, by shot index — a 3-frame white flash lands on each, so the five movements read
 # as movements instead of one long list.
@@ -182,9 +197,23 @@ def logo(width):
 #
 # The OUTLINE is the part that matters, not the size: a plain white word vanishes into the parrot's
 # lime plumage or the bingo card. A black stroke keeps every letter readable over any of this art.
-BIG_PX, SMALL_PX = 150, 62
-CARD_BIG_PX, CARD_SMALL_PX = 92, 52
+BIG_PX, SMALL_PX = 170, 80
+CARD_BIG_PX, CARD_SMALL_PX = 112, 68
 PAD_X, TILT = 96, -2.0
+
+# Sticker entrance timing, in FRAMES rather than as a fraction of the shot. A fraction would make
+# the pop last 0.4s on a 1.4s banner and 1.1s on the 3.8s opener — the same motion reading as two
+# different animations. Frames keep every sticker's pop identical, which is what makes them feel
+# like one design rather than one-per-shot.
+POP_START, POP_FRAMES = 2, 11        # headline: scales up past 1.0 and settles
+SUB_START, SUB_FRAMES = 8, 9         # subline: staggered after it, rises and fades in
+
+def _ease_out_back(p):
+    """Overshoots 1.0 then settles — the snap that makes a sticker read as slapped on."""
+    c1 = 1.70158
+    c3 = c1 + 1
+    q = p - 1
+    return 1 + c3 * q * q * q + c1 * q * q
 
 def wrap(d, text, f, maxw):
     """Break a headline to the width actually available. "YOU GET SORTED" at 96px overflowed the
@@ -201,58 +230,77 @@ def wrap(d, text, f, maxw):
     if cur: lines.append(cur)
     return lines
 
-def _sticker(text, f, accent, stroke, offset):
-    """One caption line on its own transparent layer, so the whole line rotates as a unit."""
-    pad = stroke + offset + 40
+def _text_layer(text, f, fill, stroke, stroke_fill, accent_offset=None):
+    """One line of caption on its own transparent layer, so it can be rotated, scaled and faded as
+    a unit. Everything animated has to be a layer; PIL cannot transform text drawn straight on."""
+    pad = stroke + (accent_offset or 0) + 40
     probe = ImageDraw.Draw(Image.new("RGB", (8, 8)))
     w = int(probe.textlength(text, font=f)) + pad * 2
     lay = Image.new("RGBA", (w, f.size + pad * 2), (0, 0, 0, 0))
     d = ImageDraw.Draw(lay)
-    d.text((pad + offset, pad + offset), text, font=f, fill=accent + (255,),
-           stroke_width=stroke, stroke_fill=accent + (255,))
-    d.text((pad, pad), text, font=f, fill=INK + (255,),
-           stroke_width=stroke, stroke_fill=(8, 10, 18, 255))
+    if accent_offset:
+        d.text((pad + accent_offset, pad + accent_offset), text, font=f, fill=fill + (255,),
+               stroke_width=stroke, stroke_fill=fill + (255,))
+    d.text((pad, pad), text, font=f, fill=INK + (255,), stroke_width=stroke, stroke_fill=stroke_fill)
     return lay, pad
 
-def draw_caption(img, big, small, accent, t, card_mode=False):
+def _place(img, lay, x, y, scale=1.0, alpha=1.0, angle=0.0):
+    """Composite a caption layer, scaled about its own centre so a pop grows in place."""
+    if alpha <= 0.01:
+        return
+    if angle:
+        lay = lay.rotate(angle, resample=Image.BICUBIC, expand=True)
+    w0, h0 = lay.size
+    if abs(scale - 1.0) > 0.002:
+        lay = lay.resize((max(1, int(w0 * scale)), max(1, int(h0 * scale))), Image.BICUBIC)
+    if alpha < 0.999:
+        al = lay.getchannel("A").point(lambda v: int(v * alpha))
+        lay.putalpha(al)
+    img.paste(lay, (int(x + (w0 - lay.width) / 2), int(y + (h0 - lay.height) / 2)), lay)
+
+def draw_caption(img, big, small, accent, t, i, card_mode=False):
     d = ImageDraw.Draw(img, "RGBA")
     big_px = CARD_BIG_PX if card_mode else BIG_PX
     small_px = CARD_SMALL_PX if card_mode else SMALL_PX
-    fb, fs = font(big_px), font(small_px, black=False)
+    fb, fs = font(big_px), font(small_px)
     x = int(W * 0.52) if card_mode else PAD_X
     maxw = W - x - 60
 
     if not card_mode:
-        scrim = Image.new("RGBA", (W, 470), (0, 0, 0, 0))
+        scrim = Image.new("RGBA", (W, 520), (0, 0, 0, 0))
         sd = ImageDraw.Draw(scrim)
-        for i in range(470):
-            sd.line([(0, i), (W, i)], fill=(5, 8, 16, int(220 * (i / 470) ** 1.5)))
-        img.paste(Image.alpha_composite(img.crop((0, H - 470, W, H)).convert("RGBA"), scrim).convert("RGB"),
-                  (0, H - 470))
+        for k in range(520):
+            sd.line([(0, k), (W, k)], fill=(5, 8, 16, int(222 * (k / 520) ** 1.5)))
+        img.paste(Image.alpha_composite(img.crop((0, H - 520, W, H)).convert("RGBA"), scrim).convert("RGB"),
+                  (0, H - 520))
 
-    y_small = (H // 2 + 30) if card_mode else (H - 128)
+    y_small = (H // 2 + 24) if card_mode else (H - 190)
 
+    # headline: pops in with an overshoot, and unwinds a little extra tilt as it lands
     if big:
+        pp = min(1.0, max(0.0, (i - POP_START) / POP_FRAMES))
+        e = _ease_out_back(pp) if pp > 0 else 0.0
+        scale = 0.55 + 0.45 * e
+        angle = TILT + (1 - pp) * 7.0
+        alpha = min(1.0, pp * 2.4)
         lines = wrap(d, big, fb, maxw)
         lh = big_px + 18
-        # The block ends a clear 62px above the subline. At 96px a 26px gap was fine; at 150px the
-        # same gap put the headline's baseline into the subline, which the style preview showed.
-        y = y_small - 62 - lh * len(lines)
+        y = y_small - 66 - lh * len(lines)
         for ln in lines:
-            lay, pad = _sticker(ln, fb, accent,
-                                stroke=9 if card_mode else 10, offset=8 if card_mode else 12)
-            lay = lay.rotate(TILT, resample=Image.BICUBIC, expand=True)
-            img.paste(lay, (x - pad, y - pad), lay)
+            lay, pad = _text_layer(ln, fb, accent, 9 if card_mode else 12, (8, 10, 18, 255),
+                                   accent_offset=8 if card_mode else 13)
+            _place(img, lay, x - pad, y - pad, scale, alpha, angle)
             y += lh
 
+    # subline: staggered behind the headline, rising into place
     if small:
-        d.text((x, y_small), small, font=fs, fill=(238, 244, 255, 255),
-               stroke_width=4 if card_mode else 5, stroke_fill=(8, 10, 18, 255))
+        sp = min(1.0, max(0.0, (i - SUB_START) / SUB_FRAMES))
+        lay, pad = _text_layer(small, fs, accent, 4 if card_mode else 6, (8, 10, 18, 255))
+        _place(img, lay, x - pad, y_small - pad + int((1 - sp) * 46), 1.0, sp)
 
-    # accent rule that draws itself across the shot — motion without moving the words
     rw = int(min(1.0, t * 2.2) * (W * 0.30))
     if rw > 3:
-        ry = y_small + small_px + 26
+        ry = y_small + small_px + 30
         d.rounded_rectangle([x, ry, x + rw, ry + 9], radius=5, fill=accent + (255,))
 
 def render():
@@ -300,7 +348,7 @@ def render():
                     d.rounded_rectangle([(W - rw) / 2, H // 2 + 200, (W + rw) / 2, H // 2 + 208],
                                         radius=4, fill=sh["accent"] + (255,))
             else:
-                draw_caption(frame, sh["big"], sh["small"], sh["accent"], t, card_mode)
+                draw_caption(frame, sh["big"], sh["small"], sh["accent"], t, i, card_mode)
 
             # Hard 2-frame cuts, not fades: a dip to black on every cut is what made the last one
             # feel slow. Act changes get a white flash instead.
