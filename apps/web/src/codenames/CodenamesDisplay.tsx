@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCodenames } from "./useCodenames";
 import { useRexHost, RexBanner } from "../host/RexHost";
 import { CodenamesBoard } from "./CodenamesBoard";
@@ -182,21 +182,70 @@ function Center({ children, bg }: { children: React.ReactNode; bg?: React.CSSPro
   return <div style={bg} className="ff-backdrop grid h-full w-full place-items-center p-6 text-center text-ink"><div className="flex flex-col items-center">{children}</div></div>;
 }
 
-// John's reaction card. Which beat shows is derived from state rather than an event feed, so it
-// cannot get out of step with the board: the assassin ends the game on `beat-caught`, an ordinary
-// finish gets the getaway, a fresh clue gets the nose-tap, and a spent clue means someone guessed
-// wrong. It sits behind the board at low opacity so it never fights the words.
+// John's reaction card.
+//
+// The first version keyed off `state.clue`, which is null between turns -- most of the game -- so
+// five of the six beats were effectively unreachable. It also read `state.assassinHit`, a field
+// that does not exist on CnState; the front end was not in the typecheck's build graph, so nothing
+// said so. Both were found by watching a real game rather than by any test.
+//
+// This version reacts to TRANSITIONS: which card just flipped, and whose turn it was when it did.
+// A beat shows for a few seconds and clears, the way a reaction card should, and the ending is
+// derived from the board (every colour is public once the game ends) rather than an invented field.
+const BEAT_MS = 4500;
+
 function BeatCard({ state }: { state: CnState }) {
-  let slug: string | null = null;
-  if (state.phase === "ended") slug = state.assassinHit ? BEATS.caught : BEATS.getaway;
-  else if (state.clue && state.clue.remaining === 0) slug = BEATS.shock;
-  else if (state.clue && state.clue.remaining < state.clue.count) slug = BEATS.disaster;
-  else if (state.clue) slug = BEATS.clue;
-  else if (state.counts.red === 0 || state.counts.blue === 0) slug = BEATS.win;
-  if (!slug) return null;
+  const [beat, setBeat] = useState<string | null>(null);
+  const seen = useRef<{ revealed: Set<number>; phase: string; clue: string; team: CnTeam | null }>({
+    revealed: new Set(), phase: "lobby", clue: "", team: null,
+  });
+
+  useEffect(() => {
+    const st = seen.current;
+    // Remember the guessing team while a clue is live: after the last guess the clue is cleared and
+    // the turn has already flipped, so by then it is too late to ask who was guessing.
+    if (state.clue) st.team = state.clue.team;
+
+    if (state.phase === "lobby") {
+      st.revealed = new Set(); st.phase = "lobby"; st.clue = ""; st.team = null;
+      setBeat(null);
+      return;
+    }
+
+    if (state.phase === "ended" && st.phase !== "ended") {
+      st.phase = "ended";
+      const assassin = state.board.some((c) => c.revealed && c.color === "assassin");
+      setBeat(assassin ? BEATS.caught : BEATS.getaway);   // stays up; the game is over
+      return;
+    }
+    if (state.phase === "ended") return;
+    st.phase = state.phase;
+
+    const flipped = state.board.find((c) => c.revealed && !st.revealed.has(c.i));
+    if (flipped) {
+      for (const c of state.board) if (c.revealed) st.revealed.add(c.i);
+      if (flipped.color === "assassin") setBeat(BEATS.caught);
+      else if (flipped.color === "neutral") setBeat(BEATS.disaster);
+      else if (st.team && flipped.color === st.team) setBeat(BEATS.win);
+      else setBeat(BEATS.shock);
+      return;
+    }
+
+    const clueKey = state.clue ? `${state.clue.team}:${state.clue.word}:${state.clue.count}` : "";
+    if (clueKey && clueKey !== st.clue) { st.clue = clueKey; setBeat(BEATS.clue); }
+  }, [state]);
+
+  // Clear after a beat, so John reacts and then gets out of the way.
+  useEffect(() => {
+    if (!beat || state.phase === "ended") return;
+    const t = setTimeout(() => setBeat(null), BEAT_MS);
+    return () => clearTimeout(t);
+  }, [beat, state.phase]);
+
+  if (!beat) return null;
   return (
     <img
-      src={artUrl(slug)}
+      src={artUrl(beat)}
       alt=""
       aria-hidden
       className="pointer-events-none absolute bottom-0 right-0 h-2/5 w-auto opacity-25"
