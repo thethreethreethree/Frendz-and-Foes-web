@@ -37,6 +37,26 @@ export function FounderRoute() {
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // WITH THE OTHER HOOKS, deliberately. I first put this below the `if (!unlocked) return` for the
+  // passcode screen, where it reads fine and typechecks clean -- and would have crashed the moment
+  // the page went from locked to unlocked, because React requires every hook to run in the same
+  // order on every render. A hook after a conditional return does not.
+  //
+  // Which tab, remembered on this device: somebody checking the money each morning should not have
+  // to click past People first. try/catch because localStorage THROWS in a private window rather
+  // than politely returning null.
+  const [tab, setTabState] = useState<FounderTab>(() => {
+    try {
+      const saved = localStorage.getItem("pz_founder_tab");
+      if (saved && TABS.some(([id]) => id === saved)) return saved as FounderTab;
+    } catch { /* private mode */ }
+    return "people";
+  });
+  const setTab = (t: FounderTab) => {
+    setTabState(t);
+    try { localStorage.setItem("pz_founder_tab", t); } catch { /* private mode */ }
+  };
+
   // Auto-unlock if a passcode was remembered on this device.
   useEffect(() => {
     let saved: string | null = null;
@@ -132,33 +152,88 @@ export function FounderRoute() {
           <button onClick={lock} className="ml-auto text-sm font-semibold text-muted hover:text-ink">Lock</button>
         </div>
 
-        <BackersCard users={users} ready={dbReady} onRefresh={() => refreshBackers()} onOpen={setOpenId} />
+        {/* TABS, not one long scroll.
+            Measured before changing anything: with EMPTY data this page was 4.2 screens of
+            scrolling across six panels, and that is before a single backer, payment, venue or code
+            row exists. The codes table alone already runs to thirteen. §5 of the business backend
+            design called for this; five phases of panels is what made it necessary.
 
-        {openId && (
-          <BackerDetailCard
-            passcode={passcode} id={openId}
-            onClose={() => setOpenId(null)}
-            onChanged={() => refreshBackers()}
-          />
+            Only the ACTIVE tab is mounted, so the four you are not looking at do not fetch. Each
+            panel loads its own data on mount, so rendering all of them fired five admin requests on
+            every visit to look at one number. */}
+        <TabBar tab={tab} setTab={setTab} />
+
+        {tab === "people" && (
+          <>
+            <BackersCard users={users} ready={dbReady} onRefresh={() => refreshBackers()} onOpen={setOpenId} />
+            {openId && (
+              <BackerDetailCard
+                passcode={passcode} id={openId}
+                onClose={() => setOpenId(null)}
+                onChanged={() => refreshBackers()}
+              />
+            )}
+            {dbReady && <MintCard passcode={passcode} onMinted={refresh} />}
+            <CodesCard passcode={passcode} rows={rows} ready={dbReady} setRows={setRows} onRefresh={refresh} />
+            <SubscriptionsCard passcode={passcode} users={users} />
+          </>
         )}
 
-        <GamePassCard hours={passHours} onDrop={dropPass} />
+        {tab === "money" && (
+          <>
+            <MoneyCard passcode={passcode} />
+            <VenuesCard passcode={passcode} />
+          </>
+        )}
 
-        <MoneyCard passcode={passcode} />
-        <FulfilmentCard passcode={passcode} />
-        <ActivityCard passcode={passcode} />
-        <VenuesCard passcode={passcode} />
-        <StaffCard passcode={passcode} />
+        {tab === "fulfilment" && <FulfilmentCard passcode={passcode} />}
 
-        {dbReady && <MintCard passcode={passcode} onMinted={refresh} />}
+        {tab === "activity" && <ActivityCard passcode={passcode} />}
 
-        <CodesCard passcode={passcode} rows={rows} ready={dbReady} setRows={setRows} onRefresh={refresh} />
-
-        <SubscriptionsCard passcode={passcode} users={users} />
-
-        <AuditCard passcode={passcode} />
+        {tab === "settings" && (
+          <>
+            <GamePassCard hours={passHours} onDrop={dropPass} />
+            <StaffCard passcode={passcode} />
+            <AuditCard passcode={passcode} />
+          </>
+        )}
       </div>
     </Shell>
+  );
+}
+
+// The tabs. Ordered by how often the owner actually opens them, not by the order they were built:
+// people first (backers and codes are the daily job), money second, and settings last because it is
+// where you go once.
+const TABS = [
+  ["people", "People"],
+  ["money", "Money"],
+  ["fulfilment", "Fulfilment"],
+  ["activity", "Activity"],
+  ["settings", "Settings"],
+] as const;
+
+export type FounderTab = (typeof TABS)[number][0];
+
+function TabBar({ tab, setTab }: { tab: FounderTab; setTab: (t: FounderTab) => void }) {
+  return (
+    <div className="flex flex-wrap gap-1.5 rounded-2xl border border-line bg-surface p-1.5" role="tablist">
+      {TABS.map(([id, label]) => (
+        <button
+          key={id}
+          role="tab"
+          aria-selected={tab === id}
+          onClick={() => setTab(id)}
+          className={`ff-tap flex-1 rounded-xl px-3 py-2 text-sm font-bold transition ${
+            tab === id
+              ? "bg-gradient-to-br from-primary to-accent text-white"
+              : "text-muted hover:text-ink"
+          }`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
   );
 }
 
