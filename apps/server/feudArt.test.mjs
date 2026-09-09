@@ -1,6 +1,8 @@
-// THE GATE the owner asked for: "45 graphics, 45 applications to the page."
+// THE GATE, same shape as the Cover Ops one: every supplied Survey Showdown file must be accounted
+// for in the manifest as APPLIED or REJECTED-with-a-reason, and every applied file must exist AND be
+// referenced by the app. Wiring in "most of them" cannot pass silently.
 //
-// Every one of the 45 supplied Cover Ops files must be accounted for in the manifest as either
+// Every one of the 45 supplied Survey Showdown files must be accounted for in the manifest as either
 // APPLIED or REJECTED-with-a-reason, and every APPLIED file must (a) exist as a real image on
 // disk and (b) be REFERENCED BY THE APP. Wiring in "most of them" cannot pass silently, which is
 // the failure mode the owner has seen on other builds.
@@ -11,9 +13,9 @@ import { fileURLToPath } from "node:url";
 // fileURLToPath, not URL.pathname: this repo lives under "Frendz and Foes" and the space
 // arrives percent-encoded, which made every path lookup miss.
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const SRC_DIR = join(ROOT, "GRAPHIC ASSETS", "COVER OPS");
-const ART_DIR = join(ROOT, "apps", "web", "public", "art", "coverops");
-const MANIFEST = join(ROOT, "tools", "coverops", "manifest.json");
+const SRC_DIR = join(ROOT, "GRAPHIC ASSETS", "SURVEY SHOWDOWN");
+const ART_DIR = join(ROOT, "apps", "web", "public", "art", "feud");
+const MANIFEST = join(ROOT, "tools", "feud", "manifest.json");
 const CODE_DIRS = [join(ROOT, "apps", "web", "src")];
 
 let fails = 0;
@@ -47,7 +49,7 @@ check("slugs are unique", new Set(applied.map((m) => m.slug)).size === applied.l
 
 // 2. Every APPLIED file exists as a real, non-trivial image.
 const missingFiles = applied.filter((m) => !existsSync(join(ART_DIR, m.slug + ".webp")));
-check(`every applied asset exists in public/art/coverops (${applied.length} expected)`,
+check(`every applied asset exists in public/art/feud (${applied.length} expected)`,
       missingFiles.length === 0, `missing: ${missingFiles.map((m) => m.slug).join(", ")}`);
 const tiny = applied.filter((m) => {
   const p = join(ART_DIR, m.slug + ".webp");
@@ -68,7 +70,7 @@ function walk(dir, out = []) {
 // because ANOTHER game happens to use the same name -- Quick Draw does exactly that.
 const code = CODE_DIRS.flatMap((d) => walk(d))
   .map((f) => readFileSync(f, "utf8"))
-  .filter((t) => t.includes("coverops") || t.includes("./art"))
+  .filter((t) => t.includes("feud") || t.includes("./art"))
   .join("\n");
 // EXACT match, not substring. `code.includes(slug)` passed when a slug was renamed to a longer
 // string that merely STARTS with it -- "prop-token" is a prefix of "prop-tokenX", so unwiring an

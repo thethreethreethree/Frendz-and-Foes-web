@@ -1,0 +1,166 @@
+[
+  {
+    "idx": 14,
+    "src": "Neon_game_show_stage_2K_202609090941.jpeg",
+    "verdict": "applied",
+    "slot": "backdrop",
+    "slug": "bg-lobby",
+    "note": "Empty neon stage, two podiums, big BLANK answer board dead centre. Nobody here yet."
+  },
+  {
+    "idx": 15,
+    "src": "PlayZoo_game_screen_background_p…_2K_202609090948.jpeg",
+    "verdict": "applied",
+    "slot": "backdrop",
+    "slug": "bg-board",
+    "note": "Contestants at podiums, board with EIGHT BLANK PANELS. The app renders answers into them."
+  },
+  {
+    "idx": 11,
+    "src": "Confetti_cannons_firing_over_pod…_2K_202609090956.jpeg",
+    "verdict": "applied",
+    "slot": "backdrop",
+    "slug": "bg-finale",
+    "note": "Confetti cannons over empty podiums, streamers, litter. The night is over."
+  },
+  {
+    "idx": 16,
+    "src": "PlayZoo_party_game_background_sc…_2K_202609090948.jpeg",
+    "verdict": "applied",
+    "slot": "backdrop",
+    "slug": "bg-stage-alt",
+    "note": "Angled stage, raccoon and wolf at podiums. Board is off-centre and already lit, so an atmosphere plate rather than a working board."
+  },
+  {
+    "idx": 8,
+    "src": "Cartoon_lion_roaring_in_suit_2K_202609091014.jpeg",
+    "verdict": "applied",
+    "slot": "beat",
+    "slug": "beat-start",
+    "note": "Duke arms wide, roaring with laughter, crowd celebrating. Show opening."
+  },
+  {
+    "idx": 4,
+    "src": "Cartoon_lion_celebrating_victory_2K_202609091019.jpeg",
+    "verdict": "applied",
+    "slot": "beat",
+    "slug": "beat-win",
+    "note": "Duke behind the podium, both fists up, mane flying. Team takes the round."
+  },
+  {
+    "idx": 6,
+    "src": "Cartoon_lion_reacting_to_mistake_2K_202609091015.jpeg",
+    "verdict": "applied",
+    "slot": "beat",
+    "slug": "beat-strike",
+    "note": "Duke clutching his head beside a huge pink neon X and a fireball. Wrong answer."
+  },
+  {
+    "idx": 5,
+    "src": "Cartoon_lion_reacting_in_facepalm_2K_202609091018.jpeg",
+    "verdict": "applied",
+    "slot": "beat",
+    "slug": "beat-facepalm",
+    "note": "Duke with a paw over his face, one pained eye showing. A weak answer."
+  },
+  {
+    "idx": 12,
+    "src": "Defeated_cartoon_lion_reacting_2K_202609091017.jpeg",
+    "verdict": "applied",
+    "slot": "beat",
+    "slug": "beat-lost",
+    "note": "Duke in dismay, smoke and embers, the room wincing. Round lost."
+  },
+  {
+    "idx": 7,
+    "src": "Cartoon_lion_reacting_to_theft_2K_202609091018.jpeg",
+    "verdict": "applied",
+    "slot": "beat",
+    "slug": "beat-steal",
+    "note": "Duke grinning sheepishly as coins rain down. The steal."
+  },
+  {
+    "idx": 18,
+    "src": "Red_game-show_buzzer_2K_202609091012.jpeg",
+    "verdict": "applied",
+    "slot": "prop",
+    "slug": "prop-buzzer",
+    "note": "Big red game-show buzzer, amber glow ring under the dome."
+  },
+  {
+    "idx": 9,
+    "src": "Chunky_brass_token_stamped_hand_2K_202609091005.jpeg",
+    "verdict": "applied",
+    "slot": "prop",
+    "slug": "prop-token",
+    "note": "Brass token embossed with an open hand. Hand up to answer."
+  },
+  {
+    "idx": 10,
+    "src": "Coins_and_chips_stacked_into_2K_202609091011.jpeg",
+    "verdict": "applied",
+    "slot": "prop",
+    "slug": "prop-pot",
+    "note": "Box overflowing with gold coins and neon chips. The pot."
+  },
+  {
+    "idx": 17,
+    "src": "Red_X_stamp_slamming_down_2K_202609091003.jpeg",
+    "verdict": "applied",
+    "slot": "prop",
+    "slug": "prop-strike",
+    "note": "All-red stamp with a giant glowing X slamming down. Chosen over the wooden take: bolder and on-palette."
+  },
+  {
+    "idx": 20,
+    "src": "Retro_countdown_clock_ticking_2K_202609091013 (1).jpeg",
+    "verdict": "applied",
+    "slot": "prop",
+    "slug": "prop-clock",
+    "note": "Retro clock with its numerals falling out. Chosen over the brass take: house palette, and no countdown value baked in."
+  },
+  {
+    "idx": 2,
+    "src": "Blank_game-show_panel_flipping_open_2K_202609091004.jpeg",
+    "verdict": "applied",
+    "slot": "prop",
+    "slug": "panel-open",
+    "note": "Answer panel mid-flip with a BLANK WHITE face. The revealed state."
+  },
+  {
+    "idx": 1,
+    "src": "Blank_game-show_panel_flipping_open_2K_202609091004 (1).jpeg",
+    "verdict": "applied",
+    "slot": "prop",
+    "slug": "panel-dark",
+    "note": "Answer panel with a BLANK DARK face in a pink neon frame. The hidden state, and white text reads on it."
+  },
+  {
+    "idx": 19,
+    "src": "Red_team_crest_badge_2K_202609090958.jpeg",
+    "verdict": "applied",
+    "slot": "prop",
+    "slug": "crest-red",
+    "note": "Red team crest: shield, snarling critter in shades, crossed party-poppers."
+  },
+  {
+    "idx": 3,
+    "src": "Blue_team_crest_badge_2K_202609090959.jpeg",
+    "verdict": "applied",
+    "slot": "prop",
+    "slug": "crest-blue",
+    "note": "Blue team crest: circular badge, scowling wolf with a drink, crossed party-poppers."
+  },
+  {
+    "idx": 13,
+    "src": "Giant_red_X_stamping_down_2K_202609091003.jpeg",
+    "verdict": "rejected",
+    "reason": "DUPLICATE of prop-strike. Both are a red X stamp; the kept one has a far bolder X and a neon glow matching the house style, where this one's brown wooden handle reads realistic and off-palette."
+  },
+  {
+    "idx": 21,
+    "src": "Retro_countdown_clock_ticking_2K_202609091013.jpeg",
+    "verdict": "rejected",
+    "reason": "DUPLICATE of prop-clock. Both are a retro countdown clock; this one is muted brass rather than the house palette AND bakes in the digits 03 and 02, so the app could never render a live countdown into it."
+  }
+]
