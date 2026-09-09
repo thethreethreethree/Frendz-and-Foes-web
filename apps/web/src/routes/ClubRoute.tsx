@@ -27,7 +27,7 @@ export function ClubRoute() {
       <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col px-5 pt-8 pb-12">
         <div className="flex items-center justify-between">
           <div className="ff-title text-xl font-extrabold">The Backers' Club</div>
-          <Link to="/" className="rounded-lg border border-line bg-surface/70 px-3 py-1.5 text-sm font-bold text-ink transition hover:-translate-y-0.5">← Home</Link>
+          <Link to="/" className="ff-tap rounded-lg border border-line bg-surface/70 px-3 py-1.5 text-sm font-bold text-ink transition hover:-translate-y-0.5">← Home</Link>
         </div>
 
         {loading ? (
@@ -103,7 +103,7 @@ function SignupPanel({ onIn, toLogin }: { onIn: (b: Backer) => void; toLogin: ()
           {checking ? "Checking the list…" : "Check my code"}
         </button>
       </form>
-      <button onClick={toLogin} className="text-sm font-semibold text-muted underline-offset-4 hover:text-primary hover:underline">
+      <button onClick={toLogin} className="ff-tap text-sm font-semibold text-muted underline-offset-4 hover:text-primary hover:underline">
         Already a member? Log in →
       </button>
     </div>
@@ -226,7 +226,7 @@ function LoginPanel({ onIn, toSignup }: { onIn: (b: Backer) => void; toSignup: (
           {byPassword ? "Use my backer code instead" : "Use a username + password instead"}
         </button>
       </form>
-      <button onClick={toSignup} className="text-sm font-semibold text-muted underline-offset-4 hover:text-primary hover:underline">
+      <button onClick={toSignup} className="ff-tap text-sm font-semibold text-muted underline-offset-4 hover:text-primary hover:underline">
         New here? I've got a code →
       </button>
     </div>
@@ -249,7 +249,7 @@ function SignedIn({ me, onOut, onSorted, onUpdate }: { me: Backer; onOut: () => 
     return (
       <div className="mt-6 flex flex-col gap-3">
         <div className="flex items-center gap-3">
-          <button onClick={() => setChatOpen(false)} className="rounded-lg border border-line bg-surface/70 px-3 py-1.5 text-sm font-bold text-ink transition hover:-translate-y-0.5">← Club</button>
+          <button onClick={() => setChatOpen(false)} className="ff-tap rounded-lg border border-line bg-surface/70 px-3 py-1.5 text-sm font-bold text-ink transition hover:-translate-y-0.5">← Club</button>
           {enc && <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold" style={{ borderColor: enc.accent, color: enc.accent }}>{enc.emoji} {enc.name}</span>}
           <span className="ml-auto text-sm font-semibold text-muted">{me.username}</span>
         </div>

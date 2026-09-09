@@ -52,7 +52,7 @@ export function WaitlistRoute() {
             <div className="ff-title text-xl font-extrabold leading-none">John</div>
             <div className="text-xs font-semibold uppercase tracking-wide text-muted">Your man on the inside</div>
           </div>
-          <Link to="/" className="ml-auto rounded-lg border border-line bg-surface/70 px-3 py-1.5 text-sm font-bold text-ink transition hover:-translate-y-0.5">
+          <Link to="/" className="ff-tap ml-auto rounded-lg border border-line bg-surface/70 px-3 py-1.5 text-sm font-bold text-ink transition hover:-translate-y-0.5">
             ← Home
           </Link>
         </div>

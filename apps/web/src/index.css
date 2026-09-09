@@ -58,6 +58,23 @@ body,
   }
 }
 
+/* A tap target big enough to actually hit.
+ *
+ * 44px is Apple's documented minimum and Google's is 48. A measured sweep of the phone-facing pages
+ * found the "back home" link at 34px on every route, the suggestion chips on /ask-john at 34px, and
+ * "Already a member? Log in" at TWENTY pixels tall. None of that is visible in a screenshot -- the
+ * text reads fine, it is simply too small to hit with a thumb, and the person who misses just
+ * assumes the site is broken.
+ *
+ * inline-flex so the min-height actually applies to an anchor, which is inline by default and
+ * ignores height entirely. */
+.ff-tap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+}
+
 /* The app's scroll shell.
  *
  * index.html sets viewport-fit=cover, which deliberately extends the page under the notch and the

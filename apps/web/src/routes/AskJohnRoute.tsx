@@ -63,7 +63,7 @@ export function AskJohnRoute() {
           <div className="ff-title text-xl font-extrabold leading-none">Ask John</div>
           <Link
             to="/"
-            className="ml-auto rounded-lg border border-line bg-surface/70 px-3 py-1.5 text-sm font-bold text-ink transition hover:-translate-y-0.5"
+            className="ff-tap ml-auto rounded-lg border border-line bg-surface/70 px-3 py-1.5 text-sm font-bold text-ink transition hover:-translate-y-0.5"
           >
             ← Home
           </Link>
@@ -124,8 +124,13 @@ export function AskJohnRoute() {
           </div>
         </blockquote>
 
-        {/* Chat */}
-        <div className="mt-6 flex h-[30rem] flex-col overflow-hidden rounded-2xl border border-line bg-surface/60 backdrop-blur">
+        {/* Chat.
+            Height is min(30rem, 65dvh), not a flat 30rem: on a phone with the browser bars showing,
+            a fixed 480px box plus everything above it pushes the composer off the bottom of the
+            screen -- you can see the conversation but not the thing you type into. dvh shrinks it
+            with the chrome. min-h keeps it usable rather than collapsing to a slit on a short
+            landscape screen. */}
+        <div className="mt-6 flex h-[min(30rem,65dvh)] min-h-[20rem] flex-col overflow-hidden rounded-2xl border border-line bg-surface/60 backdrop-blur">
           <div className="flex items-center gap-2 border-b border-line px-4 py-2.5">
             <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
             <span className="text-sm font-bold text-ink">John · PlayZoo support</span>
@@ -169,7 +174,7 @@ export function AskJohnRoute() {
                   <button
                     key={q}
                     onClick={() => send(q)}
-                    className="rounded-full border border-line bg-canvas px-3 py-1.5 text-[13px] font-semibold text-muted transition hover:border-primary hover:text-ink"
+                    className="ff-tap rounded-full border border-line bg-canvas px-3 py-1.5 text-[13px] font-semibold text-muted transition hover:border-primary hover:text-ink"
                   >
                     {q}
                   </button>
