@@ -162,3 +162,105 @@ software already runs. The half that can slip is the custom characters, because 
 backer count; a campaign that lands far past $3,500 puts that date under pressure first, and missing a
 stated delivery date in month one is the most damaging thing a campaign can do. Flagged before launch,
 owner's call to keep it.
+
+---
+
+## 5. Reward tiers — titles, descriptions and items
+
+Paste-ready for Kickstarter's reward form. Every number here comes from `PLANS` in
+[apps/server/subscriptions.js](../apps/server/subscriptions.js); the headline sentences match
+`TIERS` in [kickstarter/build.py](build.py) and `productKnowledge.js` word for word, so the reward
+card, the campaign page and what Rex and John tell people can never disagree.
+
+**Shipping on all three: none.** Every reward is digital — access and artwork. Nothing is posted, so
+set no shipping and collect no addresses.
+
+**Estimated delivery on all three: one month after the campaign ends.** Access and backer codes go
+out the moment it closes; the custom animals are drawn inside that same month. That promise is
+already made in the FAQ above, so the reward form must not say anything looser or tighter.
+
+### $15 — Zoo Pass
+
+**Title:** Zoo Pass
+
+**Description:**
+
+> Six months of PlayZoo and five games to lose at — a cheap date with your own public humiliation.
+>
+> It all runs in a browser. Put PlayZoo on the big screen, your guests scan a code, and Rex — the AI
+> zookeeper — runs the night. Nobody downloads anything and nobody makes an account.
+>
+> You also get into the backers-only club, where you are sorted into one of the four enclosures and
+> are not permitted to leave.
+
+**Items:**
+- PlayZoo access — 6 months
+- 5 games unlocked
+- Backer code
+- Backers-only club and enclosure
+
+### $30 — Founding Animal
+
+**Title:** Founding Animal
+
+**Description:**
+
+> A full year of PlayZoo, ten games, and one custom animal drawn just for you — immortalised, and
+> frankly better-looking than the original.
+>
+> Everything in the Zoo Pass, twice the year and twice the games. Then we draw you into the cast: one
+> animal, your call on what it is, done in the PlayZoo house style and yours to keep.
+>
+> The custom animals are the part with a real deadline attached — they are drawn in batches through
+> the month after the campaign closes, ahead of the general artwork.
+
+**Items:**
+- PlayZoo access — 12 months
+- 10 games unlocked
+- 1 custom animal character, drawn for you
+- Backer code
+- Backers-only club and enclosure
+
+### $50 — Head Keeper
+
+**Title:** Head Keeper
+
+**Description:**
+
+> A full year with EVERY game unlocked, plus TWO custom characters made just for you. You basically
+> own a wing of the zoo.
+>
+> All fourteen games, nothing held back, for a full year — Survey Showdown, Murder Mystery, Cover
+> Ops, Sketch Relay, Bingo Night, Trivia, Foreheads, Quick Draw, Solo Clue, Ballpark, Full Cast,
+> Encore, Off Limits and the strictly-after-dark one.
+>
+> And two custom animals rather than one, so you can put someone else in the zoo as well. Whether
+> that is a gift or a threat is between you and them.
+
+**Items:**
+- PlayZoo access — 12 months
+- All 14 games unlocked
+- 2 custom animal characters, drawn for you
+- Backer code
+- Backers-only club and enclosure
+
+### OPEN DECISION — which five, and which ten?
+
+`subscriptions.js` states it plainly: `games` is a COUNT, not a list, because **which** five games a
+Zoo Pass unlocks has never been decided. This copy therefore says "5 games" and "10 games" and names
+none of them.
+
+That will not survive contact with backers. "Which five?" is the first comment under the $15 tier,
+and answering it publicly after people have pledged means either disappointing someone or quietly
+changing the deal — which the risks section on this page explicitly promises not to do.
+
+Three ways to close it, none of which the code prevents:
+
+1. **Name them.** Pick five and ten and write them into the reward items. Clearest for a backer, and
+   the tiers stop being a mystery box.
+2. **Let the backer choose.** "Any five games you like." Generous, and it makes the count the
+   product rather than a curated list.
+3. **Say it is not decided yet, on the page.** Honest, keeps the option open, and is much better
+   received before a pledge than after one.
+
+Only $50 is safe as written, because "every game" needs no list.
