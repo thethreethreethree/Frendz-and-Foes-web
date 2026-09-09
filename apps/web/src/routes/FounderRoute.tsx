@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { refreshGate, isFounderPass } from "../net/gate";
 import { Link } from "react-router-dom";
 import {
   type BackerDetail, type BackerRow, type CodeRow, type EventRow,
@@ -20,6 +21,7 @@ const REMEMBER_KEY = "pz_founder_pc";
 
 export function FounderRoute() {
   const [passcode, setPasscode] = useState("");
+  const [passHours, setPassHours] = useState<number | null>(null);
   const [remember, setRemember] = useState(false);
   const [authed, setAuthed] = useState(false);
   const [rows, setRows] = useState<CodeRow[]>([]);
@@ -45,6 +47,21 @@ export function FounderRoute() {
     setRows(r.codes || []);
     void refreshBackers(pc);
     try { if (remember) localStorage.setItem(REMEMBER_KEY, pc); } catch { /* ignore */ }
+    // Exchange the passcode for a founder pass so THIS browser can also reach the games while the
+    // public gate is shut. Best-effort: the founder tools work whether or not this succeeds.
+    try {
+      const pr = await fetch("/api/founder/pass", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ passcode: pc }),
+      });
+      if (pr.ok) { const d = await pr.json(); setPassHours(d.hours ?? null); await refreshGate(); }
+    } catch { /* founder tools still work without it */ }
+  }
+
+  async function dropPass() {
+    try { await fetch("/api/founder/pass/revoke", { method: "POST" }); } catch { /* ignore */ }
+    setPassHours(null);
+    await refreshGate();
   }
 
   async function refresh() {
@@ -111,6 +128,8 @@ export function FounderRoute() {
             onChanged={() => refreshBackers()}
           />
         )}
+
+        <GamePassCard hours={passHours} onDrop={dropPass} />
 
         <MintCard passcode={passcode} onMinted={refresh} />
 
@@ -655,5 +674,35 @@ function Shell({ children }: { children: React.ReactNode }) {
         {children}
       </div>
     </div>
+  );
+}
+
+// Says out loud that the games are open for THIS browser only, and offers to hand the pass back.
+// Without this the owner cannot tell whether they are seeing the games because they are a founder
+// or because the public gate is open -- which is exactly the thing they must not get wrong before
+// a launch.
+function GamePassCard({ hours, onDrop }: { hours: number | null; onDrop: () => void }) {
+  const active = isFounderPass();
+  return (
+    <section className="rounded-2xl border border-line bg-surface p-4">
+      <h2 className="ff-title text-xl">Game access</h2>
+      {active ? (
+        <>
+          <p className="mt-1 text-sm text-muted">
+            The games are unlocked <b>on this browser only</b>
+            {hours ? <> for about <b>{hours} hours</b></> : null}. Everyone else still lands on the
+            waitlist. Open <span className="font-mono">/#/display</span> to start a game night.
+          </p>
+          <button onClick={onDrop}
+            className="mt-3 rounded-lg border border-line px-3 py-1.5 text-sm font-semibold hover:border-danger">
+            Hand the pass back
+          </button>
+        </>
+      ) : (
+        <p className="mt-1 text-sm text-muted">
+          Games are open to everyone right now, so no founder pass is needed.
+        </p>
+      )}
+    </section>
   );
 }

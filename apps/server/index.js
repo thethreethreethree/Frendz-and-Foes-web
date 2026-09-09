@@ -64,6 +64,8 @@ import {
 } from "./backers.js";
 import { sortQuestions, sortInto } from "./sorting.js";
 import { getEnclosure } from "./enclosures.js";
+import { makeFounderPass, founderFromCookieHeader, founderCookie, clearFounderCookie,
+         FOUNDER_PASS_HOURS } from "./founderPass.js";
 import { canAccess, getMessages, addMessage, addRexMessage, addJohnMessage, roomMeta, ROOM_IDS, chatStats } from "./chat.js";
 import { initBanter, noteMessage as banterNote, forceScene } from "./banter.js";
 import { addressedCharacter, ensureTag } from "./mentions.js";
@@ -111,12 +113,35 @@ app.get("/healthz", (_req, res) => res.json({ ok: true }));
 // completes: flip GAMES_OPEN=true in the box's .env and restart to open everything at once. The
 // client fails CLOSED (treats games as locked) if this can't be reached, so a launch gate never
 // fails open.
-app.get("/api/status", (_req, res) => {
+app.get("/api/status", (req, res) => {
   res.json({
     gamesOpen: process.env.GAMES_OPEN === "true",
+    // A valid founder pass opens the games for THIS BROWSER ONLY, while the public gate stays shut.
+    founder: !!founderFromCookieHeader(req.headers.cookie),
     // So the client can say WHY hosting is refused instead of showing a dead button.
     enforceEntitlements: process.env.ENFORCE_ENTITLEMENTS === "true",
   });
+});
+
+// --- Founder pass ------------------------------------------------------------------------------
+// Exchange the admin passcode for a short-lived signed cookie that lets this browser into the games
+// before launch. Rate-limited on the SAME bucket as the admin header, so a guesser cannot use this
+// door to sidestep the limit on that one.
+app.post("/api/founder/pass", (req, res) => {
+  if (!ADMIN_PASSCODE) return res.status(503).json({ error: "No admin passcode is configured." });
+  const given = req.body && req.body.passcode;
+  if (!timingSafeStrEq(given, ADMIN_PASSCODE)) {
+    if (rateLimited(req, res, "adminpass", 20, 15 * 60_000)) return;
+    return res.status(401).json({ error: "Wrong passcode." });
+  }
+  const token = makeFounderPass();
+  res.setHeader("Set-Cookie", founderCookie(token, isSecure(req)));
+  res.json({ ok: true, hours: FOUNDER_PASS_HOURS });
+});
+
+app.post("/api/founder/pass/revoke", (req, res) => {
+  res.setHeader("Set-Cookie", clearFounderCookie(isSecure(req)));
+  res.json({ ok: true });
 });
 
 // --- Rex, the AI host --------------------------------------------------------------------------
@@ -794,7 +819,11 @@ io.on("connection", (socket) => {
   // or joined — not by clicking, not by a typed URL, not by a hand-rolled socket. We simply don't
   // wire up any game handlers and refuse the generic relay "join", so the socket is inert for games
   // while locked. The front-end funnels every entry point to /waitlist; this is the server backstop.
-  const gamesOpen = process.env.GAMES_OPEN === "true";
+  // The founder pass opens the games for one browser. Read from the HANDSHAKE cookie, because a
+  // socket has no Express request -- and gating only the HTTP side would let the owner reach a
+  // screen whose socket then silently ignored every game event.
+  const founderPass = !!founderFromCookieHeader(socket.handshake.headers.cookie);
+  const gamesOpen = process.env.GAMES_OPEN === "true" || founderPass;
 
   if (gamesOpen) {
     registerMurder2Handlers(io, socket, rooms); // roomKey/now default to uppercase/Date.now here
