@@ -62,7 +62,7 @@ export function HomeRoute() {
 
   return (
     <div
-      className="relative h-full overflow-y-auto text-ink"
+      className="relative h-full ff-scroll text-ink"
       style={{
         // Night-zoo backdrop as the page's OWN background (children paint over it, so hero text +
         // cards sit on top). Dark scrim gradient keeps text readable; canvas colour is the fallback

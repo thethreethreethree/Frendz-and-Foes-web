@@ -39,6 +39,44 @@ body,
   margin: 0;
 }
 
+/* DYNAMIC viewport height, not 100%.
+ *
+ * Every content route is a fixed-height box with its own inner scroller (body has overflow:hidden),
+ * so the height of that box IS the visible area. `height: 100%` on iOS resolves against the LARGE
+ * viewport — the one with Safari's URL bar collapsed — so while the bar is expanded the box is
+ * taller than what you can see, and the top and bottom of every page sit UNDERNEATH the browser
+ * chrome. Reported on /ask-john: John's name hidden behind the URL bar, the quote cut off by the
+ * toolbar.
+ *
+ * 100dvh tracks the chrome as it collapses and expands. Declared inside @supports so a browser
+ * without dvh keeps the 100% above rather than losing its height entirely. */
+@supports (height: 100dvh) {
+  html,
+  body,
+  #root {
+    height: 100dvh;
+  }
+}
+
+/* The app's scroll shell.
+ *
+ * index.html sets viewport-fit=cover, which deliberately extends the page under the notch and the
+ * home indicator — and nothing was padding for it, so the first and last lines of a page could sit
+ * under hardware. These insets are zero on every device without a notch, so this costs nothing
+ * anywhere else.
+ *
+ * overscroll-behavior stops a scroll that reaches the end of this box from chaining to the page
+ * behind it, which on iOS is what makes an inner scroller feel broken. */
+.ff-scroll {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
 body {
   font-family: var(--font-body);
   background: rgb(var(--c-canvas)); /* dark ground; avoids a white flash before the app paints */

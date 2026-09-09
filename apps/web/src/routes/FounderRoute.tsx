@@ -691,7 +691,7 @@ function CopyButton({ label, text }: { label: string; text: string }) {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="ff-backdrop h-full overflow-y-auto text-ink">
+    <div className="ff-backdrop h-full ff-scroll text-ink">
       <div className="mx-auto w-full max-w-3xl px-5 pt-8 pb-12">
         <div className="flex items-center justify-between">
           <div className="ff-title text-xl font-extrabold">PlayZoo · Founder</div>
