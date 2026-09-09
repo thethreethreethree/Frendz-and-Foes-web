@@ -235,29 +235,67 @@ urgent the moment the campaign closes.*
 **Phase 3 — activity.** `game_sessions`, `game_players`, the Activity tab.
 *Third because it is also unrecoverable, but no game nights are being lost while the gate is shut.*
 
-**Phase 4 — venues.** `venues`, venue detail, per-venue access and sessions.
-*Fourth because it needs Phase 1 (billing) and Phase 3 (usage) to be worth anything.*
+**Phase 4 — staff and roles.** `staff`, named login, `actor_staff_id` on events.
+*MOVED UP from fifth on 2026-09-09. The original ordering said "unless someone else is getting
+access sooner, in which case it moves to first" — and per §7.4 they are. Shared-passcode history
+cannot be attributed retroactively, so every day of shared use makes this worse.*
 
-**Phase 5 — staff and roles.** `staff`, named login, `actor_staff_id` on events.
-*Last because it adds no business capability while the owner is the only user — unless someone else
-is getting access sooner, in which case it moves to first.*
-
----
-
-## 7. Decisions for the owner — I will not guess these
-
-1. **White-label pricing.** Per event, monthly, or annual licence? This sets `venues.plan` and how
-   billing works. It is a fact about the business, not a technical choice.
-2. **Post-Kickstarter consumer pricing.** The three tiers are Kickstarter REWARDS. Whether they
-   become recurring subscriptions at the same prices, or a different retail price, decides whether
-   `subscriptions` needs a price history.
-3. **Kickstarter money.** It arrives via Kickstarter/Stripe Connect, not our own Stripe. Should it
-   be imported into `payments` as `source='kickstarter'` so one number covers all revenue?
-4. **Staff.** Is anyone else getting access in the next few months? If yes, Phase 5 moves first.
-5. **Refund policy.** Whether a refund revokes entitlements immediately or at period end changes
-   `applyStripeEvent()`.
+**Phase 5 — venues.** `venues`, venue detail, per-venue access and sessions.
+*Last because it needs Phase 1 (billing) and Phase 3 (usage) to be worth anything, and no venue is
+being billed today.*
 
 ---
+
+## 7. Owner decisions — ANSWERED 2026-09-09
+
+These were open questions about the business, not technical choices. The owner answered four of the
+five on 2026-09-09; they are recorded here because a decision that lives only in a chat log gets
+re-litigated or, worse, quietly guessed at by the next person to touch the schema.
+
+### 7.1 White-label pricing — **MONTHLY SUBSCRIPTION**
+
+Venues pay a flat monthly fee. `venues.plan` holds a monthly plan id and `venues.renews` is a
+monthly date. Predictable to forecast, simplest to build, and it matches how bars already buy
+quiz-night services.
+
+*The known risk:* a venue running one event a month feels overcharged and churns. The session
+tracking from Phase 3 is what will show whether that is happening — usage per venue against fee —
+so this is revisitable with evidence rather than by feel.
+
+### 7.2 Post-Kickstarter consumer pricing — **STILL OPEN**
+
+Whether the three tiers become recurring subscriptions at the same prices, or retail moves to a
+different number. Until it is answered, `subscriptions` has no price history and does not need one.
+It becomes urgent the day the campaign closes and the first renewal is due.
+
+### 7.3 Kickstarter money — **NOT IMPORTED. The ledger is Stripe-only.**
+
+`payments` records money that actually moved through our own Stripe. Kickstarter pledges stay out.
+
+*Why this matters more than it sounds:* it means **the ledger is not total revenue and must never be
+presented as if it were.** The gain is that every row reconciles against a Stripe payout with no
+hand-entered figures in the way. The cost is that "how much have we taken" needs two places, and the
+founder has accepted that.
+
+*Consequence already applied:* the Money panel's manual "Add Kickstarter money" box contradicted
+this the moment it was decided, and has been changed — see §5.
+
+### 7.4 Staff — **YES, ONE OR TWO PEOPLE SOON. Phase 5 moves ahead of Phase 4.**
+
+The ordering in §6 assumed the owner was the only user. That assumption is now false, so named staff
+accounts jump the queue ahead of venues.
+
+*Why this cannot wait:* everyone currently shares one passcode. The audit log therefore cannot
+distinguish the owner's action from anyone else's, and access cannot be revoked from one person
+without changing the passcode for everybody — including the owner. Both problems get worse with
+every day of shared use, because the un-attributable history accumulates and cannot be repaired
+afterwards.
+
+### 7.5 Refunds — **ACCESS ENDS IMMEDIATELY**
+
+A refund revokes entitlements at once and cancels any undelivered fulfilment item, rather than
+letting the period run out. Simplest to reason about and it closes the obvious abuse of playing a
+full month and then reclaiming the money.
 
 ## 8. What this does NOT include, deliberately
 

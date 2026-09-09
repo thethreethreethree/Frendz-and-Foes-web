@@ -37,17 +37,22 @@ export function MoneyCard({ passcode }: { passcode: string }) {
   }
   useEffect(() => { void load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [passcode]);
 
-  // Kickstarter money never touches our Stripe, so it has to be enterable by hand or the ledger can
-  // never show the true total. Parsed to MINOR UNITS here so a float never reaches the server.
+  // Money that reached us outside Stripe -- a bank transfer, a comped venue night. Parsed to MINOR
+  // UNITS here so a float never reaches the server.
+  //
+  // NOT Kickstarter. The owner decided on 2026-09-09 (§7.3 of the business backend design) that
+  // pledges stay OUT of this ledger, so that every row here reconciles against a Stripe payout with
+  // no hand-entered figures in the way. The cost of that choice is that these totals are not total
+  // revenue, which the panel now says out loud rather than letting the number imply otherwise.
   async function addManual() {
     const major = Number(amount);
     if (!Number.isFinite(major) || major === 0) { setErr("Enter an amount like 30 or 12.50."); return; }
     setBusy(true);
     const r = await addPayment(passcode, {
       kind: major > 0 ? "charge" : "refund",
-      source: "kickstarter",
+      source: "bank",
       amountCents: Math.round(Math.abs(major) * 100),
-      description: note || "Kickstarter pledge",
+      description: note || "Recorded by hand",
     });
     setBusy(false);
     if (r.error) { setErr(r.error); return; }
@@ -112,9 +117,17 @@ export function MoneyCard({ passcode }: { passcode: string }) {
       </div>
 
       {ready && (
+        <p className="border-t border-line px-4 py-2 text-xs text-muted">
+          <b>Stripe money plus anything recorded by hand below.</b> Kickstarter pledges are
+          deliberately excluded — they never touch our Stripe, and keeping them out is what lets
+          every row here reconcile against a payout. These figures are not your total revenue.
+        </p>
+      )}
+
+      {ready && (
         <div className="flex flex-wrap items-end gap-2 border-t border-line px-4 py-3">
           <label className="text-xs font-semibold uppercase tracking-wide text-muted">
-            Add Kickstarter money
+            Add money taken outside Stripe
             <input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="30"
               inputMode="decimal"
               className="mt-1 block w-28 rounded-lg border border-line bg-canvas px-3 py-1.5 text-sm text-ink" />

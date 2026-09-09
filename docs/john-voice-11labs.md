@@ -52,6 +52,12 @@ you want to retry one bad line without re-rolling everything.
 
 ## 3. The script
 
+> **Do not paste this section into ElevenLabs.** It read the headings, timecodes and tags aloud when
+> the whole document was pasted in. The clean paste-ready version is
+> [`john-vo-script.txt`](john-vo-script.txt) — spoken words only, nothing else in the file.
+>
+> What follows is the same script with timings, for laying the audio onto the video afterwards.
+
 Timecodes are the real shot boundaries of the current render (1920×1080, 68.93s), generated from
 `SHOTS` in `tools/promo/build_promo.py`. **In-points are where a line should START.** The voice does
 not need to hit every cut and will sound better flowing across them.
