@@ -28,7 +28,7 @@ THREE THINGS THE FIRST CUT GOT WRONG, all fixed here:
 Frames are composed with PIL and piped into ffmpeg. Each shot pre-scales its source ONCE; the
 per-frame work is a crop and the caption.
 """
-import os, subprocess
+import math, os, subprocess
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
@@ -64,12 +64,18 @@ def font(px, black=True):
 #   cut   : a keyed cutout over a dark ground plate.
 #   card  : a portrait banner held beside its caption — 16:9 is wide enough to do this properly.
 #   end   : the wordmark over the confetti plate.
-def scene(secs, art, big, small, accent, ay=0.5, ax=0.5):
-    return dict(secs=secs, kind="scene", art=art, big=big, small=small, accent=accent, ay=ay, ax=ax)
-def cut(secs, art, ground, big, small, accent):
-    return dict(secs=secs, kind="cut", art=art, ground=ground, big=big, small=small, accent=accent)
-def card(secs, art, big, small, accent):
-    return dict(secs=secs, kind="card", art=art, big=big, small=small, accent=accent)
+#   fx    : how the PICTURE enters, on top of the caption's own pop.
+#           "whip"  a fast horizontal smear that settles — used to enter the quick game shots
+#           "shake" a decaying camera knock — used on the two impact beats
+#           "spin"  the banner rotates and scales into place — the enclosure cards
+def scene(secs, art, big, small, accent, ay=0.5, ax=0.5, fx=None):
+    return dict(secs=secs, kind="scene", art=art, big=big, small=small, accent=accent,
+                ay=ay, ax=ax, fx=fx)
+def cut(secs, art, ground, big, small, accent, fx=None):
+    return dict(secs=secs, kind="cut", art=art, ground=ground, big=big, small=small,
+                accent=accent, fx=fx)
+def card(secs, art, big, small, accent, fx="spin"):
+    return dict(secs=secs, kind="card", art=art, big=big, small=small, accent=accent, fx=fx)
 def end(secs, small, accent):
     return dict(secs=secs, kind="end", art="confetti", big="", small=small, accent=accent)
 
@@ -86,17 +92,17 @@ SHOTS = [
     cut(2.4, "cut-rex-wave", "backdrop", "MEET REX",   "he thinks he's in charge",                AMBER),
     cut(2.0, "cut-sleeper",  "backdrop", "",           "meanwhile, our star performer",           LIME),
     # --- the games, fast --------------------------------------------------------------------
-    scene(2.0, "buzzers",        "SURVEY SHOWDOWN",    "two teams. one buzzer. no friendships.",  PINK,  ay=0.52),
-    scene(1.8, "whiteboards",    "",                   "wrong. confidently wrong.",               PINK,  ay=0.50),
-    scene(1.8, "charades-zip",   "CHARADES",           "no talking. no writing. no dignity.",     VIOLET, ay=0.45),
-    scene(1.6, "charades-tower", "",                   "he has been a washing machine a while",   VIOLET, ay=0.42),
-    scene(2.0, "sketch-relay",   "SKETCH RELAY",       "this began as a cat",                     LIME,  ay=0.50),
-    scene(1.6, "parrot-easel",   "",                   "it has opinions now",                     LIME,  ay=0.48),
-    scene(2.0, "spy-board",      "COVER OPS",          "find your agents. avoid the assassin.",   TEAL,  ay=0.50),
-    scene(2.0, "lineup",         "MURDER MYSTERY",     "one of us is lying. it's me.",            PINK,  ay=0.52),
-    scene(1.6, "bingo",          "BINGO",              "she is absolutely cheating",              AMBER, ay=0.50),
-    scene(1.6, "casino",         "HIGH ROLLERS",       "the house is a gorilla. it wins.",        AMBER, ay=0.50),
-    scene(1.8, "bar18",          "THE 18+ ONE",        "not in front of the parrot",              VIOLET, ay=0.45),
+    scene(2.0, "buzzers",        "SURVEY SHOWDOWN",    "two teams. one buzzer. no friendships.",  PINK,  ay=0.52, fx="shake"),
+    scene(1.8, "whiteboards",    "",                   "wrong. confidently wrong.",               PINK,  ay=0.50, fx="whip"),
+    scene(1.8, "charades-zip",   "CHARADES",           "no talking. no writing. no dignity.",     VIOLET, ay=0.45, fx="whip"),
+    scene(1.6, "charades-tower", "",                   "he has been a washing machine a while",   VIOLET, ay=0.42, fx="whip"),
+    scene(2.0, "sketch-relay",   "SKETCH RELAY",       "this began as a cat",                     LIME,  ay=0.50, fx="whip"),
+    scene(1.6, "parrot-easel",   "",                   "it has opinions now",                     LIME,  ay=0.48, fx="whip"),
+    scene(2.0, "spy-board",      "COVER OPS",          "find your agents. avoid the assassin.",   TEAL,  ay=0.50, fx="whip"),
+    scene(2.0, "lineup",         "MURDER MYSTERY",     "one of us is lying. it's me.",            PINK,  ay=0.52, fx="shake"),
+    scene(1.6, "bingo",          "BINGO",              "she is absolutely cheating",              AMBER, ay=0.50, fx="whip"),
+    scene(1.6, "casino",         "HIGH ROLLERS",       "the house is a gorilla. it wins.",        AMBER, ay=0.50, fx="whip"),
+    scene(1.8, "bar18",          "THE 18+ ONE",        "not in front of the parrot",              VIOLET, ay=0.45, fx="whip"),
     cut(1.8, "cut-wheel", "backdrop", "",              "grand prize: meh",                        LIME),
     # --- the enclosures ---------------------------------------------------------------------
     card(1.4, "banner-rowdies",  "YOU GET SORTED",     "four enclosures. no appeals.",            AMBER),
@@ -176,13 +182,61 @@ def load_cut(name, ground, accent):
 
 def load_card(name):
     """A portrait enclosure banner held on the left, caption to the right. This composition only
-    works because the frame is wide — it is the one thing 16:9 buys that 9:16 cannot."""
+    works because the frame is wide — it is the one thing 16:9 buys that 9:16 cannot.
+
+    Returns the ground and the banner SEPARATELY: the banner is composited per frame so it can
+    rotate and scale into place, which it cannot do once flattened into the plate."""
     g = ground_plate("doodle", 0.55)
     b = _open(name).convert("RGBA")
-    s = (H - 120) / b.height
-    b = b.resize((int(b.width * s), int(b.height * s)), Image.LANCZOS)
-    g.paste(b, (170, 60), b if b.mode == "RGBA" else None)
-    return g
+    sc = (H - 120) / b.height
+    return g, b.resize((int(b.width * sc), int(b.height * sc)), Image.LANCZOS)
+
+def place_banner(ground, banner, k):
+    """k 0..1 through the spin-in. Rotates from 14 degrees and scales up, settling with the same
+    overshoot the captions use so picture and type land as one move."""
+    f = ground.copy()
+    e = _ease_out_back(k) if k > 0 else 0.0
+    scale = 0.62 + 0.38 * e
+    ang = 14.0 * (1 - k)
+    b = banner.rotate(ang, resample=Image.BICUBIC, expand=True)
+    if abs(scale - 1.0) > 0.002:
+        b = b.resize((max(1, int(b.width * scale)), max(1, int(b.height * scale))), Image.BICUBIC)
+    if k < 0.999:
+        b.putalpha(b.getchannel("A").point(lambda v: int(v * min(1.0, k * 2.2))))
+    cx, cy = 170 + banner.width // 2, 60 + banner.height // 2
+    f.paste(b, (cx - b.width // 2, cy - b.height // 2), b)
+    return f
+
+FX_FRAMES = {"whip": 5, "shake": 11, "spin": 13}
+
+def _pan(frame, ox, oy, zoom):
+    """Offset a frame WITHOUT exposing an edge.
+
+    The first attempt translated with an affine and left a black band where the picture used to be —
+    which reads as a rendering glitch, not as camera movement. Zooming slightly first gives the
+    offset something to move into, and clamping the crop guarantees it can never reach past the
+    image no matter how large the offset gets."""
+    zw, zh = int(W * zoom), int(H * zoom)
+    z = frame.resize((zw, zh), Image.BILINEAR)
+    cx = min(max((zw - W) / 2 + ox, 0), zw - W)
+    cy = min(max((zh - H) / 2 + oy, 0), zh - H)
+    return z.crop((int(cx), int(cy), int(cx) + W, int(cy) + H))
+
+def _whip(frame, k):
+    """A horizontal smear that decays as the shot settles.
+
+    The smear is made by squashing the frame horizontally and stretching it back, which averages
+    neighbouring columns — a directional blur PIL has no filter for, and far cheaper than summing
+    shifted copies. The slide is deliberately small: the blur does the work, and a large slide would
+    need a zoom big enough to visibly soften the whole shot."""
+    narrow = max(10, int(W * (1.0 - 0.90 * k)))
+    f = frame.resize((narrow, H), Image.BILINEAR).resize((W, H), Image.BILINEAR)
+    return _pan(f, W * 0.055 * k, 0, 1.14)
+
+def _shake(frame, k, i):
+    """A decaying camera knock. Oscillates so it reads as an impact rather than a drift."""
+    amp = 30 * k
+    return _pan(frame, amp * math.sin(i * 2.30), amp * 0.55 * math.cos(i * 3.10), 1.075)
 
 def logo(width):
     im = Image.open(LOGO_PATH).convert("RGBA")
@@ -320,7 +374,7 @@ def render():
         elif kind == "cut":
             still = load_cut(sh["art"], sh["ground"], sh["accent"])
         elif kind == "card":
-            still = load_card(sh["art"])
+            still, banner = load_card(sh["art"])
         else:
             still = ground_plate("confetti", 0.25)
             lg = logo(760)
@@ -335,8 +389,17 @@ def render():
                 px = min(max(int(ax * src.width - cw / 2), 0), src.width - cw)
                 py = min(max(int(ay * src.height - ch / 2), 0), src.height - ch)
                 frame = src.crop((px, py, px + cw, py + ch)).resize((W, H), Image.BILINEAR)
+            elif kind == "card":
+                kk = min(1.0, (i + 1) / FX_FRAMES["spin"]) if sh.get("fx") == "spin" else 1.0
+                frame = place_banner(still, banner, kk)
             else:
                 frame = still.copy()
+
+            fx = sh.get("fx")
+            if fx == "whip" and i < FX_FRAMES["whip"]:
+                frame = _whip(frame, 1.0 - i / FX_FRAMES["whip"])
+            elif fx == "shake" and i < FX_FRAMES["shake"]:
+                frame = _shake(frame, (1.0 - i / FX_FRAMES["shake"]) ** 1.6, i)
 
             if kind == "end":
                 d = ImageDraw.Draw(frame, "RGBA")
