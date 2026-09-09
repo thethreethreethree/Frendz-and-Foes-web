@@ -36,6 +36,24 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "dist", "story")
 os.makedirs(OUT, exist_ok=True)
 
+
+def clear_stale(out_dir, keep):
+    """Delete PNGs from a PREVIOUS run that this run no longer produces.
+
+    An export ADDS and OVERWRITES; it never removes. When the enclosures block was inserted
+    at 07 every later section shifted by one, and the old 07-the-cast .. 11-back-us stayed on
+    disk beside the new 08-the-cast .. 12-back-us -- seventeen files for twelve sections.
+    Uploading that folder would have put duplicates on the campaign, in the wrong order.
+    """
+    removed = []
+    for f in sorted(os.listdir(out_dir)):
+        if f.endswith(".png") and f not in keep:
+            os.remove(os.path.join(out_dir, f))
+            removed.append(f)
+    if removed:
+        print("removed stale:", ", ".join(removed))
+    return removed
+
 CHROME = r"C:/Program Files/Google/Chrome/Application/chrome.exe"
 PORT = 9231
 
@@ -202,6 +220,7 @@ try:
         txt = ev(f"(function(){{var e=document.getElementById('{sid}');return e?e.innerText:'';}})()") or ""
         text_parts.append(f"\n\n===== {title} =====\n\n{txt.strip()}")
 
+    clear_stale(OUT, {f"{fname}.png" for _, fname, _ in SECTIONS})
     open(os.path.join(OUT, "kickstarter-copy.txt"), "w", encoding="utf-8").write("\n".join(text_parts))
     print("saved kickstarter-copy.txt")
     print("OUT:", OUT)

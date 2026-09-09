@@ -12,6 +12,7 @@ apps/web/public/. Rebuild:  python kickstarter/build.py
 Published artifact: https://claude.ai/code/artifact/88fce1cd-26be-4c48-8e3b-2bb8702389ea
 """
 import base64, io, os
+NL = chr(10)
 from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -63,6 +64,20 @@ TIERS = [
  ("$50","Head Keeper","A full year with EVERY game unlocked, plus TWO custom characters made just for you. You basically own a wing of the zoo.",True),
 ]
 
+
+# The four enclosures - mirrors apps/server/enclosures.js, which is canonical for names, accents,
+# temperaments, mottos and blurbs.
+ENCLOSURES = [
+    ("rowdies", "The Rowdies", "#f59e0b", "Bold · Loud · Fearless", "Leap first, look later.",
+     "Charge-first, loud, allergic to reading the sign. If it looks fun, they're already doing it."),
+    ("cuddle-crew", "The Cuddle Crew", "#2dd4bf", "Loyal · Warm · Ride-or-die", "Snacks and secrets shared.",
+     "No drama, no snitching, all snacks. They'll have your back and split their last fry with you."),
+    ("know-it-owls", "The Know-It-Owls", "#8b5cf6", "Clever · Witty · Smug", "Well, actually.",
+     "Trivia sharks and 'well, actually' merchants. Insufferably right roughly 80% of the time."),
+    ("schemers", "The Schemers", "#ec4899", "Sly · Cunning · Mischief", "Didn't see it? Didn't happen.",
+     "Always playing three moves ahead. It's not cheating if nobody catches you. Yes, that's John's lot."),
+]
+
 def build(mode):
     """mode 'b64' inlines images; mode 'url' references them at same-origin paths."""
     jpg = (lambda rel,w,q=82: "/"+rel) if mode=="url" else _b64_jpg
@@ -85,6 +100,21 @@ def build(mode):
         cast += f'  <div class="critter"><img src="{png(f"cast/{slug}.png",340)}" alt="{name} the {slug}"><b>{name}</b><span>{role}</span></div>\n'
     cast += '</div>'
 
+    # The banner art MUST go through png(). A hardcoded <img src="ui/..."> resolves on the served
+    # site but is a BROKEN IMAGE in the self-contained artifact and in the story-image export --
+    # which is exactly how it shipped the first time, and only looking at the PNG caught it.
+    enclosures = '<div class="encgrid">' + NL
+    for slug, name, accent, temper, motto, blurb in ENCLOSURES:
+        enclosures += (
+            f'  <div class="enccard" style="--acc:{accent}">' + NL +
+            f'    <img class="encbanner" src="{png(f"ui/enclosure-{slug}.png", 520)}" alt="{name} banner">' + NL +
+            f'    <h3>{name}</h3>' + NL +
+            f'    <p class="temper">{temper}</p>' + NL +
+            f'    <p>{blurb}</p>' + NL +
+            f'    <p class="motto">&ldquo;{motto}&rdquo;</p>' + NL +
+            '  </div>' + NL)
+    enclosures += '</div>'
+
     tiers = '<div class="tiers tiers-3">\n'
     for price,name,desc,feat in TIERS:
         cls = "tier feature" if feat else "tier"
@@ -94,6 +124,7 @@ def build(mode):
     body = open(os.path.join(HERE, "body.html"), encoding="utf-8").read()
     return (body.replace("{{HERO}}", hero).replace("{{REX_FULL}}", rexfull)
                 .replace("{{JOHN_DESK}}", johndesk).replace("{{REX_WARN}}", rexwarn).replace("{{GAMES_GRID}}", games).replace("{{CAST_GRID}}", cast)
+                .replace("{{ENCLOSURE_GRID}}", enclosures)
                 .replace("{{TIERS}}", tiers))
 
 def wrap(body):
