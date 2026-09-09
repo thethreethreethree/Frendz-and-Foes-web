@@ -152,6 +152,41 @@ CREATE TABLE IF NOT EXISTS payments (
 CREATE INDEX IF NOT EXISTS idx_payments_occurred ON payments(occurred);
 CREATE INDEX IF NOT EXISTS idx_payments_backer ON payments(backer_id);
 CREATE INDEX IF NOT EXISTS idx_payments_brand ON payments(brand_slug);
+
+-- What we OWE people. Phase 2 of docs/business-backend-design.md.
+--
+-- The campaign sells custom characters: Founding Animal ($30) includes one, Head Keeper ($50)
+-- includes two, and the FAQ promises them within a month of the campaign closing. Nothing recorded
+-- who was owed what, so the list of outstanding promises existed only in the tier definitions --
+-- which say how many are owed but never whether any were delivered.
+--
+-- Unlike payments this table is MUTABLE: a promise is a piece of work that moves through states,
+-- not an event that happened. Every transition is written to the events table, which is where the
+-- immutable history lives, matching how the subscriptions table already works.
+--
+-- UNIQUE(backer_id, kind, seq) is the important line. Rows are generated FROM a backer's tier, and
+-- that generation runs again every time their entitlements are looked at; without the constraint a
+-- Head Keeper would accrue two more character slots on every visit. Same lesson as
+-- payments.stripe_event_id: anything derived from a repeatable trigger needs a key that says
+-- "this one already exists".
+CREATE TABLE IF NOT EXISTS fulfilment (
+  id          TEXT PRIMARY KEY,
+  backer_id   TEXT NOT NULL,
+  kind        TEXT NOT NULL,     -- custom-character | physical | other
+  seq         INTEGER NOT NULL DEFAULT 1,   -- "1 of 2", "2 of 2" — what makes a tier's rows distinct
+  title       TEXT,
+  status      TEXT NOT NULL DEFAULT 'owed', -- owed | briefed | in-progress | review | delivered | cancelled
+  due         INTEGER,           -- null until the owner sets a date; NEVER guessed from a
+                                 -- campaign close date nobody has told us
+  notes       TEXT,
+  asset_path  TEXT,              -- where the finished art landed
+  created     INTEGER NOT NULL,
+  updated     INTEGER NOT NULL,
+  UNIQUE(backer_id, kind, seq)
+);
+CREATE INDEX IF NOT EXISTS idx_fulfilment_status ON fulfilment(status);
+CREATE INDEX IF NOT EXISTS idx_fulfilment_backer ON fulfilment(backer_id);
+CREATE INDEX IF NOT EXISTS idx_fulfilment_due ON fulfilment(due);
 `);
 
 // Has this one-time migration already run? Explicit, because "the table is empty" is not the same

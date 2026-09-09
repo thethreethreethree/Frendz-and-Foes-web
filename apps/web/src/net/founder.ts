@@ -257,3 +257,64 @@ export async function addPayment(passcode: string, p: {
     return { ok: true };
   } catch { return { error: "Network hiccup — try again." }; }
 }
+
+// --- Fulfilment queue --------------------------------------------------------------------------
+// What we owe people. Rows are generated from each backer's tier on the server, so this list cannot
+// drift from what was actually sold — the client never creates them.
+export type FulfilmentRow = {
+  id: string;
+  backer_id: string;
+  backer_name: string | null;
+  backer_full_name: string | null;
+  kind: string;
+  seq: number;
+  title: string;
+  status: string;
+  due: number | null;
+  notes: string | null;
+  asset_path: string | null;
+  created: number;
+  updated: number;
+};
+
+export type FulfilmentSummary = {
+  byStatus: Record<string, number>;
+  open: number;
+  overdue: number;
+  total: number;
+};
+
+export const FULFILMENT_STATUSES = [
+  "owed", "briefed", "in-progress", "review", "delivered", "cancelled",
+] as const;
+
+export async function listFulfilment(passcode: string, openOnly = false): Promise<{
+  items?: FulfilmentRow[]; summary?: FulfilmentSummary; ready?: boolean; error?: string;
+}> {
+  try {
+    const res = await fetch(`/api/backer/admin/fulfilment${openOnly ? "?open=1" : ""}`,
+      { headers: headers(passcode) });
+    if (res.status === 401) return { error: "That admin passcode isn't right." };
+    if (res.status === 503) return { ready: false, items: [], error: "The database is unavailable right now." };
+    if (!res.ok) return { error: "Couldn't load the queue — try again." };
+    const d = await res.json();
+    return { ...d, ready: d.ready !== false };
+  } catch { return { error: "Network hiccup — try again." }; }
+}
+
+export async function updateFulfilment(
+  passcode: string, id: string, patch: { status?: string; due?: string | null; notes?: string; assetPath?: string },
+): Promise<{ item?: FulfilmentRow; error?: string }> {
+  try {
+    const res = await fetch(`/api/backer/admin/fulfilment/${encodeURIComponent(id)}`, {
+      method: "PATCH", headers: { ...headers(passcode), "content-type": "application/json" },
+      body: JSON.stringify(patch),
+    });
+    if (res.status === 401) return { error: "That admin passcode isn't right." };
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      return { error: d.error || "Couldn't save that change." };
+    }
+    return await res.json();
+  } catch { return { error: "Network hiccup — try again." }; }
+}

@@ -42,11 +42,14 @@ import { generateCodes, checkCode, redeemCode, listCodes, revokeCode, backerCode
 let SQL = null;
 let SUBS = null;
 let PAY = null;
+let FUL = null;
 try {
   SQL = await import("./sqlite.js");
   SUBS = await import("./subscriptions.js");
   PAY = await import("./payments.js");
   await PAY.initPayments();
+  FUL = await import("./fulfilment.js");
+  await FUL.initFulfilment();
 } catch (err) {
   console.error("[ff-server] database unavailable - founder tools and subscriptions are OFF:", err?.message || err);
 }
@@ -440,6 +443,14 @@ app.get("/api/backer/admin/stripe", (req, res) => {
 // Nothing here deletes anything. The files are the only copy of the pre-SQLite data, and a separate
 // deployment (Render) has its own database that may not have migrated - so removal is a deliberate,
 // per-environment act, taken by a human who can see this report.
+// 503 when the fulfilment queue specifically is down, so the page can say "figures unavailable"
+// rather than render a confident empty queue - the same rule the money panel follows.
+const needFul = (res) => {
+  if (FUL && FUL.fulfilmentReady()) return false;
+  res.status(503).json({ ready: false, error: "The database is unavailable right now." });
+  return true;
+};
+
 // --- Money ledger (founder-only) ---------------------------------------------------------------
 // Every total here is DERIVED from the payments rows on each call. Nothing is stored, so nothing
 // can drift away from what actually happened.
@@ -497,6 +508,91 @@ app.get("/api/backer/admin/payments.csv", (req, res) => {
   ].map(esc).join(","));
   res.setHeader("content-type", "text/csv; charset=utf-8");
   res.setHeader("content-disposition", `attachment; filename="playzoo-payments-${new Date().toISOString().slice(0,10)}.csv"`);
+  res.send([head.join(","), ...rows].join(NL));
+});
+
+// --- Fulfilment queue (founder-only) -----------------------------------------------------------
+// What we owe people. Rows are DERIVED from each backer's tier and generated idempotently, so this
+// list cannot drift from what was actually sold.
+app.get("/api/backer/admin/fulfilment", (req, res) => {
+  if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
+  if (needDb(res) || needFul(res)) return;
+
+  // Generate any missing rows before listing. There is no "on purchase" hook that could be missed:
+  // every backer with an entitlement gets their rows the first time this page is opened.
+  let created = 0;
+  try {
+    for (const b of SQL.db.prepare("SELECT id FROM backers").all()) {
+      const ent = SUBS.entitlementsFor(b.id);
+      created += FUL.syncFulfilmentFor(b.id, ent?.customCharacters || 0).created;
+    }
+  } catch (err) {
+    console.error("[ff-server] fulfilment sync sweep failed:", err?.message || err);
+  }
+
+  const list = FUL.listFulfilment({
+    status: req.query.status || null,
+    openOnly: req.query.open === "1",
+  });
+  res.json({ ready: list.ready, items: list.items, summary: FUL.fulfilmentSummary(), created });
+});
+
+// Move an item along, set a due date, attach notes or the finished asset path.
+app.patch("/api/backer/admin/fulfilment/:id", (req, res) => {
+  if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
+  if (needDb(res) || needFul(res)) return;
+  const b = req.body || {};
+  const patch = {};
+  if (b.status !== undefined) patch.status = b.status;
+  if (b.notes !== undefined) patch.notes = b.notes;
+  if (b.title !== undefined) patch.title = b.title;
+  if (b.assetPath !== undefined) patch.assetPath = b.assetPath;
+  // due arrives as a date string or null; a NaN must be rejected, never stored as a coerced 0.
+  if (b.due !== undefined) {
+    if (b.due === null || b.due === "") patch.due = null;
+    else {
+      const t = Date.parse(b.due);
+      if (!Number.isFinite(t)) return res.status(400).json({ error: "Due date is not a real date." });
+      patch.due = t;
+    }
+  }
+  const r = FUL.updateFulfilment(req.params.id, patch);
+  if (r.error) return res.status(400).json({ error: r.error });
+  res.json({ item: r.item });
+});
+
+// A one-off item no tier implies - a replacement, a poster, a goodwill extra.
+app.post("/api/backer/admin/fulfilment", (req, res) => {
+  if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
+  if (needDb(res) || needFul(res)) return;
+  const b = req.body || {};
+  const r = FUL.addFulfilment({
+    backerId: b.backerId, kind: b.kind, title: b.title, notes: b.notes,
+    due: b.due ? Date.parse(b.due) : undefined,
+  });
+  if (r.error) return res.status(400).json({ error: r.error });
+  res.json({ item: r.item });
+});
+
+app.get("/api/backer/admin/fulfilment.csv", (req, res) => {
+  if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
+  if (needDb(res) || needFul(res)) return;
+  const { ready, items } = FUL.allFulfilmentForExport();
+  if (!ready) return res.status(503).json({ error: "The database is unavailable right now." });
+  const chr34 = String.fromCharCode(34);
+  const NL = String.fromCharCode(10);
+  const esc = (v) => {
+    const s = v == null ? "" : String(v);
+    return /["\n,]/.test(s) ? chr34 + s.replace(/"/g, chr34 + chr34) + chr34 : s;
+  };
+  const head = ["backer_name","backer_full_name","kind","title","status","due_iso","notes","asset_path","backer_id","id"];
+  const rows = items.map((f) => [
+    f.backer_name, f.backer_full_name, f.kind, f.title, f.status,
+    f.due ? new Date(f.due).toISOString().slice(0, 10) : "",
+    f.notes, f.asset_path, f.backer_id, f.id,
+  ].map(esc).join(","));
+  res.setHeader("content-type", "text/csv; charset=utf-8");
+  res.setHeader("content-disposition", `attachment; filename="playzoo-fulfilment-${new Date().toISOString().slice(0,10)}.csv"`);
   res.send([head.join(","), ...rows].join(NL));
 });
 
