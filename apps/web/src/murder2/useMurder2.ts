@@ -23,7 +23,7 @@ export function useMurder2(room: string, role: "host" | "display" | "player") {
         const st = loadPlayer2(room);
         if (st.name) m2Join(room, st.name, st.avatar, st.id, st.rejoinToken);
       } else {
-        s.emit("join", { room, role, game: "murder2" });
+        s.emit("join", { room, role, game: "murder" });
       }
     };
     const onState = (st: V2State) => setState(st);

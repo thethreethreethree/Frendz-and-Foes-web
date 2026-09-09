@@ -116,6 +116,19 @@ check("payments is 401 unauthenticated", await status("/api/backer/admin/payment
 check("activity is 401 unauthenticated", await status("/api/backer/admin/activity", {}) === 401);
 
 console.log("");
+console.log("--- the backer game-pick routes are actually mounted ---");
+// Unit tests prove gamePicks.js is correct; they cannot prove index.js registered the routes.
+// A 401 means the route EXISTS and refused an anonymous caller. A 404 would mean it is not there
+// at all, which is what a typo in the path or an unreached app.get() looks like.
+check("GET /api/backer/games exists and refuses anonymous",
+      await status("/api/backer/games", {}) === 401);
+check("POST /api/backer/games exists and refuses anonymous",
+      (await fetch(base + "/api/backer/games", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ game: "trivia" }),
+      })).status === 401);
+
+console.log("");
 console.log("--- revoking ends the session already in hand ---");
 await fetch(`${base}/api/backer/admin/staff/${made.staff.id}`, {
   method: "PATCH", headers: { ...asOwner, "content-type": "application/json" },

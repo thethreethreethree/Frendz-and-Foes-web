@@ -244,6 +244,26 @@ CREATE TABLE IF NOT EXISTS staff (
   last_seen   INTEGER
 );
 CREATE INDEX IF NOT EXISTS idx_staff_active ON staff(active);
+
+-- WHICH games a backer chose. Phase 3b of docs/business-backend-design.md.
+--
+-- The tiers sell a COUNT, not a list: Zoo Pass is any five games you choose, Founding Animal any
+-- ten (owner decision, 2026-09-09, recorded in kickstarter/campaign-fields.md). That promise is
+-- printed on the reward card, so it has to be a real thing the server can check.
+--
+-- The count a backer is allowed comes from their PLAN and is NOT stored here. Storing it would let
+-- the allowance drift away from the tier they actually hold -- upgrade someone and their old,
+-- smaller number would quietly still apply. The plan is the single source of truth for how many;
+-- this table only records which.
+--
+-- UNIQUE(backer_id, game) so picking the same game twice cannot burn two of a backer's five.
+CREATE TABLE IF NOT EXISTS game_picks (
+  backer_id TEXT NOT NULL,
+  game      TEXT NOT NULL,     -- a canonical slug from productKnowledge.js GAMES
+  picked    INTEGER NOT NULL,
+  UNIQUE(backer_id, game)
+);
+CREATE INDEX IF NOT EXISTS idx_picks_backer ON game_picks(backer_id);
 `);
 
 // Who performed an action, when it was a member of staff rather than a backer.

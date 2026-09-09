@@ -45,6 +45,7 @@ let PAY = null;
 let FUL = null;
 let SES = null;
 let STAFF = null;
+let PICKS = null;
 try {
   SQL = await import("./sqlite.js");
   SUBS = await import("./subscriptions.js");
@@ -56,6 +57,8 @@ try {
   await SES.initSessions();
   STAFF = await import("./staff.js");
   await STAFF.initStaff();
+  PICKS = await import("./gamePicks.js");
+  await PICKS.initGamePicks();
   // A crash or a deploy restart leaves sessions with ended = NULL forever, which both blocks the
   // next night in that room (partial unique index) and counts a dead night as live in every figure.
   SES.closeStaleSessions();
@@ -895,6 +898,39 @@ app.post("/api/backer/logout", (req, res) => {
   res.json({ ok: true });
 });
 
+// --- Which games did you choose? ---------------------------------------------------------------
+// The tiers sell "any five games you choose" (any ten at $30). These are how a backer sees and
+// changes that. Head Keeper has every game and never touches them.
+app.get("/api/backer/games", (req, res) => {
+  const b = sessionBacker(req);
+  if (!b) return res.status(401).json({ error: "Not signed in." });
+  if (needDb(res)) return;
+  const ent = SUBS.entitlementsFor(b.id);
+  const st = PICKS ? PICKS.pickStateFor(b.id, ent) : { ready: false, chosen: [] };
+  // The catalogue travels with the state so the chooser never has to hardcode a second game list --
+  // which is exactly how three slugs drifted apart the first time.
+  // The catalogue is read from gamePicks, which reads it from productKnowledge. One chain, so the
+  // chooser cannot be offered a game the picker would then reject.
+  const catalogue = PICKS ? [...PICKS.VALID_GAMES] : [];
+  res.json({ ...st, games: catalogue });
+});
+
+app.post("/api/backer/games", (req, res) => {
+  const b = sessionBacker(req);
+  if (!b) return res.status(401).json({ error: "Not signed in." });
+  if (needDb(res)) return;
+  if (!PICKS || !PICKS.gamePicksReady()) {
+    return res.status(503).json({ error: "The database is unavailable right now." });
+  }
+  const { game, pick } = req.body || {};
+  const ent = SUBS.entitlementsFor(b.id);
+  const r = pick === false
+    ? PICKS.unpickGame(b.id, game)
+    : PICKS.pickGame(b.id, game, ent);
+  if (r.error) return res.status(400).json({ error: r.error });
+  res.json(PICKS.pickStateFor(b.id, ent));
+});
+
 app.get("/api/backer/me", (req, res) => {
   res.json({ backer: publicBacker(sessionBacker(req)), ready: backersReady() });
 });
@@ -1081,7 +1117,7 @@ function socketBacker(socket) {
 //
 // The superadmin passcode always passes - the founder must never be locked out of their own product
 // by a billing rule.
-function hostEntitled(socket) {
+function hostEntitled(socket, game = null) {
   if (process.env.ENFORCE_ENTITLEMENTS !== "true") return { ok: true, reason: "not enforced" };
   const pc = socket.handshake?.auth?.adminPasscode || socket.handshake?.headers?.["x-admin-passcode"];
   if (ADMIN_PASSCODE && pc === ADMIN_PASSCODE) return { ok: true, reason: "superadmin" };
@@ -1101,6 +1137,18 @@ function hostEntitled(socket) {
         : "Hosting needs an active PlayZoo plan. Back the Kickstarter to get one.",
     };
   }
+  // WHICH game, not just whether they have a plan. The tiers sell "any five games you choose", so
+  // an active plan alone is not the whole answer -- it was, until now, which made the count on the
+  // reward card decorative.
+  //
+  // canPlay fails OPEN on an unknown game or an unavailable picks table, for the same reason the
+  // check above fails open with no database: a storage problem must never become "the game you paid
+  // for is gone".
+  if (PICKS && game) {
+    const allowed = PICKS.canPlay(b.id, game, ent);
+    if (!allowed.ok) return { ok: false, reason: allowed.reason, error: allowed.error };
+  }
+
   return { ok: true, reason: "entitled", plan: ent.plan };
 }
 
@@ -1235,7 +1283,7 @@ io.on("connection", (socket) => {
     if (typeof room !== "string" || !room) return;
     // Only the hosting surfaces are gated: a "player" phone has no account and never will.
     if (role === "host" || role === "display") {
-      const gate = hostEntitled(socket);
+      const gate = hostEntitled(socket, typeof game === "string" ? game : null);
       if (!gate.ok) {
         console.log(`[ff-server] host refused (${gate.reason})`);
         socket.emit("locked", { entitlement: true, reason: gate.reason, error: gate.error });

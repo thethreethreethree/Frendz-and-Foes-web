@@ -16,7 +16,7 @@ import type { SessionRow, ActivitySummary, GameStat } from "../net/founder";
 const GAME_NAMES: Record<string, string> = {
   feud: "Survey Showdown",
   trivia: "Trivia",
-  murder2: "Murder Mystery",
+  murder: "Murder Mystery",
   codenames: "Cover Ops",
   telestrations: "Sketch Relay",
   pictionary: "Quick Draw",
@@ -25,8 +25,8 @@ const GAME_NAMES: Record<string, string> = {
   justone: "Solo Clue",
   ballpark: "Ballpark",
   monikers: "Monikers",
-  fullcast: "Full Cast",
-  offlimits: "Off Limits",
+  reverse: "Full Cast",
+  taboo: "Off Limits",
   afterdark: "After Dark (18+)",
   unknown: "Unattributed",
 };
