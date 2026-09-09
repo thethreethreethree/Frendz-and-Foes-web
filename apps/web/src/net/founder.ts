@@ -318,3 +318,45 @@ export async function updateFulfilment(
     return await res.json();
   } catch { return { error: "Network hiccup — try again." }; }
 }
+
+// --- Activity: what happened on game nights -----------------------------------------------------
+// Every figure is derived server-side from game_sessions. Nothing here is a stored total.
+export type SessionRow = {
+  id: string;
+  room_code: string;
+  game: string | null;
+  brand_slug: string | null;
+  started: number;
+  ended: number | null;
+  peak_players: number;
+  completed: number;
+};
+
+export type GameStat = {
+  game: string;
+  nights: number;
+  finished_nights: number;
+  completed: number;
+  biggest: number;
+  avg_players: number;
+  avg_minutes: number | null;
+};
+
+export type ActivitySummary = {
+  byGame: GameStat[];
+  totals: { nights: number; live: number; completed: number; biggest: number };
+};
+
+export async function listActivity(passcode: string, days = 30): Promise<{
+  sessions?: SessionRow[]; allTime?: ActivitySummary; window?: ActivitySummary;
+  days?: number; ready?: boolean; error?: string;
+}> {
+  try {
+    const res = await fetch(`/api/backer/admin/activity?days=${days}`, { headers: headers(passcode) });
+    if (res.status === 401) return { error: "That admin passcode isn't right." };
+    if (res.status === 503) return { ready: false, sessions: [], error: "The database is unavailable right now." };
+    if (!res.ok) return { error: "Couldn't load activity — try again." };
+    const d = await res.json();
+    return { ...d, ready: d.ready !== false };
+  } catch { return { error: "Network hiccup — try again." }; }
+}

@@ -124,6 +124,26 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), (req,
     else if (m.duplicate) console.log("[ff-server] Stripe event already recorded (retry):", v.event?.id);
   }
   const r = SUBS.applyStripeEvent(v.event);
+
+  // A refund also cancels what we still owe them. Access ending while an undelivered custom
+  // character stays in the queue would put us to work for somebody who took their money back --
+  // and the queue is meant to be the list of promises we actually intend to keep.
+  //
+  // Only UNDELIVERED work is cancelled. Something already drawn and sent stays on the record as
+  // delivered: it happened, and rewriting history to tidy it away would lose that we did the work.
+  if (r.revoked && r.backerId && FUL) {
+    try {
+      for (const item of FUL.listFulfilment({ backerId: r.backerId, openOnly: true }).items) {
+        FUL.updateFulfilment(item.id, {
+          status: "cancelled",
+          notes: [item.notes, "cancelled automatically: payment refunded"].filter(Boolean).join(" · "),
+        });
+      }
+    } catch (err) {
+      console.error("[ff-server] could not cancel fulfilment after refund:", err?.message || err);
+    }
+  }
+
   // Always 200 on a VERIFIED event, even if we could not map it to a backer: a non-2xx makes Stripe
   // retry the same event indefinitely, and an event we do not understand will never succeed on a
   // retry. It is logged instead.
@@ -457,6 +477,15 @@ const needFul = (res) => {
   return true;
 };
 
+// 503 when session tracking specifically is down, so the Activity panel can say so rather than
+// render a confident "no game nights" - which would read as "nobody played" instead of "we cannot
+// tell you". Same rule the money and fulfilment panels follow.
+const needSes = (res) => {
+  if (SES && SES.sessionsReady()) return false;
+  res.status(503).json({ ready: false, error: "The database is unavailable right now." });
+  return true;
+};
+
 // --- Money ledger (founder-only) ---------------------------------------------------------------
 // Every total here is DERIVED from the payments rows on each call. Nothing is stored, so nothing
 // can drift away from what actually happened.
@@ -599,6 +628,46 @@ app.get("/api/backer/admin/fulfilment.csv", (req, res) => {
   ].map(esc).join(","));
   res.setHeader("content-type", "text/csv; charset=utf-8");
   res.setHeader("content-disposition", `attachment; filename="playzoo-fulfilment-${new Date().toISOString().slice(0,10)}.csv"`);
+  res.send([head.join(","), ...rows].join(NL));
+});
+
+// --- Activity: what actually happened on game nights (founder-only) ----------------------------
+// Every figure DERIVED from game_sessions on each call. Nothing stored, so nothing can drift.
+app.get("/api/backer/admin/activity", (req, res) => {
+  if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
+  if (needDb(res) || needSes(res)) return;
+  const now = Date.now();
+  const days = Math.max(1, Math.min(365, Number(req.query.days) || 30));
+  res.json({
+    ready: true,
+    sessions: SES.listSessions({ limit: Number(req.query.limit) || 60 }).sessions,
+    allTime: SES.sessionSummary(),
+    window: SES.sessionSummary({ since: now - days * 86400_000 }),
+    days,
+  });
+});
+
+app.get("/api/backer/admin/activity.csv", (req, res) => {
+  if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
+  if (needDb(res) || needSes(res)) return;
+  const { ready, sessions } = SES.allSessionsForExport();
+  if (!ready) return res.status(503).json({ error: "The database is unavailable right now." });
+  const chr34 = String.fromCharCode(34);
+  const NL = String.fromCharCode(10);
+  const esc = (v) => {
+    const t = v == null ? "" : String(v);
+    return /["\n,]/.test(t) ? chr34 + t.replace(/"/g, chr34 + chr34) + chr34 : t;
+  };
+  const head = ["started_iso","ended_iso","minutes","game","room_code","brand_slug","peak_players","completed","id"];
+  const rows = sessions.map((x) => [
+    new Date(x.started).toISOString(),
+    x.ended ? new Date(x.ended).toISOString() : "",
+    x.ended ? Math.round((x.ended - x.started) / 60000) : "",
+    x.game || "", x.room_code, x.brand_slug || "", x.peak_players,
+    x.completed ? "yes" : "no", x.id,
+  ].map(esc).join(","));
+  res.setHeader("content-type", "text/csv; charset=utf-8");
+  res.setHeader("content-disposition", `attachment; filename="playzoo-activity-${new Date().toISOString().slice(0,10)}.csv"`);
   res.send([head.join(","), ...rows].join(NL));
 });
 

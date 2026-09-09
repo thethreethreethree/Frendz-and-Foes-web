@@ -163,9 +163,41 @@ export function stripeStatus() {
 //
 // Deliberately tolerant about the shape: it reads only the fields we store, so a Stripe API version
 // bump that adds fields cannot break it.
+/**
+ * A refund ends access AT ONCE — the owner's decision, 2026-09-09 (§7.5 of the business backend
+ * design). Not at period end: that let someone play a full month and then reclaim the money.
+ *
+ * BOTH the status and the period are killed, deliberately. entitlementsFor() derives `active` from
+ * the status AND an independent expiry check, so writing only one of them would leave a second path
+ * still granting access if the other were ever missed. Two independent falsehoods have to line up
+ * for a refunded backer to keep playing.
+ */
+export function revokeForRefund(backerId, reason = "refund") {
+  if (!backerId) return { error: "No backer to revoke." };
+  const r = setSubscription(backerId, {
+    status: "canceled",
+    currentPeriodEnd: Date.now(),   // already in the past by the time anything reads it
+  });
+  logEvent("entitlement.revoked", backerId, { reason });
+  return r;
+}
+
 export function applyStripeEvent(event, resolveBackerId) {
   const type = event?.type || "";
   const obj = event?.data?.object || {};
+
+  // Money coming BACK ends access immediately. Handled before the subscription filter below, which
+  // would otherwise drop these on the floor: charge.refunded is not a customer.subscription.* event,
+  // so until now a refund took the money back and the backer kept playing.
+  if (type === "charge.refunded" || type === "charge.dispute.created") {
+    const who = typeof resolveBackerId === "function"
+      ? resolveBackerId(obj)
+      : (obj.metadata && obj.metadata.backerId) || null;
+    if (!who) return { error: "Could not map that refund to a backer." };
+    const out = revokeForRefund(who, type);
+    return { ...out, revoked: true, backerId: who };
+  }
+
   if (!type.startsWith("customer.subscription.") && type !== "checkout.session.completed") {
     return { ignored: true, type };
   }

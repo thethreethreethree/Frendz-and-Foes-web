@@ -133,5 +133,46 @@ console.log("--- the Stripe price map comes from the ENVIRONMENT ---");
   delete process.env.STRIPE_PRICE_MAP;
 }
 
+
+// --- refunds end access IMMEDIATELY (owner's decision, 2026-09-09, §7.5) -------------------------
+// Before this, charge.refunded was not a customer.subscription.* event, so applyStripeEvent dropped
+// it on the floor: the money went back and the backer kept playing.
+console.log("");
+console.log("--- a refund ends access at once ---");
+{
+  const who = "refund-me";
+  subs.setSubscription(who, {
+    plan: "head-keeper", status: "active",
+    currentPeriodEnd: Date.now() + 60 * 86400000,      // two months of access left
+  });
+  check("entitled before the refund", subs.entitlementsFor(who).active, true);
+  check("with two custom characters", subs.entitlementsFor(who).customCharacters, 2);
+
+  const out = subs.applyStripeEvent({
+    type: "charge.refunded",
+    data: { object: { metadata: { backerId: who }, amount_refunded: 5000 } },
+  });
+  check("a refund is acted on, not ignored", out.revoked, true);
+
+  const ent = subs.entitlementsFor(who);
+  check("access ends AT ONCE, not at period end", ent.active, false);
+  check("the entitlement count drops to zero too", ent.customCharacters, 0);
+
+  // TWO independent paths kill access, so one missed write cannot leave it open.
+  check("status is canceled", ent.status, "canceled");
+  check("period expired independently of the status", ent.expired, true);
+
+  // A chargeback is money leaving under protest - same outcome.
+  const who2 = "disputed";
+  subs.setSubscription(who2, { plan: "zoo-pass", status: "active", currentPeriodEnd: Date.now() + 86400000 });
+  subs.applyStripeEvent({ type: "charge.dispute.created", data: { object: { metadata: { backerId: who2 } } } });
+  check("a chargeback revokes the same way", subs.entitlementsFor(who2).active, false);
+
+  // An unmappable refund must not throw, and must not quietly report success.
+  const orphan = subs.applyStripeEvent({ type: "charge.refunded", data: { object: {} } });
+  check("a refund with no backer errors rather than pretending", !!orphan.error, true);
+  check("and does not claim to have revoked anything", !!orphan.revoked, false);
+}
+
 console.log(`\n${fails === 0 ? "ALL PASS" : fails + " FAILURE(S)"}`);
 process.exit(fails === 0 ? 0 : 1);
