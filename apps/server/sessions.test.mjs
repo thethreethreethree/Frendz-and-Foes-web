@@ -94,5 +94,19 @@ check("a session with no game is labelled, not dropped",
       sum.byGame.some((g) => g.game === "codenames"), JSON.stringify(sum.byGame.map((g) => g.game)));
 check("totals count the live one", sum.totals.live === 1, JSON.stringify(sum.totals));
 
+// --- an EMPTY database must answer with zeros, not nulls ------------------------------------------
+// SUM() and MAX() over zero rows return NULL in SQLite. The live API was handing the panel
+// {"live":null,"completed":null,"biggest":null} where it had promised counts.
+{
+  const far = S.sessionSummary({ since: Date.now() + 86400000 });   // a window containing nothing
+  const t = far.totals;
+  check("an empty window reports 0 nights, not null", t.nights === 0, JSON.stringify(t));
+  check("0 live, not null", t.live === 0, JSON.stringify(t));
+  check("0 completed, not null", t.completed === 0, JSON.stringify(t));
+  check("0 biggest, not null", t.biggest === 0, JSON.stringify(t));
+  check("no aggregate is null", Object.values(t).every((v) => v !== null), JSON.stringify(t));
+}
+
+
 console.log(fails ? `\n${fails} FAILED` : "\nall session checks passed");
 process.exit(fails ? 1 : 0);

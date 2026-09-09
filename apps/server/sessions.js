@@ -188,18 +188,22 @@ export function sessionSummary({ since = null } = {}) {
   const byGame = db.prepare(`
     SELECT COALESCE(game, 'unknown') game,
            COUNT(*) nights,
-           SUM(CASE WHEN ended IS NOT NULL THEN 1 ELSE 0 END) finished_nights,
-           SUM(CASE WHEN completed = 1 THEN 1 ELSE 0 END) completed,
-           MAX(peak_players) biggest,
-           CAST(AVG(peak_players) AS INTEGER) avg_players,
+           COALESCE(SUM(CASE WHEN ended IS NOT NULL THEN 1 ELSE 0 END), 0) finished_nights,
+           COALESCE(SUM(CASE WHEN completed = 1 THEN 1 ELSE 0 END), 0) completed,
+           COALESCE(MAX(peak_players), 0) biggest,
+           COALESCE(CAST(AVG(peak_players) AS INTEGER), 0) avg_players,
            CAST(AVG(CASE WHEN ended IS NOT NULL THEN (ended - started) / 60000.0 END) AS INTEGER) avg_minutes
     FROM game_sessions ${w} GROUP BY COALESCE(game, 'unknown') ORDER BY nights DESC`).all(...args);
 
+  // COALESCE on every aggregate: SUM() and MAX() over ZERO rows return NULL in SQLite, not 0. An
+  // empty database was handing the panel {"live":null,"completed":null,"biggest":null} where it had
+  // promised counts. The frontend's ?? 0 happened to cover it, but an API that answers "null nights"
+  // to "how many nights" is wrong at the source, and the next consumer will not be so lucky.
   const totals = db.prepare(`
     SELECT COUNT(*) nights,
-           SUM(CASE WHEN ended IS NULL THEN 1 ELSE 0 END) live,
-           SUM(CASE WHEN completed = 1 THEN 1 ELSE 0 END) completed,
-           MAX(peak_players) biggest
+           COALESCE(SUM(CASE WHEN ended IS NULL THEN 1 ELSE 0 END), 0) live,
+           COALESCE(SUM(CASE WHEN completed = 1 THEN 1 ELSE 0 END), 0) completed,
+           COALESCE(MAX(peak_players), 0) biggest
     FROM game_sessions ${w}`).get(...args);
 
   return { ready: true, byGame, totals };
