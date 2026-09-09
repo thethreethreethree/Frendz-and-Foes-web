@@ -142,7 +142,10 @@
   @media(min-width:40rem){.encgrid{grid-template-columns:1fr 1fr}}
   .enccard{border:2px solid var(--line);border-left:6px solid var(--acc);border-radius:14px;
            padding:1.05rem 1.2rem;background:var(--raised)}
-  .enccard h3{font-family:var(--display);font-weight:800;font-size:1.3rem;margin:0;color:var(--acc)}
+  .encbanner{display:block;width:100%;max-width:170px;height:auto;margin:0 auto .7rem;
+           filter:drop-shadow(0 6px 18px rgba(0,0,0,.55))}
+  .enccard h3{font-family:var(--display);font-weight:800;font-size:1.3rem;margin:0;color:var(--acc);text-align:center}
+  .enccard .temper{text-align:center}
   .enccard .temper{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;
            color:var(--muted);margin:.3rem 0 .55rem}
   .enccard p{margin:0;font-size:.97rem;line-height:1.5}
@@ -155,6 +158,12 @@
            text-transform:uppercase;color:var(--pink)}
   .askbar{margin-top:1.4rem;display:flex;flex-wrap:wrap;align-items:center;gap:.5rem 1rem;
           border:1px dashed var(--violet);border-radius:14px;padding:1rem 1.2rem;background:rgba(139,92,246,.07)}
+  .askbtn{display:inline-block;font-family:var(--display);font-weight:800;font-size:1.02rem;
+          text-decoration:none;color:#fff;padding:.7rem 1.2rem;border-radius:12px;
+          background:linear-gradient(120deg,var(--violet),var(--pink));white-space:nowrap;
+          box-shadow:0 8px 22px -8px rgba(139,92,246,.9);transition:transform .12s}
+  .askbtn:hover{transform:translateY(-1px)}
+  .askbtn:focus-visible{outline:2px solid var(--pink);outline-offset:3px}
   .askbar b{font-family:var(--display);font-weight:800;color:var(--violet);font-size:1.15rem;white-space:nowrap}
   .askbar span{color:var(--muted);font-size:.98rem;flex:1 1 300px;line-height:1.45}
   .askbar code{font-family:var(--mono);font-size:.9rem;color:var(--lime);background:rgba(163,230,53,.1);
@@ -338,7 +347,7 @@
       <div class="askbar">
         <b>Talk to John right now</b>
         <span>He's a real AI character, awake at an unreasonable hour, and he will answer anything you ask about PlayZoo — in between trying to flog you a used napkin.</span>
-        <code>playzoo.snapaweb.com/#/ask-john</code>
+        <a class="askbtn" href="https://playzoo.snapaweb.com/#/ask-john" target="_blank" rel="noopener">Ask John a question &rarr;</a>
       </div>
     </div>
   </section>
@@ -384,24 +393,32 @@
       <p>Back this and you don't just get a login — you get <b>sorted</b>. Five short, extremely silly questions, and I put you where you belong. Not at random, either: your answers decide it, so the people who think like you end up in with you. That's the bit that makes the group chat worth reading.</p>
       <div class="encgrid">
         <div class="enccard" style="--acc:#f59e0b">
+          <img class="encbanner" src="ui/enclosure-rowdies.png" alt="The Rowdies banner"
+               width="900" height="1200" loading="lazy">
           <h3>The Rowdies</h3>
           <p class="temper">Bold · Loud · Fearless</p>
           <p>Charge-first, loud, allergic to reading the sign. If it looks fun, they're already doing it.</p>
           <p class="motto">&ldquo;Leap first, look later.&rdquo;</p>
         </div>
         <div class="enccard" style="--acc:#2dd4bf">
+          <img class="encbanner" src="ui/enclosure-cuddle-crew.png" alt="The Cuddle Crew banner"
+               width="900" height="1200" loading="lazy">
           <h3>The Cuddle Crew</h3>
           <p class="temper">Loyal · Warm · Ride-or-die</p>
           <p>No drama, no snitching, all snacks. They'll have your back and split their last fry with you.</p>
           <p class="motto">&ldquo;Snacks and secrets shared.&rdquo;</p>
         </div>
         <div class="enccard" style="--acc:#8b5cf6">
+          <img class="encbanner" src="ui/enclosure-know-it-owls.png" alt="The Know-It-Owls banner"
+               width="900" height="1200" loading="lazy">
           <h3>The Know-It-Owls</h3>
           <p class="temper">Clever · Witty · Smug</p>
           <p>Trivia sharks and 'well, actually' merchants. Insufferably right roughly 80% of the time.</p>
           <p class="motto">&ldquo;Well, actually.&rdquo;</p>
         </div>
         <div class="enccard" style="--acc:#ec4899">
+          <img class="encbanner" src="ui/enclosure-schemers.png" alt="The Schemers banner"
+               width="900" height="1200" loading="lazy">
           <h3>The Schemers</h3>
           <p class="temper">Sly · Cunning · Mischief</p>
           <p>Always playing three moves ahead. It's not cheating if nobody catches you. Yes, that's John's lot.</p>
