@@ -94,8 +94,8 @@ export const GAMES = [
 
 // Reward tiers — mirrors kickstarter/build.py TIERS. Prices are stated exactly or not at all.
 export const TIERS = [
-  ["$15", "Zoo Pass", "Six months of PlayZoo and five games."],
-  ["$30", "Founding Animal", "A full year, ten games, and one custom animal character drawn just for you."],
+  ["$15", "Zoo Pass", "Six months of PlayZoo and any five games you choose."],
+  ["$30", "Founding Animal", "A full year, any ten games you choose, and one custom animal character drawn just for you."],
   ["$50", "Head Keeper", "A full year with EVERY game unlocked, plus TWO custom characters made for you."],
 ];
 export const GOAL = "$3,500";

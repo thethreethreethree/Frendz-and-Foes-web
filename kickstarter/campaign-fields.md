@@ -185,7 +185,7 @@ already made in the FAQ above, so the reward form must not say anything looser o
 
 **Description:**
 
-> Six months of PlayZoo and five games to lose at — a cheap date with your own public humiliation.
+> Six months of PlayZoo and any five games you choose to lose at — a cheap date with your own public humiliation.
 >
 > It all runs in a browser. Put PlayZoo on the big screen, your guests scan a code, and Rex — the AI
 > zookeeper — runs the night. Nobody downloads anything and nobody makes an account.
@@ -195,7 +195,7 @@ already made in the FAQ above, so the reward form must not say anything looser o
 
 **Items:**
 - PlayZoo access — 6 months
-- 5 games unlocked
+- Any 5 games, your pick
 - Backer code
 - Backers-only club and enclosure
 
@@ -205,10 +205,10 @@ already made in the FAQ above, so the reward form must not say anything looser o
 
 **Description:**
 
-> A full year of PlayZoo, ten games, and one custom animal drawn just for you — immortalised, and
+> A full year of PlayZoo, any ten games you choose, and one custom animal drawn just for you — immortalised, and
 > frankly better-looking than the original.
 >
-> Everything in the Zoo Pass, twice the year and twice the games. Then we draw you into the cast: one
+> Everything in the Zoo Pass, twice the year and twice the games — and again, you pick which. Then we draw you into the cast: one
 > animal, your call on what it is, done in the PlayZoo house style and yours to keep.
 >
 > The custom animals are the part with a real deadline attached — they are drawn in batches through
@@ -216,7 +216,7 @@ already made in the FAQ above, so the reward form must not say anything looser o
 
 **Items:**
 - PlayZoo access — 12 months
-- 10 games unlocked
+- Any 10 games, your pick
 - 1 custom animal character, drawn for you
 - Backer code
 - Backers-only club and enclosure
@@ -244,23 +244,24 @@ already made in the FAQ above, so the reward form must not say anything looser o
 - Backer code
 - Backers-only club and enclosure
 
-### OPEN DECISION — which five, and which ten?
+### DECIDED — the backer picks
 
-`subscriptions.js` states it plainly: `games` is a COUNT, not a list, because **which** five games a
-Zoo Pass unlocks has never been decided. This copy therefore says "5 games" and "10 games" and names
-none of them.
+Answered by the owner on 2026-09-09: **any five, and any ten, chosen by the backer.**
 
-That will not survive contact with backers. "Which five?" is the first comment under the $15 tier,
-and answering it publicly after people have pledged means either disappointing someone or quietly
-changing the deal — which the risks section on this page explicitly promises not to do.
+No list to argue with, nobody buys a tier and finds their favourite game missing, and it cannot age
+badly as the fourteen games get better. The COUNT is the product. Only $50 needed no answer, because
+"every game" needs no list.
 
-Three ways to close it, none of which the code prevents:
+Recorded in `PLANS` in [apps/server/subscriptions.js](../apps/server/subscriptions.js), and the
+blurbs in `productKnowledge.js` and [build.py](build.py) were updated in the same commit — those
+three must never disagree, because Rex and John answer from `productKnowledge` while the backer is
+reading the page built from `build.py`.
 
-1. **Name them.** Pick five and ten and write them into the reward items. Clearest for a backer, and
-   the tiers stop being a mystery box.
-2. **Let the backer choose.** "Any five games you like." Generous, and it makes the count the
-   product rather than a curated list.
-3. **Say it is not decided yet, on the page.** Honest, keeps the option open, and is much better
-   received before a pledge than after one.
+**Not enforced yet, and the reward copy now promises it.** `hostEntitled()` in `index.js` checks only
+that a plan is ACTIVE — it never looks at which game is being hosted, so today any active plan can
+host all fourteen. Making the count real needs a stored per-backer list of chosen games, a screen to
+choose them, and a check at join time.
 
-Only $50 is safe as written, because "every game" needs no list.
+Why that is not a fire: `ENFORCE_ENTITLEMENTS` defaults off, every game is behind `GAMES_OPEN` until
+the campaign finishes, and nobody holds a paid plan yet. It becomes urgent the day games open — which
+is also the first day the promise is testable by a backer.

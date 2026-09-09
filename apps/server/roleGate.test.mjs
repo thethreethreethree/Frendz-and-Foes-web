@@ -11,10 +11,24 @@ import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
+import { createServer } from "node:net";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const TMP = mkdtempSync(join(tmpdir(), "pz-gate-"));
-const PORT = 3199;
+// A FREE port, asked of the OS, not a fixed one.
+//
+// This first used a hard-coded 3199 and failed intermittently in the full suite: a previous run's
+// server had not released the port yet, so the boot check timed out and the whole file failed with
+// no assertion having actually run. A test that fails at random is worse than no test, because it
+// trains you to re-run instead of read.
+const PORT = await new Promise((resolve, reject) => {
+  const probe = createServer();
+  probe.once("error", reject);
+  probe.listen(0, "127.0.0.1", () => {
+    const { port } = probe.address();
+    probe.close(() => resolve(port));
+  });
+});
 const PASSCODE = "gate-test-passcode";
 
 let fails = 0;

@@ -14,19 +14,28 @@
 
 import { db, logEvent } from "./sqlite.js";
 
-// The three Kickstarter tiers. `games` is a COUNT, not a list: which five games a Zoo Pass unlocks
-// is an owner decision that has not been made, and inventing a list here would quietly become the
-// answer. "all" means every game.
+// The three Kickstarter tiers. `games` is a COUNT, not a list — and as of the owner's decision on
+// 2026-09-09 that is the PRODUCT, not a gap: a backer picks ANY five (or ten) games they like.
+// "all" means every game.
+//
+// NOT ENFORCED YET, and the reward copy now promises it. hostEntitled() in index.js checks only
+// that a plan is ACTIVE; it never looks at which game is being hosted, so today every active plan
+// can host all fourteen. Making the count real needs a per-backer list of chosen games and a check
+// against it at join time.
+//
+// Not urgent, and worth saying why rather than leaving it looking like an oversight:
+// ENFORCE_ENTITLEMENTS defaults off, all game access is behind GAMES_OPEN until the campaign
+// finishes, and nobody holds a paid plan yet. It becomes urgent the day games open.
 export const PLANS = {
   "zoo-pass": {
     id: "zoo-pass", price: "$15", name: "Zoo Pass",
     months: 6, games: 5, customCharacters: 0,
-    blurb: "Six months of PlayZoo and five games.",
+    blurb: "Six months of PlayZoo and any five games you choose.",
   },
   "founding-animal": {
     id: "founding-animal", price: "$30", name: "Founding Animal",
     months: 12, games: 10, customCharacters: 1,
-    blurb: "A full year, ten games, and one custom animal character drawn just for you.",
+    blurb: "A full year, any ten games you choose, and one custom animal character drawn just for you.",
   },
   "head-keeper": {
     id: "head-keeper", price: "$50", name: "Head Keeper",

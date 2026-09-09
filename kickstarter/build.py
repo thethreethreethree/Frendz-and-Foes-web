@@ -59,8 +59,8 @@ CAST = [
 ]
 # (price, name, description, is_feature)
 TIERS = [
- ("$15","Zoo Pass","Six months of PlayZoo and five games to lose at — a cheap date with your own public humiliation.",False),
- ("$30","Founding Animal","A full year of PlayZoo, ten games, and one custom animal drawn just for you — immortalized, and frankly better-looking than the original.",True),
+ ("$15","Zoo Pass","Six months of PlayZoo and any five games you choose to lose at — a cheap date with your own public humiliation.",False),
+ ("$30","Founding Animal","A full year of PlayZoo, any ten games you choose, and one custom animal drawn just for you — immortalized, and frankly better-looking than the original.",True),
  ("$50","Head Keeper","A full year with EVERY game unlocked, plus TWO custom characters made just for you. You basically own a wing of the zoo.",True),
 ]
 
