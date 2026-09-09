@@ -360,3 +360,76 @@ export async function listActivity(passcode: string, days = 30): Promise<{
     return { ...d, ready: d.ready !== false };
   } catch { return { error: "Network hiccup — try again." }; }
 }
+
+// --- Staff accounts (Phase 4) -------------------------------------------------------------------
+// Named logins, so the audit log can say who acted and access can be revoked from one person.
+export type StaffRow = {
+  id: string;
+  email: string;
+  name: string | null;
+  role: string;
+  active: boolean;
+  created: number;
+  last_seen: number | null;
+  can: string[];
+};
+
+export const STAFF_ROLES = ["owner", "admin", "support", "readonly"] as const;
+
+// What each role may reach, mirrored from the server for the UI's benefit only. Hiding a panel is a
+// courtesy; the server's reqCan() is the actual control, and this copy must never be treated as one.
+export const ROLE_BLURB: Record<string, string> = {
+  owner: "Everything, including managing staff",
+  admin: "Everything except managing staff",
+  support: "Fulfilment, activity and people — no money",
+  readonly: "Activity only",
+};
+
+export async function whoAmI(passcode: string): Promise<{
+  staff?: StaffRow; via?: string; error?: string;
+}> {
+  try {
+    const res = await fetch("/api/backer/admin/staff/me", { headers: headers(passcode) });
+    if (!res.ok) return { error: "Not signed in." };
+    return await res.json();
+  } catch { return { error: "Network hiccup — try again." }; }
+}
+
+export async function listStaff(passcode: string): Promise<{
+  staff?: StaffRow[]; ready?: boolean; error?: string;
+}> {
+  try {
+    const res = await fetch("/api/backer/admin/staff", { headers: headers(passcode) });
+    if (res.status === 403) return { error: "Only an owner can manage staff." };
+    if (!res.ok) return { error: "Couldn't load staff — try again." };
+    return await res.json();
+  } catch { return { error: "Network hiccup — try again." }; }
+}
+
+export async function createStaff(passcode: string, body: {
+  email: string; password: string; name?: string; role?: string;
+}): Promise<{ staff?: StaffRow; error?: string }> {
+  try {
+    const res = await fetch("/api/backer/admin/staff", {
+      method: "POST", headers: { ...headers(passcode), "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) return { error: d.error || "Couldn't create that account." };
+    return d;
+  } catch { return { error: "Network hiccup — try again." }; }
+}
+
+export async function updateStaff(passcode: string, id: string, patch: {
+  role?: string; active?: boolean; password?: string;
+}): Promise<{ staff?: StaffRow; ok?: boolean; error?: string }> {
+  try {
+    const res = await fetch(`/api/backer/admin/staff/${encodeURIComponent(id)}`, {
+      method: "PATCH", headers: { ...headers(passcode), "content-type": "application/json" },
+      body: JSON.stringify(patch),
+    });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) return { error: d.error || "Couldn't save that change." };
+    return d;
+  } catch { return { error: "Network hiccup — try again." }; }
+}

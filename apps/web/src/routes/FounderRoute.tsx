@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { MoneyCard } from "./MoneyCard";
 import { FulfilmentCard } from "./FulfilmentCard";
 import { ActivityCard } from "./ActivityCard";
+import { StaffCard } from "./StaffCard";
 import { refreshGate, isFounderPass } from "../net/gate";
 import { Link } from "react-router-dom";
 import {
@@ -145,6 +146,7 @@ export function FounderRoute() {
         <MoneyCard passcode={passcode} />
         <FulfilmentCard passcode={passcode} />
         <ActivityCard passcode={passcode} />
+        <StaffCard passcode={passcode} />
 
         {dbReady && <MintCard passcode={passcode} onMinted={refresh} />}
 

@@ -25,3 +25,7 @@ tools/promo/src/
 
 # Rendered promo videos. Large binaries, rebuilt by tools/promo/build_promo.py; delivered as files.
 tools/promo/*.mp4
+
+# Licensed music for the promo. Kept out of git: it is a third-party asset with its own licence,
+# and the licence, not the repo, is what grants the right to use it.
+tools/promo/audio/
