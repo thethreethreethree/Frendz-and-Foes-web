@@ -1,3 +1,7 @@
+// NOTE: `ready` is the server saying whether the DATABASE is reachable. When it is false the
+// endpoints still answer 200 with an EMPTY list (a deliberate fail-safe: the games keep running
+// while the founder tools degrade). These helpers used to drop that flag, so the founder page
+// rendered "No backers yet" during an outage -- confident, reassuring, and wrong.
 // Client helpers for the founder admin page. The founder passcode is sent as the x-admin-passcode
 // header to the existing superadmin endpoints (see apps/server/index.js). It's held in the page's
 // memory (optionally remembered on-device); never sent anywhere but these same-origin admin calls.
@@ -17,13 +21,13 @@ function headers(passcode: string) {
 }
 
 // Validate the passcode by listing codes. Returns the rows, or an error (e.g. wrong passcode).
-export async function listCodes(passcode: string): Promise<{ codes?: CodeRow[]; error?: string }> {
+export async function listCodes(passcode: string): Promise<{ codes?: CodeRow[]; ready?: boolean; error?: string }> {
   try {
     const res = await fetch("/api/backer/codes", { headers: headers(passcode) });
     if (res.status === 401) return { error: "That admin passcode isn't right." };
     if (!res.ok) return { error: "Couldn't load codes — try again." };
     const data = await res.json();
-    return { codes: Array.isArray(data.codes) ? data.codes : [] };
+    return { codes: Array.isArray(data.codes) ? data.codes : [], ready: data.ready !== false };
   } catch {
     return { error: "Network hiccup — try again." };
   }
@@ -61,13 +65,13 @@ export interface BackerRow {
   hasAvatar: boolean;
 }
 
-export async function listBackers(passcode: string): Promise<{ users?: BackerRow[]; error?: string }> {
+export async function listBackers(passcode: string): Promise<{ users?: BackerRow[]; ready?: boolean; error?: string }> {
   try {
     const res = await fetch("/api/backer/admin/users", { headers: headers(passcode) });
     if (res.status === 401) return { error: "That admin passcode isn't right." };
     if (!res.ok) return { error: "Couldn't load backers — try again." };
     const data = await res.json();
-    return { users: Array.isArray(data.users) ? data.users : [] };
+    return { users: Array.isArray(data.users) ? data.users : [], ready: data.ready !== false };
   } catch {
     return { error: "Network hiccup — try again." };
   }

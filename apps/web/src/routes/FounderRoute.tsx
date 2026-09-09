@@ -22,6 +22,8 @@ const REMEMBER_KEY = "pz_founder_pc";
 export function FounderRoute() {
   const [passcode, setPasscode] = useState("");
   const [passHours, setPassHours] = useState<number | null>(null);
+  // false ONLY when the server said the database is unreachable. Undefined/true means healthy.
+  const [dbReady, setDbReady] = useState(true);
   const [remember, setRemember] = useState(false);
   const [authed, setAuthed] = useState(false);
   const [rows, setRows] = useState<CodeRow[]>([]);
@@ -45,6 +47,7 @@ export function FounderRoute() {
     if (r.error) { setErr(r.error); return; }
     setAuthed(true);
     setRows(r.codes || []);
+    setDbReady(r.ready !== false);
     void refreshBackers(pc);
     try { if (remember) localStorage.setItem(REMEMBER_KEY, pc); } catch { /* ignore */ }
     // Exchange the passcode for a founder pass so THIS browser can also reach the games while the
@@ -71,6 +74,7 @@ export function FounderRoute() {
 
   async function refreshBackers(pc = passcode) {
     const r = await listBackers(pc);
+    if (r.ready === false) setDbReady(false);
     if (!r.error) setUsers(r.users || []);
   }
 
@@ -111,15 +115,19 @@ export function FounderRoute() {
   return (
     <Shell>
       <div className="mx-auto mt-8 flex max-w-3xl flex-col gap-6">
+        {!dbReady && <DbDownBanner />}
+
         <div className="flex items-center gap-3">
           <h1 className="ff-title text-2xl font-extrabold">Backers</h1>
           <span className="rounded-full border border-line bg-canvas px-3 py-1 text-xs font-semibold text-muted">
-            {users.length} {users.length === 1 ? "backer" : "backers"} · {rows.length} codes · {valid.length} valid · {used.length} used
+            {dbReady
+              ? `${users.length} ${users.length === 1 ? "backer" : "backers"} · ${rows.length} codes · ${valid.length} valid · ${used.length} used`
+              : "counts unavailable"}
           </span>
           <button onClick={lock} className="ml-auto text-sm font-semibold text-muted hover:text-ink">Lock</button>
         </div>
 
-        <BackersCard users={users} onRefresh={() => refreshBackers()} onOpen={setOpenId} />
+        <BackersCard users={users} ready={dbReady} onRefresh={() => refreshBackers()} onOpen={setOpenId} />
 
         {openId && (
           <BackerDetailCard
@@ -131,9 +139,9 @@ export function FounderRoute() {
 
         <GamePassCard hours={passHours} onDrop={dropPass} />
 
-        <MintCard passcode={passcode} onMinted={refresh} />
+        {dbReady && <MintCard passcode={passcode} onMinted={refresh} />}
 
-        <CodesCard passcode={passcode} rows={rows} setRows={setRows} onRefresh={refresh} />
+        <CodesCard passcode={passcode} rows={rows} ready={dbReady} setRows={setRows} onRefresh={refresh} />
 
         <SubscriptionsCard passcode={passcode} users={users} />
 
@@ -146,8 +154,8 @@ export function FounderRoute() {
 // Every code and what happened to it, filterable, with revoke. Revoke only ever applies to an
 // UNREDEEMED code: a redeemed one is somebody's login key and pulling it would lock a real backer
 // out of their account, so the server refuses and says to remove the account instead.
-function CodesCard({ passcode, rows, setRows, onRefresh }: {
-  passcode: string; rows: CodeRow[]; setRows: (r: CodeRow[]) => void; onRefresh: () => void;
+function CodesCard({ passcode, rows, ready, setRows, onRefresh }: {
+  passcode: string; rows: CodeRow[]; ready: boolean; setRows: (r: CodeRow[]) => void; onRefresh: () => void;
 }) {
   const [filter, setFilter] = useState<"all" | "valid" | "used" | "revoked">("all");
   const [err, setErr] = useState<string | null>(null);
@@ -198,7 +206,12 @@ function CodesCard({ passcode, rows, setRows, onRefresh }: {
                 <tr><th className="px-4 py-2">Code</th><th className="px-4 py-2">State</th><th className="px-4 py-2">Note</th><th className="px-4 py-2">Redeemed</th><th className="px-4 py-2"></th></tr>
               </thead>
               <tbody>
-                {rows.length === 0 && <tr><td colSpan={5} className="px-4 py-6 text-center text-muted">No codes yet — mint some above.</td></tr>}
+                {rows.length === 0 && (
+                  <tr><td colSpan={5} className="px-4 py-6 text-center text-muted">
+                    {ready ? "No codes yet — mint some above."
+                           : "Can't read the database — this is not your code list."}
+                  </td></tr>
+                )}
                 {rows.length > 0 && shown.length === 0 && <tr><td colSpan={5} className="px-4 py-6 text-center text-muted">No {filter} codes.</td></tr>}
                 {shown.map((r) => (
                   <tr key={r.code} className="border-t border-line/60">
@@ -228,8 +241,8 @@ function CodesCard({ passcode, rows, setRows, onRefresh }: {
 // The backer roster. This is the question you open the founder page asking - who is actually in? -
 // so it sits above minting. Search covers username, code, country and enclosure in one box rather
 // than a filter row: with a few hundred backers you are looking for one person, not slicing a table.
-function BackersCard({ users, onRefresh, onOpen }:
-  { users: BackerRow[]; onRefresh: () => void; onOpen: (id: string) => void }) {
+function BackersCard({ users, ready, onRefresh, onOpen }:
+  { users: BackerRow[]; ready: boolean; onRefresh: () => void; onOpen: (id: string) => void }) {
   const [q, setQ] = useState("");
   const needle = q.trim().toLowerCase();
   const shown = needle
@@ -270,7 +283,8 @@ function BackersCard({ users, onRefresh, onOpen }:
           <tbody>
             {users.length === 0 && (
               <tr><td colSpan={5} className="px-4 py-6 text-center text-muted">
-                No backers yet — they appear here once someone redeems a code at /club.
+                {ready ? "No backers yet — they appear here once someone redeems a code at /club."
+                       : "Can't read the database — this is not your backer list."}
               </td></tr>
             )}
             {users.length > 0 && shown.length === 0 && (
@@ -457,7 +471,9 @@ function SubscriptionsCard({ passcode, users }: { passcode: string; users: Backe
     <div className="overflow-hidden rounded-2xl border border-line bg-surface/60 backdrop-blur">
       <div className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-2.5">
         <span className="text-sm font-bold text-ink">Subscriptions</span>
-        <span className="text-xs text-muted">{subs.length} on a plan · Stripe not connected yet</span>
+        <span className="text-xs text-muted">
+          {err ? "count unavailable" : `${subs.length} on a plan`} · Stripe not connected yet
+        </span>
         <button onClick={() => load()} className="ml-auto rounded-lg border border-line bg-canvas px-2.5 py-1 text-xs font-bold text-muted hover:text-ink">Refresh</button>
       </div>
 
@@ -493,7 +509,8 @@ function SubscriptionsCard({ passcode, users }: { passcode: string; users: Backe
       <div className="max-h-[320px] overflow-y-auto">
         {subs.length === 0 && (
           <p className="px-4 py-6 text-center text-sm text-muted">
-            Nobody is on a plan yet. Grant one above, or connect Stripe and let it fill in.
+            {err ? "Can't read the database — this is not your subscription list."
+                 : "Nobody is on a plan yet. Grant one above, or connect Stripe and let it fill in."}
           </p>
         )}
         <table className="w-full text-left text-sm">
@@ -703,6 +720,30 @@ function GamePassCard({ hours, onDrop }: { hours: number | null; onDrop: () => v
           Games are open to everyone right now, so no founder pass is needed.
         </p>
       )}
+    </section>
+  );
+}
+
+// Shown when the server reports the database is unreachable.
+//
+// The endpoints answer 200 with an EMPTY list in that state -- a deliberate fail-safe so the games
+// keep running while the founder tools degrade. But the page rendered that empty list through the
+// same branch as a genuinely empty one, so an outage read as "No backers yet -- mint some above":
+// confident, reassuring, wrong, and it invited minting duplicate codes at the worst possible moment.
+// The mint control is hidden while this is up, for exactly that reason.
+function DbDownBanner() {
+  return (
+    <section className="rounded-2xl border-2 border-danger bg-danger/10 p-4">
+      <h2 className="ff-title text-xl text-danger">Database unavailable</h2>
+      <p className="mt-1 text-sm text-ink">
+        The server is up and games are unaffected, but it cannot read the database right now, so
+        <b> these lists are not your real data</b>. An empty list here does NOT mean you have no
+        backers or no codes.
+      </p>
+      <p className="mt-2 text-sm text-muted">
+        Minting is disabled until it recovers — creating codes now would risk duplicates. Reload
+        once the database is back.
+      </p>
     </section>
   );
 }

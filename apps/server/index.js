@@ -213,9 +213,19 @@ function rateLimited(req, res, bucket, max, windowMs) {
 app.post("/api/auth/signup", (req, res) => {
   // Pre-launch gate: public account creation is closed and funnelled to the /waitlist page. The
   // founder can still create accounts by passing the admin passcode (or setting SIGNUPS_OPEN=true).
-  const founder = !!(process.env.ADMIN_PASSCODE && req.body && req.body.passcode === process.env.ADMIN_PASSCODE);
+  // CONSTANT-TIME, and rate-limited on the SAME bucket as the x-admin-passcode header.
+  //
+  // This used to be a plain `===` with no limit of any kind. The limiter below never ran for a bad
+  // passcode because the 403 returned first, so this route was an unlimited, full-speed guessing
+  // oracle for the passcode that opens all sixteen founder endpoints AND (since the founder pass)
+  // the games. Measured before the fix: 30 wrong guesses, 30 x 403, never a 429.
+  const given = req.body && req.body.passcode;
+  const founder = !!(ADMIN_PASSCODE && timingSafeStrEq(given, ADMIN_PASSCODE));
   const signupsOpen = process.env.SIGNUPS_OPEN === "true";
   if (!signupsOpen && !founder) {
+    // Only a FAILED founder attempt is counted. A visitor who simply hit a closed signup form sent
+    // no passcode and must not be pushed toward a lockout for it.
+    if (given && rateLimited(req, res, "adminpass", 20, 15 * 60_000)) return;
     return res.status(403).json({ error: "PlayZoo isn't open for new accounts yet — join the waitlist.", waitlist: true });
   }
   if (rateLimited(req, res, "signup", 6, 15 * 60_000)) return; // 6 new accounts / 15 min / IP
@@ -302,13 +312,29 @@ function isSuperadmin(req, res) {
   if (!ADMIN_PASSCODE) return false;
   if (timingSafeStrEq(req.get("x-admin-passcode"), ADMIN_PASSCODE)) return true;
   // Count only failures. 20 wrong guesses / 15 min / IP, matching the backer-code guard.
-  if (res) rateLimited(req, res, "adminpass", 20, 15 * 60_000);
+  //
+  // rateLimited RESPONDS with 429 when it trips, so its answer must be honoured: the old code
+  // discarded it and the caller then sent its own 401 on an already-finished response, throwing
+  // ERR_HTTP_HEADERS_SENT on every request past the limit. The client still saw the correct 429 --
+  // this was log noise, and log noise is where a real error goes to hide.
+  if (res && rateLimited(req, res, "adminpass", 20, 15 * 60_000)) {
+    res.locals = res.locals || {};
+    res.locals.rateLimitSent = true;   // the caller checks this before answering
+  }
   return false;
+}
+
+// Callers use this instead of writing their own 401: it returns true when the request has ALREADY
+// been answered (a 429 from the limiter), so the route must simply return.
+function denySuperadmin(req, res) {
+  if (res.locals && res.locals.rateLimitSent) return true;
+  res.status(401).json({ error: "Superadmin only." });
+  return true;
 }
 
 // Superadmin-only: list every brand in the store (founder god-mode).
 app.get("/api/brands", (req, res) => {
-  if (!isSuperadmin(req, res)) return res.status(401).json({ error: "Superadmin only." });
+  if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
   res.json({ ready: dbReady(), brands: listBrandSlugs() });
 });
 
@@ -324,7 +350,7 @@ app.post("/api/backer/check", (req, res) => {
 
 // Founder-only: mint N codes. Body { count, note }. Returns the plain code strings to hand out.
 app.post("/api/backer/codes", (req, res) => {
-  if (!isSuperadmin(req, res)) return res.status(401).json({ error: "Superadmin only." });
+  if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
   const { count, note } = req.body || {};
   const r = generateCodes(count, note);
   if (r.error) return res.status(503).json({ error: r.error });
@@ -333,13 +359,13 @@ app.post("/api/backer/codes", (req, res) => {
 
 // Founder-only: list every code + its state (valid/used, who redeemed it).
 app.get("/api/backer/codes", (req, res) => {
-  if (!isSuperadmin(req, res)) return res.status(401).json({ error: "Superadmin only." });
+  if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
   res.json({ ready: backerCodesReady(), codes: listCodes() });
 });
 
 // Founder-only: take an unredeemed code out of circulation (or put it back). Body { code, revoked }.
 app.post("/api/backer/codes/revoke", (req, res) => {
-  if (!isSuperadmin(req, res)) return res.status(401).json({ error: "Superadmin only." });
+  if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
   const { code, revoked } = req.body || {};
   const r = revokeCode(code, revoked !== false);
   if (r.error) return res.status(400).json({ error: r.error });
@@ -349,7 +375,7 @@ app.post("/api/backer/codes/revoke", (req, res) => {
 // Founder-only: the append-only audit log. ?limit&before&type — `before` pages by id, not offset,
 // so a page cannot shift while new events are being written.
 app.get("/api/backer/admin/events", (req, res) => {
-  if (!isSuperadmin(req, res)) return res.status(401).json({ error: "Superadmin only." });
+  if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
   if (needDb(res)) return;
   const { limit, before, type } = req.query || {};
   res.json({ events: SQL.listEvents({ limit, before, type: type || null }), types: SQL.listEventTypes() });
@@ -359,14 +385,17 @@ app.get("/api/backer/admin/events", (req, res) => {
 // read from a column, so an expired period stops granting access even if a webhook was missed.
 app.get("/api/backer/subscription", (req, res) => {
   if (needDb(res)) return;
-  const sess = readBackerSession(req.cookies?.[BACKER_COOKIE]);
+  // parseCookies, NOT req.cookies: no cookie-parser is mounted, so req.cookies is always
+  // undefined and this route answered 401 even for a signed-in backer. Nothing called it yet,
+  // which is the only reason it was not user-facing.
+  const sess = readBackerSession(parseCookies(req.headers.cookie)[BACKER_COOKIE]);
   if (!sess) return res.status(401).json({ error: "Not signed in." });
   res.json({ subscription: SUBS.getSubscription(sess.uid), entitlements: SUBS.entitlementsFor(sess.uid) });
 });
 
 // Founder-only: every subscription, and the plan catalogue behind them.
 app.get("/api/backer/admin/subscriptions", (req, res) => {
-  if (!isSuperadmin(req, res)) return res.status(401).json({ error: "Superadmin only." });
+  if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
   if (needDb(res)) return;
   res.json({ subscriptions: SUBS.listSubscriptions(), plans: PLANS() });
 });
@@ -375,7 +404,7 @@ app.get("/api/backer/admin/subscriptions", (req, res) => {
 // can moderate through the room itself; a dashboard that quietly exposes private enclosure chat to
 // an admin is a different product from the one that was promised to backers.
 app.get("/api/backer/admin/chat", (req, res) => {
-  if (!isSuperadmin(req, res)) return res.status(401).json({ error: "Superadmin only." });
+  if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
   res.json(chatStats());
 });
 
@@ -383,7 +412,7 @@ app.get("/api/backer/admin/chat", (req, res) => {
 // Exists so "is Stripe connected?" is answerable from the dashboard instead of by guessing - the
 // webhook failing closed looks identical to a webhook nobody has called yet.
 app.get("/api/backer/admin/stripe", (req, res) => {
-  if (!isSuperadmin(req, res)) return res.status(401).json({ error: "Superadmin only." });
+  if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
   if (needDb(res)) return;
   res.json(SUBS.stripeStatus());
 });
@@ -395,7 +424,7 @@ app.get("/api/backer/admin/stripe", (req, res) => {
 // deployment (Render) has its own database that may not have migrated - so removal is a deliberate,
 // per-environment act, taken by a human who can see this report.
 app.get("/api/backer/admin/legacy", (req, res) => {
-  if (!isSuperadmin(req, res)) return res.status(401).json({ error: "Superadmin only." });
+  if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
   if (needDb(res)) return;
   const authDir = process.env.AUTH_DIR || join(__dirname, "data", "auth");
   const dataDir = join(authDir, "..");
@@ -416,7 +445,7 @@ app.get("/api/backer/admin/legacy", (req, res) => {
 // honoured manually - Kickstarter rewards are fulfilled by hand at first - and afterwards as the
 // override for when a payment provider and reality disagree. Recorded in the audit log either way.
 app.post("/api/backer/admin/subscriptions/:id", (req, res) => {
-  if (!isSuperadmin(req, res)) return res.status(401).json({ error: "Superadmin only." });
+  if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
   if (needDb(res)) return;
   if (!adminGetBacker(req.params.id)) return res.status(404).json({ error: "No such account." });
   const { plan, status, currentPeriodEnd } = req.body || {};
@@ -427,13 +456,13 @@ app.post("/api/backer/admin/subscriptions/:id", (req, res) => {
 
 // Founder-only: the backer roster for the admin dashboard. Avatars are excluded (see listBackers).
 app.get("/api/backer/admin/users", (req, res) => {
-  if (!isSuperadmin(req, res)) return res.status(401).json({ error: "Superadmin only." });
+  if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
   res.json({ ready: backersReady(), users: listBackers() });
 });
 
 // Founder-only: one backer in full, including their avatar.
 app.get("/api/backer/admin/users/:id", (req, res) => {
-  if (!isSuperadmin(req, res)) return res.status(401).json({ error: "Superadmin only." });
+  if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
   const b = adminGetBacker(req.params.id);
   if (!b) return res.status(404).json({ error: "No such account." });
   res.json({ user: b });
@@ -444,7 +473,7 @@ app.get("/api/backer/admin/users/:id", (req, res) => {
 // is NOT editable here: it is the outcome of the sorting quiz, and quietly overriding it would make
 // the quiz a lie. Profile fields belong to the backer.
 app.post("/api/backer/admin/users/:id", (req, res) => {
-  if (!isSuperadmin(req, res)) return res.status(401).json({ error: "Superadmin only." });
+  if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
   const { username, clearPassword } = req.body || {};
   // Check existence FIRST: without this an unknown id fell through to updateBacker's generic
   // "No such account." and was reported as 400 (bad request) instead of 404 (no such thing).
@@ -465,7 +494,7 @@ app.post("/api/backer/admin/users/:id", (req, res) => {
 // Founder-only: manually kick off a John banter scene in a room (for testing / a nudge). Normally
 // scenes fire on their own, occasionally, in rooms with a live audience.
 app.post("/api/backer/banter", (req, res) => {
-  if (!isSuperadmin(req, res)) return res.status(401).json({ error: "Superadmin only." });
+  if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
   const roomId = req.body && req.body.roomId;
   if (!ROOM_IDS.includes(roomId)) return res.status(400).json({ error: "Unknown room." });
   res.json({ started: forceScene(roomId) });
