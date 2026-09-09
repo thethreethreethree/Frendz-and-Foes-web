@@ -50,11 +50,15 @@ export function CodenamesDisplay({ room }: { room: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state?.phase, state?.clue?.word, state?.clue?.team, state?.winner]);
 
-  if (!state) return <Center><p className="text-muted">Connecting…</p></Center>;
-
+  // useBackdrop is a HOOK, so it must run on EVERY render -- including the early return below
+  // when state is still null. Placing it after that guard changed the hook count between
+  // renders and React threw "Rendered more hooks than during the previous render".
   // Backdrop art keyed to the phase. Falls back to the .ff-backdrop gradient until the file exists.
   const phase = state?.phase === "ended" ? "ended" : state?.phase === "playing" ? "playing" : "lobby";
   const bg = useBackdrop("coverops", BACKDROPS[phase]);
+
+  if (!state) return <Center><p className="text-muted">Connecting…</p></Center>;
+
 
   if (state.phase === "lobby") {
     return (
