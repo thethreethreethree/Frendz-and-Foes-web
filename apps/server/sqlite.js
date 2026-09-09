@@ -216,7 +216,42 @@ CREATE INDEX IF NOT EXISTS idx_sessions_brand ON game_sessions(brand_slug);
 -- One LIVE session per room. A room that ends and is reopened is a new night and gets a new row;
 -- this only stops a reconnect storm opening five sessions for one game.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_sessions_live ON game_sessions(room_code) WHERE ended IS NULL;
+
+-- Named admin accounts. Phase 4 of docs/business-backend-design.md, MOVED UP from fifth on
+-- 2026-09-09 because the owner confirmed one or two other people are getting access soon.
+--
+-- Everyone currently shares one passcode. Two problems follow, and both get worse with every day of
+-- shared use rather than staying still:
+--   * The audit log cannot say WHO acted. events.actor_id holds a backer id or nothing, so an
+--     admin renaming a backer and the backer renaming themselves write identical rows. That history
+--     cannot be repaired afterwards -- the information was never captured.
+--   * Access cannot be revoked from one person. Changing the passcode changes it for everybody,
+--     including the owner.
+--
+-- The shared passcode SURVIVES as an owner-only override. It is the way back in if the last staff
+-- account is lost, and removing it would make this table a single point of lockout.
+CREATE TABLE IF NOT EXISTS staff (
+  id          TEXT PRIMARY KEY,
+  email       TEXT NOT NULL,
+  email_lower TEXT NOT NULL UNIQUE,   -- lookups are case-insensitive; the display form is kept
+  name        TEXT,
+  role        TEXT NOT NULL DEFAULT 'readonly',  -- owner | admin | support | readonly
+  pw_salt     TEXT NOT NULL,
+  pw_hash     TEXT NOT NULL,
+  active      INTEGER NOT NULL DEFAULT 1,        -- deactivated, never deleted: their audit trail
+                                                 -- has to keep resolving to a person
+  created     INTEGER NOT NULL,
+  last_seen   INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_staff_active ON staff(active);
 `);
+
+// Who performed an action, when it was a member of staff rather than a backer.
+//
+// A separate column from actor_id on purpose: actor_id holds a BACKER id, and overloading it would
+// make "did the backer do this or did an admin do it to them" unanswerable — which is the exact
+// question the audit log exists to answer.
+ensureColumn("events", "actor_staff_id", "TEXT");
 
 // Has this one-time migration already run? Explicit, because "the table is empty" is not the same
 // question - see the meta table's comment.

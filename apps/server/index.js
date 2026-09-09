@@ -44,6 +44,7 @@ let SUBS = null;
 let PAY = null;
 let FUL = null;
 let SES = null;
+let STAFF = null;
 try {
   SQL = await import("./sqlite.js");
   SUBS = await import("./subscriptions.js");
@@ -53,6 +54,8 @@ try {
   await FUL.initFulfilment();
   SES = await import("./sessions.js");
   await SES.initSessions();
+  STAFF = await import("./staff.js");
+  await STAFF.initStaff();
   // A crash or a deploy restart leaves sessions with ended = NULL forever, which both blocks the
   // next night in that room (partial unique index) and counts a dead night as live in every figure.
   SES.closeStaleSessions();
@@ -354,9 +357,37 @@ const timingSafeStrEq = (a, b) => {
   return timingSafeEqual(ha, hb) && A.length === B.length;
 };
 
+/**
+ * Who is asking, if anyone. Returns the staff row for a valid session cookie, or null.
+ *
+ * Read on EVERY request rather than trusted from login, so deactivating someone ends the session
+ * they are already holding instead of leaving them a week of access.
+ */
+function staffFromReq(req) {
+  if (!STAFF || !STAFF.staffReady()) return null;
+  const tok = parseCookies(req.headers.cookie)[STAFF.STAFF_COOKIE];
+  return tok ? STAFF.readStaffSession(tok) : null;
+}
+
+/**
+ * Does this request carry a capability? A named staff session is checked against its ROLE; the
+ * shared passcode is owner-level.
+ *
+ * The passcode survives deliberately (§7.4 of the business backend design): it is the way back in
+ * if the last staff account is lost, so staff accounts cannot become a single point of lockout.
+ */
+function reqCan(req, capability) {
+  if (timingSafeStrEq(req.get("x-admin-passcode"), ADMIN_PASSCODE)) return true;
+  const who = staffFromReq(req);
+  return !!(who && STAFF.can(who.role, capability));
+}
+
 function isSuperadmin(req, res) {
   if (!ADMIN_PASSCODE) return false;
   if (timingSafeStrEq(req.get("x-admin-passcode"), ADMIN_PASSCODE)) return true;
+  // A named staff session counts too. Any role can pass this gate; individual routes narrow it
+  // further with reqCan(), which is where "support must never see money" is actually enforced.
+  if (staffFromReq(req)) return true;
   // Count only failures. 20 wrong guesses / 15 min / IP, matching the backer-code guard.
   //
   // rateLimited RESPONDS with 429 when it trips, so its answer must be honoured: the old code
@@ -490,6 +521,7 @@ const needSes = (res) => {
 // Every total here is DERIVED from the payments rows on each call. Nothing is stored, so nothing
 // can drift away from what actually happened.
 app.get("/api/backer/admin/payments", (req, res) => {
+  if (!reqCan(req, "money")) return res.status(403).json({ error: "Your account cannot see this." });
   if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
   if (needDb(res) || needPay(res)) return;
   const now = Date.now();
@@ -509,6 +541,7 @@ app.get("/api/backer/admin/payments", (req, res) => {
 // Kickstarter money never touches our Stripe, so it has to be enterable by hand or the ledger can
 // never show the true total.
 app.post("/api/backer/admin/payments", (req, res) => {
+  if (!reqCan(req, "money")) return res.status(403).json({ error: "Your account cannot see this." });
   if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
   if (needDb(res) || needPay(res)) return;
   const b = req.body || {};
@@ -525,6 +558,7 @@ app.post("/api/backer/admin/payments", (req, res) => {
 // CSV for the accountant. Amounts in MAJOR units here because that is what a human reads, derived
 // from the integer minor units, never stored that way.
 app.get("/api/backer/admin/payments.csv", (req, res) => {
+  if (!reqCan(req, "money")) return res.status(403).json({ error: "Your account cannot see this." });
   if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
   if (needDb(res) || needPay(res)) return;
   const { ready, payments } = PAY.allPaymentsForExport();
@@ -550,6 +584,7 @@ app.get("/api/backer/admin/payments.csv", (req, res) => {
 // What we owe people. Rows are DERIVED from each backer's tier and generated idempotently, so this
 // list cannot drift from what was actually sold.
 app.get("/api/backer/admin/fulfilment", (req, res) => {
+  if (!reqCan(req, "fulfilment")) return res.status(403).json({ error: "Your account cannot see this." });
   if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
   if (needDb(res) || needFul(res)) return;
 
@@ -574,6 +609,7 @@ app.get("/api/backer/admin/fulfilment", (req, res) => {
 
 // Move an item along, set a due date, attach notes or the finished asset path.
 app.patch("/api/backer/admin/fulfilment/:id", (req, res) => {
+  if (!reqCan(req, "fulfilment")) return res.status(403).json({ error: "Your account cannot see this." });
   if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
   if (needDb(res) || needFul(res)) return;
   const b = req.body || {};
@@ -598,6 +634,7 @@ app.patch("/api/backer/admin/fulfilment/:id", (req, res) => {
 
 // A one-off item no tier implies - a replacement, a poster, a goodwill extra.
 app.post("/api/backer/admin/fulfilment", (req, res) => {
+  if (!reqCan(req, "fulfilment")) return res.status(403).json({ error: "Your account cannot see this." });
   if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
   if (needDb(res) || needFul(res)) return;
   const b = req.body || {};
@@ -610,6 +647,7 @@ app.post("/api/backer/admin/fulfilment", (req, res) => {
 });
 
 app.get("/api/backer/admin/fulfilment.csv", (req, res) => {
+  if (!reqCan(req, "fulfilment")) return res.status(403).json({ error: "Your account cannot see this." });
   if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
   if (needDb(res) || needFul(res)) return;
   const { ready, items } = FUL.allFulfilmentForExport();
@@ -634,6 +672,7 @@ app.get("/api/backer/admin/fulfilment.csv", (req, res) => {
 // --- Activity: what actually happened on game nights (founder-only) ----------------------------
 // Every figure DERIVED from game_sessions on each call. Nothing stored, so nothing can drift.
 app.get("/api/backer/admin/activity", (req, res) => {
+  if (!reqCan(req, "activity")) return res.status(403).json({ error: "Your account cannot see this." });
   if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
   if (needDb(res) || needSes(res)) return;
   const now = Date.now();
@@ -648,6 +687,7 @@ app.get("/api/backer/admin/activity", (req, res) => {
 });
 
 app.get("/api/backer/admin/activity.csv", (req, res) => {
+  if (!reqCan(req, "activity")) return res.status(403).json({ error: "Your account cannot see this." });
   if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
   if (needDb(res) || needSes(res)) return;
   const { ready, sessions } = SES.allSessionsForExport();
@@ -669,6 +709,68 @@ app.get("/api/backer/admin/activity.csv", (req, res) => {
   res.setHeader("content-type", "text/csv; charset=utf-8");
   res.setHeader("content-disposition", `attachment; filename="playzoo-activity-${new Date().toISOString().slice(0,10)}.csv"`);
   res.send([head.join(","), ...rows].join(NL));
+});
+
+// --- Staff accounts (Phase 4) ------------------------------------------------------------------
+// Named logins so the audit log can say WHO acted, and so access can be revoked from one person
+// without changing the passcode for everybody.
+app.post("/api/backer/admin/staff/login", (req, res) => {
+  if (!STAFF || !STAFF.staffReady()) return res.status(503).json({ error: "Accounts are unavailable right now." });
+  // Same bucket and limit as the passcode guard: a login form is a password oracle otherwise.
+  if (rateLimited(req, res, "adminpass", 20, 15 * 60_000)) return;
+  const { email, password } = req.body || {};
+  const who = STAFF.authenticateStaff(email, password);
+  // One message for every failure. "No such account" and "wrong password" must be indistinguishable
+  // or the form becomes a way to discover who has access.
+  if (!who) return res.status(401).json({ error: "That email and password do not match." });
+  res.setHeader("set-cookie", STAFF.staffCookie(STAFF.makeStaffSession(who.id), isSecure(req)));
+  res.json({ staff: STAFF.publicStaff(who) });
+});
+
+app.post("/api/backer/admin/staff/logout", (req, res) => {
+  if (STAFF) res.setHeader("set-cookie", STAFF.clearStaffCookie(isSecure(req)));
+  res.json({ ok: true });
+});
+
+// Who am I, and what may I do? The founder page uses this to hide panels a role cannot use --
+// hiding is a courtesy, the server check is the actual control.
+app.get("/api/backer/admin/staff/me", (req, res) => {
+  const who = staffFromReq(req);
+  if (who) return res.json({ staff: STAFF.publicStaff(who), via: "account" });
+  if (timingSafeStrEq(req.get("x-admin-passcode"), ADMIN_PASSCODE)) {
+    return res.json({
+      staff: { id: null, email: null, name: "Shared passcode", role: "owner", active: true,
+               can: STAFF ? STAFF.capabilitiesFor("owner") : [] },
+      via: "passcode",
+    });
+  }
+  res.status(401).json({ error: "Not signed in." });
+});
+
+app.get("/api/backer/admin/staff", (req, res) => {
+  if (!reqCan(req, "staff")) return res.status(403).json({ error: "Only an owner can manage staff." });
+  if (!STAFF || !STAFF.staffReady()) return res.status(503).json({ error: "Accounts are unavailable right now." });
+  res.json(STAFF.listStaff());
+});
+
+app.post("/api/backer/admin/staff", (req, res) => {
+  if (!reqCan(req, "staff")) return res.status(403).json({ error: "Only an owner can manage staff." });
+  const b = req.body || {};
+  const r = STAFF.createStaff({ email: b.email, password: b.password, name: b.name, role: b.role });
+  if (r.error) return res.status(400).json({ error: r.error });
+  res.json(r);
+});
+
+app.patch("/api/backer/admin/staff/:id", (req, res) => {
+  if (!reqCan(req, "staff")) return res.status(403).json({ error: "Only an owner can manage staff." });
+  const b = req.body || {};
+  let out = null;
+  if (b.role !== undefined) out = STAFF.setStaffRole(req.params.id, b.role);
+  if (!out?.error && b.active !== undefined) out = STAFF.setStaffActive(req.params.id, !!b.active);
+  if (!out?.error && b.password !== undefined) out = STAFF.setStaffPassword(req.params.id, b.password);
+  if (!out) return res.status(400).json({ error: "Nothing to change." });
+  if (out.error) return res.status(400).json({ error: out.error });
+  res.json(out);
 });
 
 app.get("/api/backer/admin/legacy", (req, res) => {
