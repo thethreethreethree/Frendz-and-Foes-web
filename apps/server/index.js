@@ -521,8 +521,8 @@ const needSes = (res) => {
 // Every total here is DERIVED from the payments rows on each call. Nothing is stored, so nothing
 // can drift away from what actually happened.
 app.get("/api/backer/admin/payments", (req, res) => {
-  if (!reqCan(req, "money")) return res.status(403).json({ error: "Your account cannot see this." });
   if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
+  if (!reqCan(req, "money")) return res.status(403).json({ error: "Your account cannot see this." });
   if (needDb(res) || needPay(res)) return;
   const now = Date.now();
   const startOfMonth = (d) => { const x = new Date(d); x.setDate(1); x.setHours(0,0,0,0); return x.getTime(); };
@@ -541,8 +541,8 @@ app.get("/api/backer/admin/payments", (req, res) => {
 // Kickstarter money never touches our Stripe, so it has to be enterable by hand or the ledger can
 // never show the true total.
 app.post("/api/backer/admin/payments", (req, res) => {
-  if (!reqCan(req, "money")) return res.status(403).json({ error: "Your account cannot see this." });
   if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
+  if (!reqCan(req, "money")) return res.status(403).json({ error: "Your account cannot see this." });
   if (needDb(res) || needPay(res)) return;
   const b = req.body || {};
   const r = PAY.recordPayment({
@@ -558,8 +558,8 @@ app.post("/api/backer/admin/payments", (req, res) => {
 // CSV for the accountant. Amounts in MAJOR units here because that is what a human reads, derived
 // from the integer minor units, never stored that way.
 app.get("/api/backer/admin/payments.csv", (req, res) => {
-  if (!reqCan(req, "money")) return res.status(403).json({ error: "Your account cannot see this." });
   if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
+  if (!reqCan(req, "money")) return res.status(403).json({ error: "Your account cannot see this." });
   if (needDb(res) || needPay(res)) return;
   const { ready, payments } = PAY.allPaymentsForExport();
   if (!ready) return res.status(503).json({ error: "The database is unavailable right now." });
@@ -584,8 +584,8 @@ app.get("/api/backer/admin/payments.csv", (req, res) => {
 // What we owe people. Rows are DERIVED from each backer's tier and generated idempotently, so this
 // list cannot drift from what was actually sold.
 app.get("/api/backer/admin/fulfilment", (req, res) => {
-  if (!reqCan(req, "fulfilment")) return res.status(403).json({ error: "Your account cannot see this." });
   if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
+  if (!reqCan(req, "fulfilment")) return res.status(403).json({ error: "Your account cannot see this." });
   if (needDb(res) || needFul(res)) return;
 
   // Generate any missing rows before listing. There is no "on purchase" hook that could be missed:
@@ -609,8 +609,8 @@ app.get("/api/backer/admin/fulfilment", (req, res) => {
 
 // Move an item along, set a due date, attach notes or the finished asset path.
 app.patch("/api/backer/admin/fulfilment/:id", (req, res) => {
-  if (!reqCan(req, "fulfilment")) return res.status(403).json({ error: "Your account cannot see this." });
   if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
+  if (!reqCan(req, "fulfilment")) return res.status(403).json({ error: "Your account cannot see this." });
   if (needDb(res) || needFul(res)) return;
   const b = req.body || {};
   const patch = {};
@@ -634,8 +634,8 @@ app.patch("/api/backer/admin/fulfilment/:id", (req, res) => {
 
 // A one-off item no tier implies - a replacement, a poster, a goodwill extra.
 app.post("/api/backer/admin/fulfilment", (req, res) => {
-  if (!reqCan(req, "fulfilment")) return res.status(403).json({ error: "Your account cannot see this." });
   if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
+  if (!reqCan(req, "fulfilment")) return res.status(403).json({ error: "Your account cannot see this." });
   if (needDb(res) || needFul(res)) return;
   const b = req.body || {};
   const r = FUL.addFulfilment({
@@ -647,8 +647,8 @@ app.post("/api/backer/admin/fulfilment", (req, res) => {
 });
 
 app.get("/api/backer/admin/fulfilment.csv", (req, res) => {
-  if (!reqCan(req, "fulfilment")) return res.status(403).json({ error: "Your account cannot see this." });
   if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
+  if (!reqCan(req, "fulfilment")) return res.status(403).json({ error: "Your account cannot see this." });
   if (needDb(res) || needFul(res)) return;
   const { ready, items } = FUL.allFulfilmentForExport();
   if (!ready) return res.status(503).json({ error: "The database is unavailable right now." });
@@ -672,8 +672,8 @@ app.get("/api/backer/admin/fulfilment.csv", (req, res) => {
 // --- Activity: what actually happened on game nights (founder-only) ----------------------------
 // Every figure DERIVED from game_sessions on each call. Nothing stored, so nothing can drift.
 app.get("/api/backer/admin/activity", (req, res) => {
-  if (!reqCan(req, "activity")) return res.status(403).json({ error: "Your account cannot see this." });
   if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
+  if (!reqCan(req, "activity")) return res.status(403).json({ error: "Your account cannot see this." });
   if (needDb(res) || needSes(res)) return;
   const now = Date.now();
   const days = Math.max(1, Math.min(365, Number(req.query.days) || 30));
@@ -687,8 +687,8 @@ app.get("/api/backer/admin/activity", (req, res) => {
 });
 
 app.get("/api/backer/admin/activity.csv", (req, res) => {
-  if (!reqCan(req, "activity")) return res.status(403).json({ error: "Your account cannot see this." });
   if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
+  if (!reqCan(req, "activity")) return res.status(403).json({ error: "Your account cannot see this." });
   if (needDb(res) || needSes(res)) return;
   const { ready, sessions } = SES.allSessionsForExport();
   if (!ready) return res.status(503).json({ error: "The database is unavailable right now." });
