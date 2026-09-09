@@ -68,38 +68,38 @@ def end(secs, small, accent):
 
 SHOTS = [
     # --- John hijacks the promo -------------------------------------------------------------
-    scene(2.6, "john-desk",      "",                   "hi. i'm john.",                        LIME,  ay=0.50),
+    scene(2.6, "john-desk",      "",                   "i'm john. i'll be your problem.",         LIME,  ay=0.50),
     scene(1.6, "john-b",         "",                   "they said don't let the raccoon direct.", LIME),
-    scene(1.4, "john-a",         "",                   "so obviously i directed it.",           LIME),
-    scene(3.8, "zoo-night",      "WELCOME TO PLAYZOO", "the zoo is open. sort of.",             VIOLET),
+    scene(1.4, "john-a",         "",                   "so i directed it.",                       LIME),
+    scene(3.8, "zoo-night",      "WELCOME TO PLAYZOO", "14 games. zero supervision.",             VIOLET),
     # --- what it actually is ----------------------------------------------------------------
-    scene(3.6, "explainer",      "ONE BIG SCREEN",     "the telly runs the game",               TEAL,  ay=0.50),
-    scene(2.6, "headsup",        "EVERYONE'S PHONE",   "no app. no accounts. scan a code.",     TEAL,  ay=0.45),
-    scene(3.2, "cast-hero",      "14 GAMES",           "one AI zookeeper to blame",             AMBER),
-    cut(2.4, "cut-rex-wave", "backdrop", "THAT'S REX", "he's the responsible one",              AMBER),
-    cut(2.0, "cut-sleeper",  "backdrop", "",           "the talent is asleep again",            LIME),
+    scene(3.6, "explainer",      "ONE BIG SCREEN",     "the telly does the thinking",             TEAL,  ay=0.50),
+    scene(2.6, "headsup",        "EVERYONE'S PHONE",   "no app. no accounts. no excuses.",        TEAL,  ay=0.45),
+    scene(3.2, "cast-hero",      "14 GAMES",           "one zookeeper. he's outnumbered.",        AMBER),
+    cut(2.4, "cut-rex-wave", "backdrop", "MEET REX",   "he thinks he's in charge",                AMBER),
+    cut(2.0, "cut-sleeper",  "backdrop", "",           "meanwhile, our star performer",           LIME),
     # --- the games, fast --------------------------------------------------------------------
-    scene(2.0, "buzzers",        "SURVEY SHOWDOWN",    "two teams. no mercy.",                  PINK,  ay=0.52),
-    scene(1.8, "whiteboards",    "",                   "everyone is wrong. loudly.",            PINK,  ay=0.50),
-    scene(1.8, "charades-zip",   "CHARADES",           "no talking. no writing. no dignity.",   VIOLET, ay=0.45),
-    scene(1.6, "charades-tower", "",                   "nobody knows what he is doing",         VIOLET, ay=0.42),
-    scene(2.0, "sketch-relay",   "SKETCH RELAY",       "it started as a cat",                   LIME,  ay=0.50),
-    scene(1.6, "parrot-easel",   "",                   "it is not a cat anymore",               LIME,  ay=0.48),
-    scene(2.0, "spy-board",      "COVER OPS",          "crack the grid. dodge the assassin.",   TEAL,  ay=0.50),
-    scene(2.0, "lineup",         "MURDER MYSTERY",     "one of you is lying. it's me.",         PINK,  ay=0.52),
-    scene(1.6, "bingo",          "BINGO",              "she cheats",                            AMBER, ay=0.50),
-    scene(1.6, "casino",         "HIGH ROLLERS",       "the house is a gorilla",                AMBER, ay=0.50),
-    scene(1.8, "bar18",          "AND THE 18+ ONE",    "we don't talk about it",                VIOLET, ay=0.45),
-    cut(1.8, "cut-wheel", "backdrop", "",              "the prizes are incredible",             LIME),
+    scene(2.0, "buzzers",        "SURVEY SHOWDOWN",    "two teams. one buzzer. no friendships.",  PINK,  ay=0.52),
+    scene(1.8, "whiteboards",    "",                   "wrong. confidently wrong.",               PINK,  ay=0.50),
+    scene(1.8, "charades-zip",   "CHARADES",           "no talking. no writing. no dignity.",     VIOLET, ay=0.45),
+    scene(1.6, "charades-tower", "",                   "he has been a washing machine a while",   VIOLET, ay=0.42),
+    scene(2.0, "sketch-relay",   "SKETCH RELAY",       "this began as a cat",                     LIME,  ay=0.50),
+    scene(1.6, "parrot-easel",   "",                   "it has opinions now",                     LIME,  ay=0.48),
+    scene(2.0, "spy-board",      "COVER OPS",          "find your agents. avoid the assassin.",   TEAL,  ay=0.50),
+    scene(2.0, "lineup",         "MURDER MYSTERY",     "one of us is lying. it's me.",            PINK,  ay=0.52),
+    scene(1.6, "bingo",          "BINGO",              "she is absolutely cheating",              AMBER, ay=0.50),
+    scene(1.6, "casino",         "HIGH ROLLERS",       "the house is a gorilla. it wins.",        AMBER, ay=0.50),
+    scene(1.8, "bar18",          "THE 18+ ONE",        "not in front of the parrot",              VIOLET, ay=0.45),
+    cut(1.8, "cut-wheel", "backdrop", "",              "grand prize: meh",                        LIME),
     # --- the enclosures ---------------------------------------------------------------------
-    card(1.4, "banner-rowdies",  "YOU GET SORTED",     "four enclosures. one of them is yours.", AMBER),
-    card(1.4, "banner-cuddle",   "",                   "the nice one.",                          TEAL),
-    card(1.4, "banner-owls",     "",                   "the insufferable one.",                  VIOLET),
-    card(2.2, "banner-schemers", "MINE",               "i'm a schemer. obviously.",              LIME),
+    card(1.4, "banner-rowdies",  "YOU GET SORTED",     "four enclosures. no appeals.",            AMBER),
+    card(1.4, "banner-cuddle",   "",                   "the nice one.",                           TEAL),
+    card(1.4, "banner-owls",     "",                   "the insufferable one.",                   VIOLET),
+    card(2.2, "banner-schemers", "MINE",               "obviously.",                              LIME),
     # --- the ask ----------------------------------------------------------------------------
-    scene(2.0, "crate",          "BACK IT",            "kickstarter — goal $3,500",             PINK,  ay=0.48),
-    scene(2.4, "ks-medallion",   "GET IN EARLY",       "backers play first",                    PINK,  ay=0.50),
-    end(4.4,                                           "playzoo.snapaweb.com",                  TEAL),
+    scene(2.0, "crate",          "BACK IT",            "kickstarter. $3,500. modest, frankly.",   PINK,  ay=0.48),
+    scene(2.4, "ks-medallion",   "GET IN EARLY",       "backers play first. i decide the rest.",  PINK,  ay=0.50),
+    end(4.4,                                           "playzoo.snapaweb.com",                    TEAL),
 ]
 
 # Act boundaries, by shot index — a 3-frame white flash lands on each, so the five movements read
@@ -173,13 +173,23 @@ def logo(width):
     im = Image.open(LOGO_PATH).convert("RGBA")
     return im.resize((width, int(im.height * width / im.width)), Image.LANCZOS)
 
-# Captions sit BOTTOM-LEFT, not centred: left-aligned type reads as directed rather than as a
-# slideshow label, and it keeps the middle of every frame — where the art puts its subject — clear.
-PAD_X, BIG_PX, SMALL_PX = 96, 96, 42
+# Caption geometry — STICKER style, picked by the owner from three rendered comparisons on a real
+# shot rather than from descriptions.
+#
+# The old captions were 96px on a 1080-tall frame and read as small. These are 150px, white, with a
+# heavy black outline and a hard offset shadow in the shot's accent colour, tilted two degrees so
+# they sit like a sticker slapped onto the frame rather than a subtitle burned into it.
+#
+# The OUTLINE is the part that matters, not the size: a plain white word vanishes into the parrot's
+# lime plumage or the bingo card. A black stroke keeps every letter readable over any of this art.
+BIG_PX, SMALL_PX = 150, 62
+CARD_BIG_PX, CARD_SMALL_PX = 92, 52
+PAD_X, TILT = 96, -2.0
 
 def wrap(d, text, f, maxw):
-    """Break a headline to the width actually available. "YOU GET SORTED" at 96px did not fit the
-    card column and lost its final D off the right edge — measured, not guessed at, from here on."""
+    """Break a headline to the width actually available. "YOU GET SORTED" at 96px overflowed the
+    card column and lost its final D off the right edge, so headline width is measured from here on
+    rather than assumed — and a gate in the build re-measures every caption before rendering."""
     words, lines, cur = text.split(), [], ""
     for w in words:
         t = (cur + " " + w).strip()
@@ -191,38 +201,59 @@ def wrap(d, text, f, maxw):
     if cur: lines.append(cur)
     return lines
 
+def _sticker(text, f, accent, stroke, offset):
+    """One caption line on its own transparent layer, so the whole line rotates as a unit."""
+    pad = stroke + offset + 40
+    probe = ImageDraw.Draw(Image.new("RGB", (8, 8)))
+    w = int(probe.textlength(text, font=f)) + pad * 2
+    lay = Image.new("RGBA", (w, f.size + pad * 2), (0, 0, 0, 0))
+    d = ImageDraw.Draw(lay)
+    d.text((pad + offset, pad + offset), text, font=f, fill=accent + (255,),
+           stroke_width=stroke, stroke_fill=accent + (255,))
+    d.text((pad, pad), text, font=f, fill=INK + (255,),
+           stroke_width=stroke, stroke_fill=(8, 10, 18, 255))
+    return lay, pad
+
 def draw_caption(img, big, small, accent, t, card_mode=False):
     d = ImageDraw.Draw(img, "RGBA")
-    fb, fs = font(76 if card_mode else BIG_PX), font(SMALL_PX, black=False)
+    big_px = CARD_BIG_PX if card_mode else BIG_PX
+    small_px = CARD_SMALL_PX if card_mode else SMALL_PX
+    fb, fs = font(big_px), font(small_px, black=False)
     x = int(W * 0.52) if card_mode else PAD_X
     maxw = W - x - 60
 
     if not card_mode:
-        # a scrim only along the bottom, so the picture keeps the top two thirds
-        scrim = Image.new("RGBA", (W, 380), (0, 0, 0, 0))
+        scrim = Image.new("RGBA", (W, 470), (0, 0, 0, 0))
         sd = ImageDraw.Draw(scrim)
-        for i in range(380):
-            sd.line([(0, i), (W, i)], fill=(5, 8, 16, int(225 * (i / 380) ** 1.5)))
-        img.paste(Image.alpha_composite(img.crop((0, H - 380, W, H)).convert("RGBA"), scrim).convert("RGB"),
-                  (0, H - 380))
+        for i in range(470):
+            sd.line([(0, i), (W, i)], fill=(5, 8, 16, int(220 * (i / 470) ** 1.5)))
+        img.paste(Image.alpha_composite(img.crop((0, H - 470, W, H)).convert("RGBA"), scrim).convert("RGB"),
+                  (0, H - 470))
 
-    y_small = (H // 2 + 40) if card_mode else (H - 150)
+    y_small = (H // 2 + 30) if card_mode else (H - 128)
+
     if big:
         lines = wrap(d, big, fb, maxw)
-        lh = (76 if card_mode else BIG_PX) + 14
-        y_big = y_small - lh * len(lines) - 12
+        lh = big_px + 18
+        # The block ends a clear 62px above the subline. At 96px a 26px gap was fine; at 150px the
+        # same gap put the headline's baseline into the subline, which the style preview showed.
+        y = y_small - 62 - lh * len(lines)
         for ln in lines:
-            d.text((x + 6, y_big + 6), ln, font=fb, fill=accent + (255,))
-            d.text((x, y_big), ln, font=fb, fill=INK + (255,))
-            y_big += lh
-    if small:
-        d.text((x, y_small), small, font=fs, fill=(206, 216, 240, 255))
+            lay, pad = _sticker(ln, fb, accent,
+                                stroke=9 if card_mode else 10, offset=8 if card_mode else 12)
+            lay = lay.rotate(TILT, resample=Image.BICUBIC, expand=True)
+            img.paste(lay, (x - pad, y - pad), lay)
+            y += lh
 
-    # an accent rule that draws itself across the shot — motion without moving the words
+    if small:
+        d.text((x, y_small), small, font=fs, fill=(238, 244, 255, 255),
+               stroke_width=4 if card_mode else 5, stroke_fill=(8, 10, 18, 255))
+
+    # accent rule that draws itself across the shot — motion without moving the words
     rw = int(min(1.0, t * 2.2) * (W * 0.30))
     if rw > 3:
-        ry = y_small + SMALL_PX + 30
-        d.rounded_rectangle([x, ry, x + rw, ry + 7], radius=4, fill=accent + (255,))
+        ry = y_small + small_px + 26
+        d.rounded_rectangle([x, ry, x + rw, ry + 9], radius=5, fill=accent + (255,))
 
 def render():
     cmd = ["ffmpeg", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
