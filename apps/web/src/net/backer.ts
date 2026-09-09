@@ -105,3 +105,46 @@ export async function fetchSortQuestions(): Promise<SortQuestion[]> {
 export async function submitSort(answers: number[]): Promise<{ enclosure?: EnclosureResult; alreadySorted?: boolean; error?: string }> {
   return postJson("/api/backer/sort", { answers });
 }
+
+// --- Which games did you choose? ----------------------------------------------------------------
+// The tiers sell "any five games you choose" (any ten at $30, every game at $50). The server owns
+// the allowance — it reads it from the plan on every request — so this type mirrors what it sends
+// rather than working any of it out here.
+export type PickState = {
+  ready: boolean;
+  active: boolean;
+  allGames: boolean;
+  allowance: number | "all";
+  chosen: string[];
+  remaining: number | "all";
+  overAllowance: boolean;
+  games: string[];          // the catalogue, so the chooser never hardcodes a second game list
+};
+
+// A discriminated union, deliberately: with `error?: string` ON PickState, `"error" in result` does
+// not narrow, so a caller handling the failure still sees `string | undefined` and has to cast. The
+// two outcomes are genuinely different shapes, so the type says so.
+export type PickResult = PickState | { error: string };
+
+export async function myGames(): Promise<PickResult> {
+  try {
+    const res = await fetch("/api/backer/games", { credentials: "same-origin" });
+    if (res.status === 401) return { error: "Sign in to choose your games." };
+    if (!res.ok) return { error: "Couldn't load your games — try again." };
+    return await res.json();
+  } catch { return { error: "Network hiccup — try again." }; }
+}
+
+export async function setGamePick(game: string, pick: boolean): Promise<PickResult> {
+  try {
+    const res = await fetch("/api/backer/games", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ game, pick }),
+    });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) return { error: d.error || "Couldn't save that." };
+    return d;
+  } catch { return { error: "Network hiccup — try again." }; }
+}

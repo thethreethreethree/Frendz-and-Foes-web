@@ -776,6 +776,24 @@ app.patch("/api/backer/admin/staff/:id", (req, res) => {
   res.json(out);
 });
 
+// Which games backers actually chose. Early evidence of what matters, well before the Activity
+// numbers have enough nights in them to say anything.
+app.get("/api/backer/admin/picks", (req, res) => {
+  if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
+  if (!reqCan(req, "activity")) return res.status(403).json({ error: "Your account cannot see this." });
+  if (needDb(res)) return;
+  if (!PICKS || !PICKS.gamePicksReady()) {
+    return res.status(503).json({ ready: false, error: "The database is unavailable right now." });
+  }
+  const { picks } = PICKS.allPicks();
+  // Counted per game here rather than in the browser: the panel should not have to know that a
+  // backer with no picks is different from a game with no backers.
+  const tally = {};
+  for (const g of PICKS.VALID_GAMES) tally[g] = 0;
+  for (const p of picks) if (tally[p.game] !== undefined) tally[p.game]++;
+  res.json({ ready: true, picks, tally, backers: new Set(picks.map((p) => p.backer_id)).size });
+});
+
 app.get("/api/backer/admin/legacy", (req, res) => {
   if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
   if (needDb(res)) return;

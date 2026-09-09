@@ -7,8 +7,8 @@
 // Every figure is DERIVED server-side from game_sessions on each request. Nothing is stored, so
 // nothing can drift away from what happened.
 import { useEffect, useState } from "react";
-import { listActivity } from "../net/founder";
-import type { SessionRow, ActivitySummary, GameStat } from "../net/founder";
+import { listActivity, listPicks } from "../net/founder";
+import type { SessionRow, ActivitySummary, GameStat, PickTally } from "../net/founder";
 
 // The fourteen game slugs the clients send, mapped to what they are called on the site. A slug with
 // no entry here still shows — as itself — because a game quietly missing from a report is worse
@@ -47,6 +47,7 @@ export function ActivityCard({ passcode }: { passcode: string }) {
   const [allTime, setAllTime] = useState<ActivitySummary | null>(null);
   const [win, setWin] = useState<ActivitySummary | null>(null);
   const [days, setDays] = useState(30);
+  const [picks, setPicks] = useState<PickTally | null>(null);
   const [ready, setReady] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
@@ -58,6 +59,9 @@ export function ActivityCard({ passcode }: { passcode: string }) {
     setSessions(r.sessions ?? []);
     setAllTime(r.allTime ?? null);
     setWin(r.window ?? null);
+    // Picks answer the same question as Activity but MUCH earlier: a backer chooses on day one,
+    // whereas a completion rate needs nights to accumulate before it means anything.
+    setPicks(await listPicks(passcode));
   }
   useEffect(() => { void load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [passcode, days]);
 
@@ -155,6 +159,28 @@ export function ActivityCard({ passcode }: { passcode: string }) {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {ready && picks?.ready && picks.backers > 0 && (
+        <div className="border-t border-line px-4 py-3">
+          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
+            Chosen by backers · {picks.backers} {picks.backers === 1 ? "backer has" : "backers have"} picked
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {Object.entries(picks.tally)
+              .sort((a, b) => b[1] - a[1])
+              .map(([slug, n]) => (
+                <span key={slug}
+                  className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${
+                    n > 0 ? "border-primary/50 bg-primary/10 text-primary" : "border-line text-muted"}`}>
+                  {gameName(slug)} <span className="tabular-nums">{n}</span>
+                </span>
+              ))}
+          </div>
+          <p className="mt-2 text-xs text-muted">
+            A game nobody picks is worth knowing about sooner than a game nobody finishes.
+          </p>
         </div>
       )}
 

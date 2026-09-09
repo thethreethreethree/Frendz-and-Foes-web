@@ -9,6 +9,7 @@ import { enclosureView } from "../backer/enclosures";
 import {
   type Backer, backerMe, checkBackerCode, backerSignup, backerLogin, backerLogout, backerSetPassword, updateProfile,
 } from "../net/backer";
+import { MyGamesCard } from "./MyGamesCard";
 
 // The backers-only club, hosted by Rex. It's the front door to the (upcoming) enclosure chats: a
 // backer signs up with their one-time code — Rex CHATS to check the code, then a Rex-framed FORM
@@ -298,6 +299,7 @@ function SignedIn({ me, onOut, onSorted, onUpdate }: { me: Backer; onOut: () => 
       >
         💬 Enter the clubhouse chats
       </button>
+      <MyGamesCard />
       <ProfileCard me={me} enc={enc} onEdit={() => setEditing(true)} />
       {!me.hasPassword && <PasswordCard showPw={showPw} setShowPw={setShowPw} />}
       <LogoutButton onOut={onOut} />

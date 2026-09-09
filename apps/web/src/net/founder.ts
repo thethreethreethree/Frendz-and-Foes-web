@@ -433,3 +433,17 @@ export async function updateStaff(passcode: string, id: string, patch: {
     return d;
   } catch { return { error: "Network hiccup — try again." }; }
 }
+
+// --- What backers actually chose ----------------------------------------------------------------
+// Early evidence of which games matter, well before Activity has enough nights to say anything.
+export type PickTally = { ready: boolean; tally: Record<string, number>; backers: number; error?: string };
+
+export async function listPicks(passcode: string): Promise<PickTally> {
+  try {
+    const res = await fetch("/api/backer/admin/picks", { headers: headers(passcode) });
+    if (res.status === 403) return { ready: false, tally: {}, backers: 0, error: "Your account cannot see this." };
+    if (res.status === 503) return { ready: false, tally: {}, backers: 0, error: "The database is unavailable right now." };
+    if (!res.ok) return { ready: false, tally: {}, backers: 0, error: "Couldn't load picks." };
+    return await res.json();
+  } catch { return { ready: false, tally: {}, backers: 0, error: "Network hiccup — try again." }; }
+}
