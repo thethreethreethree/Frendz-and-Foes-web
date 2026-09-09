@@ -12,6 +12,9 @@ let gamesOpen = false;
 // this flag is only a mirror of what the server already decided -- flipping it in devtools buys
 // nothing, because the socket checks the same cookie before it registers a single game handler.
 let founderPass = false;
+// Games open to everyone while nobody's plan is checked. Reported by the server so the founder page
+// can say it out loud: a warning that only appears in the server journal is seen by nobody.
+let unguarded = false;
 
 export function gamesAreOpen(): boolean {
   return gamesOpen || founderPass;
@@ -34,9 +37,15 @@ export async function fetchGate(): Promise<void> {
     const data = await res.json();
     gamesOpen = data && data.gamesOpen === true;
     founderPass = data && data.founder === true;
+    unguarded = data && data.unguarded === true;
   } catch {
     // network/error → stays locked (fail closed)
   }
+}
+
+/** True when the games are open to the public AND no plan is being checked -- everyone plays free. */
+export function isUnguarded(): boolean {
+  return unguarded;
 }
 
 /** Re-read the gate after unlocking the founder pass, so the router sees it without a reload. */

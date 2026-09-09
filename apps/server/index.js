@@ -161,10 +161,22 @@ app.use(express.json({ limit: "256kb" }));
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
 
 // Pre-launch access gate. The web app reads this at boot to decide whether the games are reachable
-// or every entry point funnels to /waitlist instead. Public games stay LOCKED until Kickstarter
-// completes: flip GAMES_OPEN=true in the box's .env and restart to open everything at once. The
-// client fails CLOSED (treats games as locked) if this can't be reached, so a launch gate never
-// fails open.
+// or every entry point funnels to /waitlist instead. The client fails CLOSED (treats games as
+// locked) if this cannot be reached, so a launch gate never fails open.
+//
+// LAUNCH DAY NEEDS **TWO** FLAGS, NOT ONE:
+//
+//     GAMES_OPEN=true             opens the games to the public
+//     ENFORCE_ENTITLEMENTS=true   makes a paid plan actually necessary to host
+//
+// Setting only the first gives every visitor all fourteen games for nothing, and a backer who paid
+// $50 receives precisely what a stranger receives. This comment used to say "flip GAMES_OPEN=true
+// to open everything at once" and stopped there, which is how that mistake gets made on the one day
+// it costs the most.
+//
+// The combination is reported below and shouted at boot rather than blocked: a deliberate free
+// window is a legitimate choice, and the server does not get to overrule the owner. It only has to
+// make it impossible to do by accident.
 app.get("/api/status", (req, res) => {
   res.json({
     gamesOpen: process.env.GAMES_OPEN === "true",
@@ -172,6 +184,8 @@ app.get("/api/status", (req, res) => {
     founder: !!founderFromCookieHeader(req.headers.cookie),
     // So the client can say WHY hosting is refused instead of showing a dead button.
     enforceEntitlements: process.env.ENFORCE_ENTITLEMENTS === "true",
+    // Open to everyone AND checking nobody's plan. Surfaced so the founder page can say so.
+    unguarded: process.env.GAMES_OPEN === "true" && process.env.ENFORCE_ENTITLEMENTS !== "true",
   });
 });
 

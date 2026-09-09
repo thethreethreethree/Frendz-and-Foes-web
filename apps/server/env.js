@@ -24,3 +24,25 @@ console.log("[ff-server] env:", JSON.stringify({
   gamesOpen: process.env.GAMES_OPEN === "true",
   enforceEntitlements: process.env.ENFORCE_ENTITLEMENTS === "true",
 }));
+
+// The one combination that quietly gives the product away.
+//
+// GAMES_OPEN without ENFORCE_ENTITLEMENTS means every visitor can host all fourteen games and a
+// paid plan buys nothing. It is a legitimate state to choose -- a free launch weekend, a demo --
+// so this warns rather than refuses. But it is shouted, every boot, because the alternative is
+// discovering it from a backer asking why they paid.
+export function warnIfUnguarded() {
+  if (process.env.GAMES_OPEN === "true" && process.env.ENFORCE_ENTITLEMENTS !== "true") {
+    const line = "=".repeat(78);
+    console.warn(line);
+    console.warn("[ff-server] GAMES ARE OPEN AND ENTITLEMENTS ARE NOT ENFORCED.");
+    console.warn("[ff-server] Every visitor can host all 14 games. A paid plan currently buys nothing.");
+    console.warn("[ff-server] Set ENFORCE_ENTITLEMENTS=true and restart, or ignore this if it is deliberate.");
+    console.warn(line);
+  }
+}
+
+// Called HERE, at import, not left as an export for someone to remember. index.js imports this
+// module for its side effects ("MUST be first"), so the check runs on every boot by construction.
+// An exported warning nobody calls is the same shape as the entitlement that was never enforced.
+warnIfUnguarded();

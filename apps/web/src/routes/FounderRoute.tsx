@@ -3,7 +3,7 @@ import { MoneyCard } from "./MoneyCard";
 import { FulfilmentCard } from "./FulfilmentCard";
 import { ActivityCard } from "./ActivityCard";
 import { StaffCard } from "./StaffCard";
-import { refreshGate, isFounderPass } from "../net/gate";
+import { refreshGate, isFounderPass , isUnguarded } from "../net/gate";
 import { Link } from "react-router-dom";
 import {
   type BackerDetail, type BackerRow, type CodeRow, type EventRow,
@@ -712,6 +712,17 @@ function GamePassCard({ hours, onDrop }: { hours: number | null; onDrop: () => v
   return (
     <section className="rounded-2xl border border-line bg-surface p-4">
       <h2 className="ff-title text-xl">Game access</h2>
+      {/* The single most expensive misconfiguration this product has: games open to the public
+          while entitlements are off means everyone plays free and a $50 backer got nothing for it.
+          The server shouts about it at boot, but nobody reads a journal -- so it is said here, on
+          the page the owner actually opens. */}
+      {isUnguarded() && (
+        <p className="mt-2 rounded-lg border border-danger bg-danger/10 px-3 py-2 text-sm font-semibold text-danger">
+          The games are open to everyone and no plan is being checked — a paid backer currently gets
+          exactly what a stranger gets. Set <span className="font-mono">ENFORCE_ENTITLEMENTS=true</span> on
+          the box and restart, unless this free period is deliberate.
+        </p>
+      )}
       {active ? (
         <>
           <p className="mt-1 text-sm text-muted">
