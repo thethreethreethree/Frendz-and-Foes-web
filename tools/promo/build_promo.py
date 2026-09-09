@@ -1,32 +1,26 @@
-"""Render the 60-second PlayZoo promo — 1920x1080 widescreen, silent, cut to an implied beat.
+"""Render the PlayZoo promo - 1920x1080 widescreen, silent, cut to an implied beat.
 
-JOHN DIRECTED THIS ONE. The framing is the point: John the Raccoon (The Schemer, per the cast
-roster) has hijacked the promo, so the captions are in his voice — lowercase asides under ALL-CAPS
-punches, and every claim about the product undercut by him immediately.
+WHAT THIS SELLS, AND IN WHAT ORDER. The product first, the comedy alongside it. A viewer decides in
+about five seconds whether a thing is for them, and the previous cut spent its first three shots on
+John being funny before it said what PlayZoo was. This one says "14 party games, one AI host" at
+four seconds, shows the one-screen-plus-phones idea at nine, and only then runs the games.
 
-WHY THIS IS A REWRITE AND NOT AN EDIT. The first cut was built only from apps/web/public/art/,
-which is game-screen art: backdrops and reaction cards. The owner's `GRAPHIC ASSETS/` folder was
-never opened for it. That folder holds the material this needed — the explainer image (Rex pointing
-at a screen while three paws hold up three phones), the sketch-relay conveyor where a drawing
-degrades from a cat into a monster, the police lineup where John whistles innocently over a chalk
-outline, the four enclosure banners, and a finished Kickstarter end card. All 59 top-level files
-were opened and described before any of them were placed here, per LAW 1a.
+The AI host is the actual differentiator - no other party-game app has one - so it gets its own act
+rather than a line buried in the montage.
 
-THREE THINGS THE FIRST CUT GOT WRONG, all fixed here:
+CAPTIONS STAY OUT OF THE BOTTOM 18%. Measured on the live Kickstarter page: the caption sat at 93.4%
+of the frame height and the player's control bar covered it completely. Every player puts its
+scrubber and timecode in that strip, so text down there is text you have chosen to hide behind a UI
+you do not control. PLAYER_SAFE_BOTTOM reserves it, and the caption block is derived from it rather
+than from a hand-picked offset.
 
-  1. TOO SLOW. Fourteen shots over sixty seconds is 4.3s a shot, which is a slideshow. This is 28
-     shots averaging 2.1s, with hard two-frame cuts instead of eight-frame fades and a white flash
-     on each act change.
+GAME NAMES ARE THE CANONICAL ONES from productKnowledge.js. An earlier cut captioned shots "High
+Rollers" and "Charades", neither of which is a PlayZoo game - a backer who watches this and then
+reads the campaign page has to meet the same fourteen names in both places.
 
-  2. LETTERBOXED. 16:9 art was fitted into a 9:16 frame with blurred bars, so two thirds of the
-     screen was filler. At 1920x1080 the 2752x1536 plates are within a hair of native and the
-     2400x1792 ones need only a vertical crop — every frame is real picture, edge to edge.
-
-  3. IT EXPLAINED NOTHING. It listed features. This one shows the product working — one screen,
-     everyone's phone, then the games themselves — before it asks for money.
-
-Frames are composed with PIL and piped into ffmpeg. Each shot pre-scales its source ONCE; the
-per-frame work is a crop and the caption.
+Everything is composited from the owner's GRAPHIC ASSETS folder; all 59 top-level files were opened
+and described before any was placed, per LAW 1a. Frames are built with PIL and piped into ffmpeg -
+each shot pre-scales its source once, so the per-frame work is a crop and the caption.
 """
 import math, os, subprocess
 import numpy as np
@@ -84,52 +78,54 @@ def end(secs, small, accent):
     return dict(secs=secs, kind="end", art="confetti", big="", small=small, accent=accent)
 
 SHOTS = [
-    # --- John hijacks the promo -------------------------------------------------------------
-    scene(2.6, "john-desk",      "",                   "i'm john. i'll be your problem.",         LIME,  ay=0.50),
-    scene(1.6, "john-b",         "",                   "they said don't let the raccoon direct.", LIME),
-    scene(1.4, "john-a",         "",                   "so i directed it.",                       LIME),
-    scene(3.8, "zoo-night",      "WELCOME TO PLAYZOO", "14 games. zero supervision.",             VIOLET),
-    # --- what it actually is ----------------------------------------------------------------
-    scene(3.6, "explainer",      "ONE BIG SCREEN",     "the telly does the thinking",             TEAL,  ay=0.50),
-    scene(2.6, "headsup",        "EVERYONE'S PHONE",   "no app. no accounts. no excuses.",        TEAL,  ay=0.45),
-    scene(3.2, "cast-hero",      "14 GAMES",           "one zookeeper. he's outnumbered.",        AMBER),
-    cut(2.4, "cut-rex-wave", "backdrop", "MEET REX",   "he thinks he's in charge",                AMBER),
-    cut(2.0, "cut-sleeper",  "backdrop", "",           "meanwhile, our star performer",           LIME),
-    # --- the games, fast --------------------------------------------------------------------
-    scene(2.0, "buzzers",        "SURVEY SHOWDOWN",    "two teams. one buzzer. no friendships.",  PINK,  ay=0.52, fx="shake"),
-    scene(1.8, "whiteboards",    "",                   "wrong. confidently wrong.",               PINK,  ay=0.50, fx="whip"),
-    scene(1.8, "charades-zip",   "CHARADES",           "no talking. no writing. no dignity.",     VIOLET, ay=0.45, fx="whip"),
-    scene(1.6, "charades-tower", "",                   "he has been a washing machine a while",   VIOLET, ay=0.42, fx="whip"),
-    scene(2.0, "sketch-relay",   "SKETCH RELAY",       "this began as a cat",                     LIME,  ay=0.50, fx="whip"),
-    scene(1.6, "parrot-easel",   "",                   "it has opinions now",                     LIME,  ay=0.48, fx="whip"),
-    scene(2.0, "spy-board",      "COVER OPS",          "find your agents. avoid the assassin.",   TEAL,  ay=0.50, fx="whip"),
-    scene(2.0, "lineup",         "MURDER MYSTERY",     "one of us is lying. it's me.",            PINK,  ay=0.52, fx="shake"),
-    scene(1.6, "bingo",          "BINGO",              "she is absolutely cheating",              AMBER, ay=0.50, fx="whip"),
-    scene(1.6, "casino",         "HIGH ROLLERS",       "the house is a gorilla. it wins.",        AMBER, ay=0.50, fx="whip"),
-    scene(1.8, "bar18",          "THE 18+ ONE",        "not in front of the parrot",              VIOLET, ay=0.45, fx="whip"),
-    cut(1.8, "cut-wheel", "backdrop", "",              "grand prize: meh",                        LIME),
-    # --- the enclosures ---------------------------------------------------------------------
-    card(1.4, "banner-rowdies",  "YOU GET SORTED",     "four enclosures. no appeals.",            AMBER),
-    card(1.4, "banner-cuddle",   "",                   "the nice one.",                           TEAL),
-    card(1.4, "banner-owls",     "",                   "the insufferable one.",                   VIOLET),
-    card(2.2, "banner-schemers", "MINE",               "obviously.",                              LIME),
-    # --- the ask ----------------------------------------------------------------------------
-    scene(2.0, "crate",          "BACK IT",            "kickstarter. $3,500. modest, frankly.",   PINK,  ay=0.48),
-    scene(2.4, "ks-medallion",   "GET IN EARLY",       "backers play first. i decide the rest.",  PINK,  ay=0.56, cap="top"),
-    end(4.4,                                           "playzoo.snapaweb.com",                    TEAL),
+    # --- WHAT IT IS. A viewer decides in the first five seconds whether this is for them, so the
+    #     product goes first and the comedy rides along. The old cut opened with three shots of
+    #     John being funny before saying what PlayZoo was.
+    scene(3.0, "john-desk",      "",                    "hi. i'm john. i work here.",             LIME,  ay=0.50),
+    scene(4.2, "zoo-night",      "14 PARTY GAMES",      "one AI host runs the whole night",       VIOLET),
+    scene(4.6, "explainer",      "ONE BIG SCREEN",      "everyone else plays from their phone",   TEAL,  ay=0.50),
+    scene(3.4, "headsup",        "NO APP. NO ACCOUNTS.", "they scan a code and they're in",       TEAL,  ay=0.45),
+
+    # --- THE HOST. The actual differentiator, and it was buried at 22s in the old cut behind the
+    #     game montage. No other party-game app has one, so it gets its own act.
+    cut(3.2, "cut-rex-wave", "backdrop", "MEET REX",     "he hosts every single game",             AMBER),
+    scene(3.8, "rex-host",       "A REAL AI HOST",      "he reacts to what you actually do",      AMBER, ay=0.50),
+    cut(3.0, "cut-sleeper",  "backdrop", "",            "and he has opinions about it",           LIME),
+
+    # --- THE GAMES, by their REAL names. The old cut invented "High Rollers" and "Charades";
+    #     neither is a PlayZoo game. These are the canonical fourteen from productKnowledge.js, so
+    #     a backer who reads the campaign page sees the same names.
+    scene(2.6, "buzzers",        "SURVEY SHOWDOWN",     "two teams, one board",                   PINK,  ay=0.52, fx="shake"),
+    scene(2.6, "spy-board",      "COVER OPS",           "crack the grid, dodge the assassin",     TEAL,  ay=0.50, fx="whip"),
+    scene(2.6, "lineup",         "MURDER MYSTERY",      "one of you is lying",                    PINK,  ay=0.52, fx="shake"),
+    scene(2.6, "sketch-relay",   "SKETCH RELAY",        "the drawing gets worse every pass",      LIME,  ay=0.50, fx="whip"),
+    scene(2.4, "gameshow",       "TRIVIA",              "fastest right answer takes it",          VIOLET, ay=0.50, fx="whip"),
+    scene(2.4, "charades-zip",   "FULL CAST",           "no talking. no writing.",                VIOLET, ay=0.45, fx="whip"),
+    scene(2.2, "bingo",          "BINGO NIGHT",         "every line comes with a dare",           AMBER, ay=0.50, fx="whip"),
+    scene(2.2, "casino",         "BALLPARK",            "guess the number, bet on the best",      AMBER, ay=0.50, fx="whip"),
+    scene(2.4, "bar18",          "AFTER DARK",          "the 18+ one, for once they've gone",     VIOLET, ay=0.45, fx="whip"),
+    scene(3.0, "cast-hero",      "AND SIX MORE",        "fourteen games, one subscription",       AMBER),
+
+    # --- THE CLUB. Sold as a feature now rather than as four punchlines in a row.
+    card(1.8, "banner-rowdies",  "A BACKERS-ONLY CLUB", "Rex sorts you into an enclosure",        AMBER),
+    card(1.5, "banner-cuddle",   "",                    "four of them to land in",                TEAL),
+    card(1.5, "banner-owls",     "",                    "you do not get to choose",               VIOLET),
+    card(1.9, "banner-schemers", "",                    "john insists his is the best one",       LIME),
+
+    # --- THE ASK.
+    scene(2.6, "crate",          "BACK IT",             "kickstarter - goal $3,500",              PINK,  ay=0.48),
+    scene(3.0, "ks-medallion",   "BACKERS PLAY FIRST",  "and pick which games they get",          PINK,  ay=0.56, cap="top"),
+    end(4.6,                                            "playzoo.snapaweb.com",                   TEAL),
 ]
 
-# Every shot 15% longer, at the owner's direction: the cut was too fast to sit with, and the new
-# sticker entrances need room to land before the shot is gone. Applied as a MULTIPLIER rather than
-# by rewriting 28 durations, so the rhythm between shots — the 1.4s banners against the 3.8s
-# opener — survives the change instead of being flattened.
-PACE = 1.15
-for _sh in SHOTS:
-    _sh["secs"] = round(_sh["secs"] * PACE, 2)
+# Durations are now set PER SHOT rather than scaled by a blanket multiplier. The multiplier existed
+# to slow a cut that was uniformly too fast; this script is paced deliberately -- 4.6s on the
+# explainer because it is the shot that has to land, 2.2s on a game the picture explains by itself.
+# A global 1.15x would stretch both equally and undo that.
 
 # Act boundaries, by shot index — a 3-frame white flash lands on each, so the five movements read
 # as movements instead of one long list.
-FLASH_AT = {4, 9, 21, 25}
+FLASH_AT = {4, 7, 17, 21}
 
 def _open(name):
     for ext in (".jpeg", ".jpg", ".png"):
@@ -255,6 +251,13 @@ def logo(width):
 #
 # The OUTLINE is the part that matters, not the size: a plain white word vanishes into the parrot's
 # lime plumage or the bingo card. A black stroke keeps every letter readable over any of this art.
+# The lowest caption pixel used to sit at 93.4% of the frame height, measured. Every video player
+# puts its control bar, its scrubber and its timecode in exactly that strip -- Kickstarter's covered
+# the subline completely, which the owner spotted on the live campaign page. Text in the bottom
+# ~10% of a video is text you have chosen to hide behind a UI you do not control.
+#
+# Everything now finishes above 82% of the height, leaving the whole bottom band to the player.
+PLAYER_SAFE_BOTTOM = 0.82
 BIG_PX, SMALL_PX = 170, 80
 CARD_BIG_PX, CARD_SMALL_PX = 112, 68
 PAD_X, TILT = 96, -2.0
@@ -325,17 +328,21 @@ def draw_caption(img, big, small, accent, t, i, card_mode=False, cap_top=False):
     maxw = W - x - 60
 
     if not card_mode:
-        scrim = Image.new("RGBA", (W, 520), (0, 0, 0, 0))
+        scrim = Image.new("RGBA", (W, 700), (0, 0, 0, 0))
         sd = ImageDraw.Draw(scrim)
-        for k in range(520):
+        for k in range(700):
             # a top scrim has to fade the OTHER way, or it darkens the picture and not the text
-            a = (1 - k / 520) if cap_top else (k / 520)
+            a = (1 - k / 700) if cap_top else (k / 700)
             sd.line([(0, k), (W, k)], fill=(5, 8, 16, int(222 * a ** 1.5)))
-        y0 = 0 if cap_top else H - 520
-        img.paste(Image.alpha_composite(img.crop((0, y0, W, y0 + 520)).convert("RGBA"), scrim).convert("RGB"),
+        y0 = 0 if cap_top else H - 700
+        img.paste(Image.alpha_composite(img.crop((0, y0, W, y0 + 700)).convert("RGBA"), scrim).convert("RGB"),
                   (0, y0))
 
-    y_small = (H // 2 + 24) if card_mode else (330 if cap_top else H - 190)
+    # Derived from the safe zone rather than a hand-picked offset, so changing the reserved band
+    # moves the whole block instead of needing three numbers kept in sync.
+    #   rule bottom = y_small + SMALL_PX + 30 + 9  ->  must land above PLAYER_SAFE_BOTTOM
+    y_bottom = int(H * PLAYER_SAFE_BOTTOM) - (small_px + 39)
+    y_small = (H // 2 + 24) if card_mode else (330 if cap_top else y_bottom)
 
     # headline: pops in with an overshoot, and unwinds a little extra tilt as it lands
     if big:
