@@ -156,11 +156,17 @@ export function FulfilmentCard({ passcode }: { passcode: string }) {
             {items.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-6 text-center text-muted">
+                  {/* Three different empty states, because they mean completely different things.
+                      "Every promise delivered" over an empty database is a lie of omission: it
+                      reads as work finished when in fact no work was ever owed. Caught by looking
+                      at the live panel, where it claimed a clean sheet on zero backers. */}
                   {!ready
                     ? "Can't read the database — this is not your list of promises."
-                    : openOnly
-                      ? "Nothing outstanding. Every promise made so far has been delivered."
-                      : "No promises recorded yet. Rows appear here as soon as a backer holds a tier that includes a custom character."}
+                    : (summary?.total ?? 0) === 0
+                      ? "Nothing owed yet. Rows appear here automatically as soon as a backer holds a tier that includes a custom character."
+                      : openOnly
+                        ? "Nothing outstanding — every promise made so far has been delivered."
+                        : "No items match this filter."}
                 </td>
               </tr>
             )}
