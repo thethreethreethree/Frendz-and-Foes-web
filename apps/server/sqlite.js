@@ -124,6 +124,34 @@ CREATE TABLE IF NOT EXISTS events (
   data     TEXT               -- JSON blob, or NULL
 );
 CREATE INDEX IF NOT EXISTS idx_events_type ON events(type);
+
+-- Money ledger. APPEND-ONLY, like events: a payment is a fact that happened, and revenue is a
+-- QUERY over these rows, never a stored total that can drift out of step with reality.
+--
+-- A refund is a NEW ROW with a negative amount, never an edit to the original charge. That is what
+-- makes history reconstructible: subscriptions.status overwrites itself, so a backer who paid,
+-- refunded and resubscribed leaves one row that looks like a single clean subscription.
+CREATE TABLE IF NOT EXISTS payments (
+  id                TEXT PRIMARY KEY,
+  backer_id         TEXT,              -- null for venue/white-label money
+  brand_slug        TEXT,              -- null for consumer money
+  kind              TEXT NOT NULL,     -- charge | refund | chargeback | payout | manual
+  source            TEXT NOT NULL,     -- stripe | kickstarter | bank | comp
+  amount_cents      INTEGER NOT NULL,  -- MINOR UNITS as an integer; floats cannot hold money.
+                                       -- Refunds and chargebacks are NEGATIVE.
+  currency          TEXT NOT NULL DEFAULT 'usd',
+  status            TEXT NOT NULL DEFAULT 'succeeded',  -- succeeded | pending | failed
+  stripe_event_id   TEXT UNIQUE,       -- IDEMPOTENCY. Stripe retries webhooks; without this a
+                                       -- retry books the same charge twice and inflates revenue.
+  stripe_object_id  TEXT,              -- pi_… / ch_… / in_…
+  description       TEXT,
+  occurred          INTEGER NOT NULL,  -- when it happened AT THE SOURCE, not when we saw it, so a
+                                       -- late webhook cannot land in the wrong month
+  created           INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_payments_occurred ON payments(occurred);
+CREATE INDEX IF NOT EXISTS idx_payments_backer ON payments(backer_id);
+CREATE INDEX IF NOT EXISTS idx_payments_brand ON payments(brand_slug);
 `);
 
 // Has this one-time migration already run? Explicit, because "the table is empty" is not the same

@@ -215,3 +215,45 @@ export async function setSubscription(
     return { error: "Network hiccup — try again." };
   }
 }
+
+// --- Money ledger -------------------------------------------------------------------------------
+// Amounts cross the wire in MINOR UNITS as integers, exactly as stored. Formatting to pounds and
+// pence happens once, at the edge, in the component -- never in transit, and never in the database.
+export interface PaymentRow {
+  id: string; backer_id: string | null; brand_slug: string | null;
+  kind: string; source: string; amount_cents: number; currency: string; status: string;
+  stripe_object_id: string | null; description: string | null; occurred: number;
+}
+export interface MoneySummary {
+  grossCents: number; refundedCents: number; netCents: number; count: number;
+  byKind: { kind: string; n: number; cents: number }[];
+  bySource: { source: string; n: number; cents: number }[];
+}
+export async function listPayments(passcode: string): Promise<{
+  payments?: PaymentRow[]; allTime?: MoneySummary; thisMonth?: MoneySummary; lastMonth?: MoneySummary;
+  ready?: boolean; error?: string;
+}> {
+  try {
+    const res = await fetch("/api/backer/admin/payments", { headers: headers(passcode) });
+    if (res.status === 401) return { error: "That admin passcode isn't right." };
+    if (res.status === 503) return { ready: false, payments: [], error: "The database is unavailable right now." };
+    if (!res.ok) return { error: "Couldn't load payments — try again." };
+    const d = await res.json();
+    return { ...d, ready: d.ready !== false };
+  } catch { return { error: "Network hiccup — try again." }; }
+}
+
+/** Kickstarter money never touches our Stripe, so it has to be enterable by hand. */
+export async function addPayment(passcode: string, p: {
+  kind: string; source: string; amountCents: number; description?: string; backerId?: string;
+}): Promise<{ ok?: boolean; error?: string }> {
+  try {
+    const res = await fetch("/api/backer/admin/payments", {
+      method: "POST", headers: { ...headers(passcode), "content-type": "application/json" },
+      body: JSON.stringify(p),
+    });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) return { error: d.error || "Couldn't record that payment." };
+    return { ok: true };
+  } catch { return { error: "Network hiccup — try again." }; }
+}

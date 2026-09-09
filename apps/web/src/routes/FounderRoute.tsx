@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { MoneyCard } from "./MoneyCard";
 import { refreshGate, isFounderPass } from "../net/gate";
 import { Link } from "react-router-dom";
 import {
@@ -138,6 +139,8 @@ export function FounderRoute() {
         )}
 
         <GamePassCard hours={passHours} onDrop={dropPass} />
+
+        <MoneyCard passcode={passcode} />
 
         {dbReady && <MintCard passcode={passcode} onMinted={refresh} />}
 

@@ -41,9 +41,12 @@ import { generateCodes, checkCode, redeemCode, listCodes, revokeCode, backerCode
 // while the games, which do not, keep running.
 let SQL = null;
 let SUBS = null;
+let PAY = null;
 try {
   SQL = await import("./sqlite.js");
   SUBS = await import("./subscriptions.js");
+  PAY = await import("./payments.js");
+  await PAY.initPayments();
 } catch (err) {
   console.error("[ff-server] database unavailable - founder tools and subscriptions are OFF:", err?.message || err);
 }
@@ -55,6 +58,13 @@ const needDb = (res) => {
   return true;
 };
 const PLANS = () => (SUBS ? SUBS.PLANS : {});
+// dbUp() covers SQL and SUBS. PAY is imported in the same block but can fail on its own, and
+// without this guard the ledger routes would crash on a null instead of answering 503.
+const needPay = (res) => {
+  if (PAY) return false;
+  res.status(503).json({ error: "The database is unavailable right now." });
+  return true;
+};
 import { stripeConfigured, verifyStripeSignature } from "./stripe.js";
 import {
   createBacker, getBacker, findBackerByCode, findBackerByUsername,
@@ -96,6 +106,13 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), (req,
   if (!v.ok) {
     console.warn("[ff-server] rejected Stripe webhook:", v.error);
     return res.status(400).json({ error: v.error });
+  }
+  // Money first, and independently: applyStripeEvent refuses events it cannot map to a backer,
+  // and an unmapped charge is still real money that must appear in the ledger.
+  if (PAY) {
+    const m = PAY.recordStripeEvent(v.event);
+    if (m.error) console.warn("[ff-server] payment not recorded:", m.error, v.event?.type);
+    else if (m.duplicate) console.log("[ff-server] Stripe event already recorded (retry):", v.event?.id);
   }
   const r = SUBS.applyStripeEvent(v.event);
   // Always 200 on a VERIFIED event, even if we could not map it to a backer: a non-2xx makes Stripe
@@ -423,6 +440,66 @@ app.get("/api/backer/admin/stripe", (req, res) => {
 // Nothing here deletes anything. The files are the only copy of the pre-SQLite data, and a separate
 // deployment (Render) has its own database that may not have migrated - so removal is a deliberate,
 // per-environment act, taken by a human who can see this report.
+// --- Money ledger (founder-only) ---------------------------------------------------------------
+// Every total here is DERIVED from the payments rows on each call. Nothing is stored, so nothing
+// can drift away from what actually happened.
+app.get("/api/backer/admin/payments", (req, res) => {
+  if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
+  if (needDb(res) || needPay(res)) return;
+  const now = Date.now();
+  const startOfMonth = (d) => { const x = new Date(d); x.setDate(1); x.setHours(0,0,0,0); return x.getTime(); };
+  const thisMonth = startOfMonth(now);
+  const lastMonth = startOfMonth(thisMonth - 1);
+  const list = PAY.listPayments({ limit: Number(req.query.limit) || 100 });
+  res.json({
+    ready: list.ready,
+    payments: list.payments,
+    allTime: PAY.paymentSummary(),
+    thisMonth: PAY.paymentSummary({ since: thisMonth }),
+    lastMonth: PAY.paymentSummary({ since: lastMonth, until: thisMonth }),
+  });
+});
+
+// Kickstarter money never touches our Stripe, so it has to be enterable by hand or the ledger can
+// never show the true total.
+app.post("/api/backer/admin/payments", (req, res) => {
+  if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
+  if (needDb(res) || needPay(res)) return;
+  const b = req.body || {};
+  const r = PAY.recordPayment({
+    kind: b.kind, source: b.source, amountCents: b.amountCents, currency: b.currency,
+    backerId: b.backerId || null, brandSlug: b.brandSlug || null,
+    description: b.description || null,
+    occurred: b.occurred ? Number(b.occurred) : Date.now(),
+  });
+  if (r.error) return res.status(400).json({ error: r.error });
+  res.json({ payment: r.payment });
+});
+
+// CSV for the accountant. Amounts in MAJOR units here because that is what a human reads, derived
+// from the integer minor units, never stored that way.
+app.get("/api/backer/admin/payments.csv", (req, res) => {
+  if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
+  if (needDb(res) || needPay(res)) return;
+  const { ready, payments } = PAY.allPaymentsForExport();
+  if (!ready) return res.status(503).json({ error: "The database is unavailable right now." });
+  const chr34 = String.fromCharCode(34);   // a double quote, without an escape to lose
+  const NL = String.fromCharCode(10);
+  const esc = (v) => {
+    const s = v == null ? "" : String(v);
+    return /["\n,]/.test(s) ? chr34 + s.replace(/"/g, chr34 + chr34) + chr34 : s;
+  };
+  const head = ["occurred_iso","kind","source","status","amount","currency","backer_id","brand_slug","description","stripe_object_id","id"];
+  const rows = payments.map((p) => [
+    new Date(p.occurred).toISOString(), p.kind, p.source, p.status,
+    (p.amount_cents / 100).toFixed(2), p.currency, p.backer_id, p.brand_slug,
+    p.description, p.stripe_object_id, p.id,
+  ].map(esc).join(","));
+  res.setHeader("content-type", "text/csv; charset=utf-8");
+  res.setHeader("content-disposition", `attachment; filename="playzoo-payments-${new Date().toISOString().slice(0,10)}.csv"`);
+  res.send([head.join(","), ...rows].join(NL));
+});
+
 app.get("/api/backer/admin/legacy", (req, res) => {
   if (!isSuperadmin(req, res)) return denySuperadmin(req, res) && undefined;
   if (needDb(res)) return;
