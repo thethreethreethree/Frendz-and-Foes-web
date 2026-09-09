@@ -19,13 +19,14 @@ OUT = "apps/web/public/art/feud"
 
 if __name__ == "__main__":
     man = json.load(io.open("tools/feud/manifest.json", encoding="utf-8"))
-    files = sorted(os.listdir(SRC))
     os.makedirs(OUT, exist_ok=True)
     done = 0
     for row in man:
         if row["verdict"] != "applied":
             continue
-        src = os.path.join(SRC, files[row["idx"] - 1])
+        # Resolve by FILENAME, never by position: adding one file to the folder shifts
+        # every later index and would silently re-point rows at the wrong images.
+        src = os.path.join(SRC, row["src"])
         dst = f'{OUT}/{row["slug"]}.webp'
         if row["slot"] in ("backdrop", "beat"):
             im = Image.open(src).convert("RGB")
