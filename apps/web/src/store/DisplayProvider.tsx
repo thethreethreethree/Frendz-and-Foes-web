@@ -35,7 +35,9 @@ export function DisplayProvider({
   const announceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    const s = joinRoom(room, role, teamId);
+    // "feud" = Survey Showdown. This provider is the follower for FeudTeamView; Survey Showdown is
+    // the one game with no special branch in DisplayRoute, so this IS its display path.
+    const s = joinRoom(room, role, teamId, "feud");
     const onSync = (snap: Snapshot) => {
       // Ignore foreign/partial snapshots. The relay is keyed by room code, not game, so a Feud
       // follower can receive a Bingo snapshot ({bingo,…}, no .state) if it lands in a shared room.

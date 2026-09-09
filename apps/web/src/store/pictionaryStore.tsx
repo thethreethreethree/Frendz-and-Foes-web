@@ -65,7 +65,7 @@ export function PictionaryProvider({ children, room }: { children: ReactNode; ro
 
   useEffect(() => {
     if (!room) return;
-    const s = joinRoom(room, "host");
+    const s = joinRoom(room, "host", undefined, "pictionary");
     const onConnect = () => { setConnected(true); emitSync(room, snapRef.current); };
     const onDisconnect = () => setConnected(false);
     s.on("connect", onConnect); s.on("disconnect", onDisconnect); s.on("presence", setPresence);
@@ -118,7 +118,7 @@ export function PictionaryFollowerProvider({ children, room, role = "display" }:
   const [presence, setPresence] = useState<Presence | null>(null);
 
   useEffect(() => {
-    const s = joinRoom(room, role);
+    const s = joinRoom(room, role, undefined, "pictionary");
     const onSync = (snap: PictionarySnapshot) => { if (!snap?.pictionary) return; setPub(snap.pictionary); setJoinQrVisible(!!snap.joinQrVisible); };
     const onPulse = (p: Pulse) => { if (p.kind === "sfx") playSfx(p.name, p.variant); };
     s.on("sync", onSync); s.on("pulse", onPulse); s.on("presence", setPresence);

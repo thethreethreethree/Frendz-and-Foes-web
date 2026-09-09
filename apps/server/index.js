@@ -43,6 +43,7 @@ let SQL = null;
 let SUBS = null;
 let PAY = null;
 let FUL = null;
+let SES = null;
 try {
   SQL = await import("./sqlite.js");
   SUBS = await import("./subscriptions.js");
@@ -50,6 +51,11 @@ try {
   await PAY.initPayments();
   FUL = await import("./fulfilment.js");
   await FUL.initFulfilment();
+  SES = await import("./sessions.js");
+  await SES.initSessions();
+  // A crash or a deploy restart leaves sessions with ended = NULL forever, which both blocks the
+  // next night in that room (partial unique index) and counts a dead night as live in every figure.
+  SES.closeStaleSessions();
 } catch (err) {
   console.error("[ff-server] database unavailable - founder tools and subscriptions are OFF:", err?.message || err);
 }
@@ -867,6 +873,23 @@ function presence(room) {
   };
 }
 
+// Broadcast presence AND record the headcount in one place.
+//
+// Both emit sites go through here so they cannot drift apart -- a second broadcast that forgot to
+// record would silently under-report every night it touched.
+//
+// "Players" is everyone who is NOT a hosting surface: the host's phone and the big screen are the
+// venue, not the party. peak_players keeps the high-water mark, so people drifting out mid-game
+// never lowers the size the night actually reached.
+function broadcastPresence(code, room) {
+  const p = presence(room);
+  io.to(code).emit("presence", p);
+  if (SES) {
+    try { SES.notePlayers(code, Math.max(0, p.total - p.host - p.display)); }
+    catch { /* a headcount is never worth breaking a live game */ }
+  }
+}
+
 // Resolve the signed-in backer from a socket's handshake cookie (backers-only chat auth). Read fresh
 // each time so a just-sorted backer's enclosure access is current.
 function socketBacker(socket) {
@@ -1036,7 +1059,7 @@ io.on("connection", (socket) => {
     registerAfterDarkHandlers(io, socket, rooms);
   }
 
-  socket.on("join", ({ room, role, teamId, hostToken }) => {
+  socket.on("join", ({ room, role, teamId, hostToken, game }) => {
     if (!gamesOpen) { socket.emit("locked", { waitlist: true }); return; }
     if (typeof room !== "string" || !room) return;
     // Only the hosting surfaces are gated: a "player" phone has no account and never will.
@@ -1049,6 +1072,15 @@ io.on("connection", (socket) => {
       }
     }
     code = room.toUpperCase();
+
+    // Record the night. Called on EVERY hosting join, not once, because there is no single reliable
+    // "game started" moment across fourteen games -- the first hosting join is the closest honest
+    // proxy. startSession is idempotent per live room, so the repetition costs nothing.
+    if (SES && (role === "host" || role === "display")) {
+      try { SES.startSession(code, { game: typeof game === "string" ? game : null }); }
+      catch (err) { console.error("[ff-server] session start failed:", err?.message || err); }
+    }
+
     // --- Host claim ------------------------------------------------------------------------
     // `role` is declared by the client, so it cannot decide who may WRITE game state. The first
     // socket to claim host for a room is issued a secret token; after that, only a socket holding
@@ -1083,7 +1115,7 @@ io.on("connection", (socket) => {
 
     // Catch a late joiner up with the latest snapshot.
     if (r.snapshot) socket.emit("sync", r.snapshot);
-    io.to(code).emit("presence", presence(r));
+    broadcastPresence(code, r);
   });
 
   // Restrict state broadcasts to the peer that joined as "host". NOTE: this is a footgun-guard, NOT
@@ -1098,6 +1130,11 @@ io.on("connection", (socket) => {
     const r = getRoom(code);
     r.snapshot = snapshot;
     socket.to(code).emit("sync", snapshot);
+    // A finished game is an EXPLICIT signal. A room going quiet is not an ending -- that is exactly
+    // the abandonment this measures, so it must never be counted as completion.
+    if (SES && snapshot && snapshot.phase === "finished") {
+      try { SES.noteCompleted(code); } catch { /* a stat is not worth breaking a game over */ }
+    }
   });
 
   socket.on("pulse", (pulse) => {
@@ -1152,10 +1189,16 @@ io.on("connection", (socket) => {
       // Keep the snapshot a while so a quick refresh still resumes; drop empty rooms lazily.
       setTimeout(() => {
         const cur = rooms.get(code);
-        if (cur && cur.peers.size === 0) rooms.delete(code);
+        if (cur && cur.peers.size === 0) {
+          rooms.delete(code);
+          // Ends with the ROOM, not with the last socket: the 60s grace above exists because a host
+          // refreshing their phone is not the end of the night, and neither is a player's tunnel
+          // dropping for ten seconds.
+          if (SES) { try { SES.endSession(code); } catch { /* ignore */ } }
+        }
       }, 60_000);
     } else {
-      io.to(code).emit("presence", presence(r));
+      broadcastPresence(code, r);
     }
   });
 });

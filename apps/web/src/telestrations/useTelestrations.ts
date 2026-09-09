@@ -13,7 +13,7 @@ export function useTelestrations(room: string, role: "host" | "display" | "playe
     const s = getSocket();
     const enter = () => {
       if (role === "player") { const st = loadTePlayer(room); if (st.name) teJoin(room, st.name, st.avatar, st.id, st.rejoinToken); }
-      else { s.emit("join", { room, role }); teSync(room); }
+      else { s.emit("join", { room, role, game: "telestrations" }); teSync(room); }
     };
     const onState = (st: TeState) => setState(st);
     const onYou = (y: TeYou) => setYou(y);

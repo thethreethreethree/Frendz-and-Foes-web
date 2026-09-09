@@ -164,9 +164,13 @@ function readHostToken(room: string): string | undefined {
   try { return sessionStorage.getItem(hostKey(room)) || undefined; } catch { return undefined; }
 }
 
-export function joinRoom(room: string, role: Role, teamId?: string): Socket {
+// `game` tells the server WHICH of the fourteen games this room is running. It is optional and
+// nullable on purpose: the server records the night either way and fills the game in when a later
+// join names it, so a caller that has not been updated degrades to an unattributed night rather
+// than losing the night entirely.
+export function joinRoom(room: string, role: Role, teamId?: string, game?: string): Socket {
   const s = getSocket();
-  const doJoin = () => s.emit("join", { room, role, teamId, hostToken: readHostToken(room) });
+  const doJoin = () => s.emit("join", { room, role, teamId, game, hostToken: readHostToken(room) });
 
   // Issued once, on the first claim. Stored so a reconnect can prove it is the same host.
   s.off("host:token");

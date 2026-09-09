@@ -90,7 +90,7 @@ export function TriviaProvider({ children, room }: { children: ReactNode; room?:
 
   useEffect(() => {
     if (!room) return;
-    const s = joinRoom(room, "host");
+    const s = joinRoom(room, "host", undefined, "trivia");
     const onConnect = () => {
       setConnected(true);
       emitSync(room, snapRef.current);
@@ -175,7 +175,7 @@ export function TriviaFollowerProvider({
   const [presence, setPresence] = useState<Presence | null>(null);
 
   useEffect(() => {
-    const s = joinRoom(room, role, teamId);
+    const s = joinRoom(room, role, teamId, "trivia");
     const onSync = (snap: TriviaSnapshot) => {
       if (!snap?.trivia) return; // ignore foreign/partial snapshots (shared-room safety, see DisplayProvider)
       setTrivia(snap.trivia);

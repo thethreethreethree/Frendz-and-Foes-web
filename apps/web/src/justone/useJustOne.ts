@@ -18,7 +18,7 @@ export function useJustOne(room: string, role: "host" | "display" | "player") {
         const st = loadJoPlayer(room);
         if (st.name) joJoin(room, st.name, st.avatar, st.id, st.rejoinToken);
       } else {
-        s.emit("join", { room, role });
+        s.emit("join", { room, role, game: "justone" });
         joSync(room);
       }
     };

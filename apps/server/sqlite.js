@@ -187,6 +187,35 @@ CREATE TABLE IF NOT EXISTS fulfilment (
 CREATE INDEX IF NOT EXISTS idx_fulfilment_status ON fulfilment(status);
 CREATE INDEX IF NOT EXISTS idx_fulfilment_backer ON fulfilment(backer_id);
 CREATE INDEX IF NOT EXISTS idx_fulfilment_due ON fulfilment(due);
+
+-- What actually happened on a game night. Phase 3 of docs/business-backend-design.md.
+--
+-- Rooms live in a Map in index.js and vanish on restart, so until now nothing recorded that a game
+-- night happened at all: not which game, not how many played, not whether anyone finished. That is
+-- unrecoverable by nature -- you cannot backfill a night nobody wrote down -- and it is the single
+-- most useful thing to know when deciding which of the fourteen games to build on.
+--
+-- DELIBERATELY THIN, AND IT MUST STAY THAT WAY. Players join by scanning a QR with no account and
+-- never will have one; that is a product decision, not an oversight. So this table must never
+-- require identity. peak_players is a COUNT, and player names are not stored at all -- there is no
+-- business question here that needs them, and storing them would turn a party game into a system
+-- holding data about people who never signed up for anything.
+CREATE TABLE IF NOT EXISTS game_sessions (
+  id            TEXT PRIMARY KEY,
+  room_code     TEXT NOT NULL,
+  game          TEXT,              -- trivia | codenames | murder2 | … ; null if a client never said
+  brand_slug    TEXT,              -- whose branding was live, for venue reporting
+  started       INTEGER NOT NULL,
+  ended         INTEGER,           -- null while the room is still live
+  peak_players  INTEGER NOT NULL DEFAULT 0,  -- high-water mark, not a running total
+  completed     INTEGER NOT NULL DEFAULT 0   -- 1 only if the game actually reached its ending
+);
+CREATE INDEX IF NOT EXISTS idx_sessions_started ON game_sessions(started);
+CREATE INDEX IF NOT EXISTS idx_sessions_game ON game_sessions(game);
+CREATE INDEX IF NOT EXISTS idx_sessions_brand ON game_sessions(brand_slug);
+-- One LIVE session per room. A room that ends and is reopened is a new night and gets a new row;
+-- this only stops a reconnect storm opening five sessions for one game.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_sessions_live ON game_sessions(room_code) WHERE ended IS NULL;
 `);
 
 // Has this one-time migration already run? Explicit, because "the table is empty" is not the same

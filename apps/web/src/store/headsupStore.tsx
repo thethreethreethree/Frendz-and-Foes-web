@@ -106,7 +106,7 @@ export function HeadsUpProvider({ children, room }: { children: ReactNode; room?
 
   useEffect(() => {
     if (!room) return;
-    const s = joinRoom(room, "host");
+    const s = joinRoom(room, "host", undefined, "headsup");
     const onConnect = () => {
       setConnected(true);
       emitSync(room, snapRef.current);
@@ -196,7 +196,7 @@ export function HeadsUpFollowerProvider({ children, room, role = "display" }: { 
   const [presence, setPresence] = useState<Presence | null>(null);
 
   useEffect(() => {
-    const s = joinRoom(room, role);
+    const s = joinRoom(room, role, undefined, "headsup");
     const onSync = (snap: HeadsUpSnapshot) => {
       if (!snap?.headsup) return; // ignore foreign/partial snapshots (shared-room safety)
       setPub(snap.headsup);

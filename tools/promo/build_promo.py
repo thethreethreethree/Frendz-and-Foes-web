@@ -68,9 +68,13 @@ def font(px, black=True):
 #           "whip"  a fast horizontal smear that settles — used to enter the quick game shots
 #           "shake" a decaying camera knock — used on the two impact beats
 #           "spin"  the banner rotates and scales into place — the enclosure cards
-def scene(secs, art, big, small, accent, ay=0.5, ax=0.5, fx=None):
+#   cap   : "bottom" (default) or "top". The Kickstarter medallion carries its OWN call to action --
+#           a green "Back us on Kickstarter" roundel and a scroll reading PLAYZOO PROJECT ACTIVE --
+#           and a bottom-left caption sat straight across both, so the frame read "Back us on K...".
+#           Moving the words lets the artwork do the asking, which is stronger than repeating it.
+def scene(secs, art, big, small, accent, ay=0.5, ax=0.5, fx=None, cap="bottom"):
     return dict(secs=secs, kind="scene", art=art, big=big, small=small, accent=accent,
-                ay=ay, ax=ax, fx=fx)
+                ay=ay, ax=ax, fx=fx, cap=cap)
 def cut(secs, art, ground, big, small, accent, fx=None):
     return dict(secs=secs, kind="cut", art=art, ground=ground, big=big, small=small,
                 accent=accent, fx=fx)
@@ -111,7 +115,7 @@ SHOTS = [
     card(2.2, "banner-schemers", "MINE",               "obviously.",                              LIME),
     # --- the ask ----------------------------------------------------------------------------
     scene(2.0, "crate",          "BACK IT",            "kickstarter. $3,500. modest, frankly.",   PINK,  ay=0.48),
-    scene(2.4, "ks-medallion",   "GET IN EARLY",       "backers play first. i decide the rest.",  PINK,  ay=0.50),
+    scene(2.4, "ks-medallion",   "GET IN EARLY",       "backers play first. i decide the rest.",  PINK,  ay=0.56, cap="top"),
     end(4.4,                                           "playzoo.snapaweb.com",                    TEAL),
 ]
 
@@ -312,7 +316,7 @@ def _place(img, lay, x, y, scale=1.0, alpha=1.0, angle=0.0):
         lay.putalpha(al)
     img.paste(lay, (int(x + (w0 - lay.width) / 2), int(y + (h0 - lay.height) / 2)), lay)
 
-def draw_caption(img, big, small, accent, t, i, card_mode=False):
+def draw_caption(img, big, small, accent, t, i, card_mode=False, cap_top=False):
     d = ImageDraw.Draw(img, "RGBA")
     big_px = CARD_BIG_PX if card_mode else BIG_PX
     small_px = CARD_SMALL_PX if card_mode else SMALL_PX
@@ -324,11 +328,14 @@ def draw_caption(img, big, small, accent, t, i, card_mode=False):
         scrim = Image.new("RGBA", (W, 520), (0, 0, 0, 0))
         sd = ImageDraw.Draw(scrim)
         for k in range(520):
-            sd.line([(0, k), (W, k)], fill=(5, 8, 16, int(222 * (k / 520) ** 1.5)))
-        img.paste(Image.alpha_composite(img.crop((0, H - 520, W, H)).convert("RGBA"), scrim).convert("RGB"),
-                  (0, H - 520))
+            # a top scrim has to fade the OTHER way, or it darkens the picture and not the text
+            a = (1 - k / 520) if cap_top else (k / 520)
+            sd.line([(0, k), (W, k)], fill=(5, 8, 16, int(222 * a ** 1.5)))
+        y0 = 0 if cap_top else H - 520
+        img.paste(Image.alpha_composite(img.crop((0, y0, W, y0 + 520)).convert("RGBA"), scrim).convert("RGB"),
+                  (0, y0))
 
-    y_small = (H // 2 + 24) if card_mode else (H - 190)
+    y_small = (H // 2 + 24) if card_mode else (330 if cap_top else H - 190)
 
     # headline: pops in with an overshoot, and unwinds a little extra tilt as it lands
     if big:
@@ -411,7 +418,8 @@ def render():
                     d.rounded_rectangle([(W - rw) / 2, H // 2 + 200, (W + rw) / 2, H // 2 + 208],
                                         radius=4, fill=sh["accent"] + (255,))
             else:
-                draw_caption(frame, sh["big"], sh["small"], sh["accent"], t, i, card_mode)
+                draw_caption(frame, sh["big"], sh["small"], sh["accent"], t, i, card_mode,
+                         sh.get("cap") == "top")
 
             # Hard 2-frame cuts, not fades: a dip to black on every cut is what made the last one
             # feel slow. Act changes get a white flash instead.

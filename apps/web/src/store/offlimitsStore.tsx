@@ -99,7 +99,7 @@ export function OffLimitsProvider({ children, room }: { children: ReactNode; roo
   // Relay: broadcast the PUBLIC projection only.
   useEffect(() => {
     if (!room) return;
-    const s = joinRoom(room, "host");
+    const s = joinRoom(room, "host", undefined, "offlimits");
     const onConnect = () => {
       setConnected(true);
       emitSync(room, snapRef.current);
@@ -189,7 +189,7 @@ export function OffLimitsFollowerProvider({
   const [presence, setPresence] = useState<Presence | null>(null);
 
   useEffect(() => {
-    const s = joinRoom(room, role);
+    const s = joinRoom(room, role, undefined, "offlimits");
     const onSync = (snap: OffLimitsSnapshot) => {
       if (!snap?.offlimits) return; // ignore foreign/partial snapshots (shared-room safety)
       setPub(snap.offlimits);

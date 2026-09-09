@@ -97,7 +97,7 @@ export function MonikersProvider({ children, room }: { children: ReactNode; room
 
   useEffect(() => {
     if (!room) return;
-    const s = joinRoom(room, "host");
+    const s = joinRoom(room, "host", undefined, "monikers");
     const onConnect = () => {
       setConnected(true);
       emitSync(room, snapRef.current);
@@ -179,7 +179,7 @@ export function MonikersFollowerProvider({ children, room, role = "display" }: {
   const [presence, setPresence] = useState<Presence | null>(null);
 
   useEffect(() => {
-    const s = joinRoom(room, role);
+    const s = joinRoom(room, role, undefined, "monikers");
     const onSync = (snap: MonikersSnapshot) => {
       if (!snap?.monikers) return; // ignore foreign/partial snapshots (shared-room safety)
       setPub(snap.monikers);

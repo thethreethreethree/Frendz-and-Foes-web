@@ -82,7 +82,7 @@ export function BingoProvider({ children, room }: { children: ReactNode; room?: 
 
   useEffect(() => {
     if (!room) return;
-    const s = joinRoom(room, "host");
+    const s = joinRoom(room, "host", undefined, "bingo");
     const onConnect = () => {
       setConnected(true);
       emitSync(room, snapRef.current);
@@ -162,7 +162,7 @@ export function BingoDisplayProvider({
   const [presence, setPresence] = useState<Presence | null>(null);
 
   useEffect(() => {
-    const s = joinRoom(room, role);
+    const s = joinRoom(room, role, undefined, "bingo");
     const onSync = (snap: BingoSnapshot) => {
       if (snap?.bingo) setBingo(snap.bingo);
       setJoinQrVisible(!!snap?.joinQrVisible);

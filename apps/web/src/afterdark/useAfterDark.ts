@@ -13,7 +13,7 @@ export function useAfterDark(room: string, role: "host" | "display" | "player") 
     const s = getSocket();
     const enter = () => {
       if (role === "player") { const st = loadCaPlayer(room); if (st.name) caJoin(room, st.name, st.avatar, st.id, st.rejoinToken); }
-      else { s.emit("join", { room, role }); caSync(room); }
+      else { s.emit("join", { room, role, game: "afterdark" }); caSync(room); }
     };
     const onState = (st: CaState) => setState(st);
     const onYou = (y: CaYou) => setYou(y);

@@ -17,7 +17,7 @@ export function useBallpark(room: string, role: "host" | "display" | "player") {
         const st = loadBpPlayer(room);
         if (st.name) bpJoin(room, st.name, st.avatar, st.id, st.rejoinToken);
       } else {
-        s.emit("join", { room, role });
+        s.emit("join", { room, role, game: "ballpark" });
         bpSync(room);
       }
     };

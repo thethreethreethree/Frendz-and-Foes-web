@@ -180,7 +180,7 @@ export function GameProvider({ children, room }: { children: ReactNode; room?: s
 
   useEffect(() => {
     if (!room) return;
-    const s = joinRoom(room, "host");
+    const s = joinRoom(room, "host", undefined, "feud");
     const onConnect = () => {
       setConnected(true);
       emitSync(room, snapshotRef.current); // bring any waiting display up to date

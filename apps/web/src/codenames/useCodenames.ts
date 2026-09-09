@@ -19,7 +19,7 @@ export function useCodenames(room: string, role: "host" | "display" | "player") 
         const st = loadCnPlayer(room);
         if (st.name) cnJoin(room, st.name, st.avatar, st.id, st.rejoinToken);
       } else {
-        s.emit("join", { room, role }); // sets host/display role + joins the room
+        s.emit("join", { room, role, game: "codenames" }); // sets host/display role + joins the room
         cnSync(room);
       }
     };

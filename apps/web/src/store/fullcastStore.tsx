@@ -99,7 +99,7 @@ export function FullCastProvider({ children, room }: { children: ReactNode; room
 
   useEffect(() => {
     if (!room) return;
-    const s = joinRoom(room, "host");
+    const s = joinRoom(room, "host", undefined, "fullcast");
     const onConnect = () => {
       setConnected(true);
       emitSync(room, snapRef.current);
@@ -179,7 +179,7 @@ export function FullCastFollowerProvider({ children, room, role = "display" }: {
   const [presence, setPresence] = useState<Presence | null>(null);
 
   useEffect(() => {
-    const s = joinRoom(room, role);
+    const s = joinRoom(room, role, undefined, "fullcast");
     const onSync = (snap: FullCastSnapshot) => {
       if (!snap?.fullcast) return; // ignore foreign/partial snapshots (shared-room safety)
       setPub(snap.fullcast);
