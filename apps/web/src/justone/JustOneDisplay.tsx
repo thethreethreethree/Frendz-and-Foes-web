@@ -63,7 +63,7 @@ export function JustOneDisplay({ room }: { room: string }) {
           </div>
           <Roster state={state} />
         </div>
-        <HostQR room={room} />
+        <HostQR room={room} game="justone" />
       </Center>
     );
   }

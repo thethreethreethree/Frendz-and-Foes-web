@@ -68,7 +68,7 @@ export function BallparkDisplay({ room }: { room: string }) {
             </div>
           </div>
         </div>
-        <HostQR room={room} />
+        <HostQR room={room} game="ballpark" />
       </Center>
     );
   }

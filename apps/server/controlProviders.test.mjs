@@ -93,5 +93,27 @@ for (const field of ["connected", "presence", "room", "role"]) {
 check("it seeds connected state instead of waiting for an event that already fired",
       /setConnected\(s\.connected\)/.test(provider));
 
+// --- the host QR must NAME its game, never sniff it ------------------------------------------------
+// getGameFromUrl() returns "feud" for a missing or unrecognised param, and ControlRoute's final
+// fall-through renders Feud. controllerUrl() used to call it, so a display whose URL had lost its
+// game param minted a "SCAN TO HOST" QR pointing at the wrong game -- silently, with no error
+// anywhere. The owner hit exactly that: a Trivia QR that opened a broken Feud screen.
+const roomSrc = readFileSync(join(WEB, "net", "room.ts"), "utf8");
+const ctl = roomSrc.slice(roomSrc.indexOf("export function controllerUrl"));
+const ctlBody = ctl.slice(0, ctl.indexOf("\n}"));
+check("controllerUrl takes the game as an argument",
+      /export function controllerUrl\(room: string, game: GameType\)/.test(ctl),
+      "sniffing the ambient URL is what pointed a Trivia QR at Feud");
+check("and never falls back to reading it from the URL",
+      !/getGameFromUrl/.test(ctlBody),
+      'defaulting to "feud" is a silent wrong answer, not a safe one');
+
+const pairingSrc = readFileSync(join(WEB, "net", "pairing.tsx"), "utf8");
+check("DisplayPairing requires a game", /DisplayPairing\(\{ game \}/.test(pairingSrc));
+check("HostQR requires a game", /HostQR\(\{ room, game \}/.test(pairingSrc));
+const displaySrc = readFileSync(join(WEB, "routes", "DisplayRoute.tsx"), "utf8");
+check("no DisplayPairing is rendered without one", !/<DisplayPairing \/>/.test(displaySrc),
+      "a bare <DisplayPairing /> is the old bug");
+
 console.log(fails ? `\n${fails} FAILED` : "\nall control-route provider checks passed");
 process.exit(fails ? 1 : 0);

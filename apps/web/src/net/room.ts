@@ -40,8 +40,16 @@ export function setUrlRoom(room: string): void {
 }
 
 /** URL that opens the host controller already paired to this room + game. */
-export function controllerUrl(room: string): string {
-  return `${window.location.origin}/?room=${room}&game=${getGameFromUrl()}#/control`;
+// The game is a REQUIRED argument, not sniffed from the ambient URL.
+//
+// This used to call getGameFromUrl(), which silently returns "feud" for a missing or unrecognised
+// param -- and ControlRoute's final fall-through renders Feud. So any display whose URL had lost
+// its game param (a TV kiosk that blocks history.replaceState, a shared or re-opened link, an
+// in-app browser that strips the query) minted a "SCAN TO HOST" QR pointing at the WRONG GAME,
+// with no error anywhere. The caller always knows which game it is running; making it pass that
+// removes the failure mode rather than papering over it.
+export function controllerUrl(room: string, game: GameType): string {
+  return `${window.location.origin}/?room=${room}&game=${game}#/control`;
 }
 
 /** URL players scan to join a Murder game from their own phones. */

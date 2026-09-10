@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { useConnection } from "./connection";
 import { controllerUrl, generateRoomCode, setUrlRoom } from "./room";
+import type { GameType } from "./socket";
 
 export function QR({ text, size = 160 }: { text: string; size?: number }) {
   const [url, setUrl] = useState("");
@@ -22,14 +23,14 @@ export function QR({ text, size = 160 }: { text: string; size?: number }) {
 // have no phone-first entry -- they are excluded from the /control picker because the DISPLAY mints
 // the room and shows the player QR. That left the host URL printed as small text on a television,
 // to be typed by hand. A second QR is the only thing that works from across a room.
-export function HostQR({ room }: { room: string }) {
+export function HostQR({ room, game }: { room: string; game: GameType }) {
   return (
     <div className="mt-4 inline-flex items-center gap-3 rounded-xl border border-line px-3 py-2">
-      <QR text={controllerUrl(room)} size={76} />
+      <QR text={controllerUrl(room, game)} size={76} />
       <div className="text-left">
         <div className="ff-title text-base tracking-wider text-ink">HOST</div>
         <div className="text-xs text-muted">Scan to run the game from your phone</div>
-        <div className="mt-0.5 font-mono text-[10px] text-muted">{controllerUrl(room)}</div>
+        <div className="mt-0.5 font-mono text-[10px] text-muted">{controllerUrl(room, game)}</div>
       </div>
     </div>
   );
@@ -60,7 +61,7 @@ export function StatusPill() {
 }
 
 // Full-screen pairing card shown on the DISPLAY until the host phone connects.
-export function DisplayPairing() {
+export function DisplayPairing({ game }: { game: GameType }) {
   const connection = useConnection();
   const room = connection.room;
   const linked = connection.connected && (connection.presence?.host ?? 0) > 0;
@@ -78,7 +79,7 @@ export function DisplayPairing() {
       <div className="ff-sticker bg-white px-10 py-8 text-center text-ink">
         <div className="font-display text-3xl text-pink">SCAN TO HOST</div>
         <div className="mt-4 flex justify-center">
-          <QR text={controllerUrl(room)} size={200} />
+          <QR text={controllerUrl(room, game)} size={200} />
         </div>
         <div className="mt-4 text-sm font-bold text-ink/60">or enter room code</div>
         <div className="ff-title text-6xl tracking-[0.3em] text-ink">{room}</div>

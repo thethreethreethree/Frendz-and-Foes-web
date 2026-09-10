@@ -73,7 +73,7 @@ export function DisplayRoute() {
     return (
       <PictionaryFollowerProvider room={room} role="display">
         <PictionaryDisplay />
-        <DisplayPairing />
+        <DisplayPairing game={game} />
       </PictionaryFollowerProvider>
     );
   }
@@ -91,7 +91,7 @@ export function DisplayRoute() {
     return (
       <BingoDisplayProvider room={BINGO_ROOM} role="display">
         <BingoDisplay />
-        <DisplayPairing />
+        <DisplayPairing game={game} />
       </BingoDisplayProvider>
     );
   }
@@ -100,7 +100,7 @@ export function DisplayRoute() {
     return (
       <TriviaFollowerProvider room={room} role="display">
         <TriviaDisplay />
-        <DisplayPairing />
+        <DisplayPairing game={game} />
       </TriviaFollowerProvider>
     );
   }
@@ -109,7 +109,7 @@ export function DisplayRoute() {
     return (
       <OffLimitsFollowerProvider room={room} role="display">
         <OffLimitsDisplay />
-        <DisplayPairing />
+        <DisplayPairing game={game} />
       </OffLimitsFollowerProvider>
     );
   }
@@ -118,7 +118,7 @@ export function DisplayRoute() {
     return (
       <HeadsUpFollowerProvider room={room} role="display">
         <HeadsUpDisplay />
-        <DisplayPairing />
+        <DisplayPairing game={game} />
       </HeadsUpFollowerProvider>
     );
   }
@@ -127,7 +127,7 @@ export function DisplayRoute() {
     return (
       <FullCastFollowerProvider room={room} role="display">
         <FullCastDisplay />
-        <DisplayPairing />
+        <DisplayPairing game={game} />
       </FullCastFollowerProvider>
     );
   }
@@ -136,7 +136,7 @@ export function DisplayRoute() {
     return (
       <MonikersFollowerProvider room={room} role="display">
         <MonikersDisplay />
-        <DisplayPairing />
+        <DisplayPairing game={game} />
       </MonikersFollowerProvider>
     );
   }
@@ -144,7 +144,7 @@ export function DisplayRoute() {
   return (
     <DisplayProvider room={room} role="display">
       <DisplayView />
-      <DisplayPairing />
+      <DisplayPairing game={game} />
     </DisplayProvider>
   );
 }

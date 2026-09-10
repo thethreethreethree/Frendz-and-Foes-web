@@ -79,7 +79,7 @@ export function CodenamesDisplay({ room }: { room: string }) {
           ))}
         </div>
         <p className="mt-1 text-xs uppercase tracking-[0.18em] text-muted">Agents on file</p>
-        <HostQR room={room} />
+        <HostQR room={room} game="codenames" />
       </Center>
     );
   }
