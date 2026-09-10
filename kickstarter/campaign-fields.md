@@ -63,7 +63,7 @@ THE PRODUCT FEATURE. PlayZoo is a party-games night hosted by Rex, an AI zookeep
 
 THE ARTWORK. Character portraits, game backdrops and imagery on this campaign page are AI-generated from prompts we wrote ourselves, describing our own original characters - twenty animals we created, named and gave personalities to, and fourteen games we designed. The prompts do not name, reference or imitate any living artist, studio or existing artwork, and no third party's images were supplied as input or used as training data. The game rules, the code, the character writing and the product design are our own.
 
-WHAT THE FUNDING IS FOR. The goal is $3,500. The software already works - fourteen games, the AI host and the phone controllers all run today. The money goes to artwork, hosting and running costs. None of it funds AI development.
+WHAT THE FUNDING IS FOR. The goal is $3,500, and it funds finishing PlayZoo and releasing version one. Fourteen games are built and the rules work, but the games are not open to the public and most still run on a plain background. The money pays for the art across all fourteen, Rex's voice, and the custom characters backers are owed. None of it funds AI development, and none of it covers running costs.
 ```
 
 ### John's version
@@ -75,7 +75,7 @@ THE ONE THAT TALKS. Rex is our AI zookeeper. He hosts the whole night - does the
 
 THE ONE THAT'S DRAWN. The character portraits, the game backdrops, the artwork on this page - AI-generated, from prompts we wrote ourselves, describing our own animals. Twenty of them. We made them up, named them, gave them their personality problems. The prompts don't name, copy or imitate any living artist, any studio, or anybody's existing work, and we didn't feed anyone else's images in as reference or training data. The games, the rules, the code and the writing are ours.
 
-WHERE THE MONEY GOES. Three thousand five hundred dollars. That's it. The thing already runs - fourteen games, the host, the phones, all of it works today. The money buys artwork, hosting, and the bill for keeping Rex talking. Not one cent of it goes to building AI. We're renting, not inventing, and we'd rather say so plainly than have you find out later.
+WHERE THE MONEY GOES. Three thousand five hundred dollars. That's it. Fourteen games are built and the rules work - what is missing is the finishing. The money buys the art across all fourteen games, Rex's actual speaking voice, and the custom characters backers are owed. It does not pay our running costs; subscriptions do that after launch. Not one cent goes to building AI - we rent that model like everyone else, and we would rather say so plainly than have you find out later.
 ```
 
 Neither version claims all campaign copy is human-written, because parts were drafted with AI
@@ -92,19 +92,19 @@ shipped -- worth declaring rather than leaving for a backer to notice.
 ```
 Right. This is the part where I'm meant to look you in the eye and tell you what could go wrong. Fine by me - I'd rather you heard it from me than found it out later.
 
-But first, the thing that actually matters, and I want you to sit with it for a second: this is not a drawing on a napkin. The fourteen games work. Rex works. The phones work. The backers' club works. You can go and prod the whole thing right now and see for yourself - that's not a promise, it's a link. Which is exactly why we're asking for three and a half grand instead of eighty. We're not building PlayZoo. We're finishing it. So the question that sinks most campaigns - "will these people ever deliver anything" - is a much smaller question here than you're used to asking.
+But first, the thing that actually matters, and I want you to sit with it for a second: this is not a drawing on a napkin. The fourteen games are built and the rules work. Rex is built. The phone controllers are built. What is not done is the finishing - the artwork, and giving Rex an actual voice - and that is precisely what your money is for. The games are not open to the public yet; backers get in first when this closes. Which is exactly why we're asking for three and a half grand instead of eighty. We are not building PlayZoo from nothing. We are finishing it and getting it out the door. So the question that sinks most campaigns - "will these people ever deliver anything" - is a much smaller question here than you're used to asking. And if you want to check there is somebody real behind this before you pledge, go and argue with John on the support page. He is switched on right now and he will insult you free of charge.
 
 Now. You asked what could bite us. Four things, and one bonus.
 
-1. WE RENT THE BRAIN. Rex's personality is ours - we wrote every rule he follows. But the model that actually speaks his lines is somebody else's service, and we pay for it by the word. If their prices jump or their service goes wobbly, our running costs move and we don't get a vote. What we did about it: we built Rex against a standard interface from day one, and the provider is a setting, not something welded into the code. We can move him to a different model without rewriting a single game. That was a deliberate decision made early, not a clever answer invented for this paragraph.
+1. WE RENT THE BRAIN. Rex's personality is ours - we wrote every rule he follows. But the model that actually speaks his lines is somebody else's service, and we pay for it by the word. If their prices jump or their service goes wobbly, what it costs us to run PlayZoo after launch moves, and we don't get a vote. What we did about it: we built Rex against a standard interface from day one, and the provider is a setting, not something welded into the code. We can move him to a different model without rewriting a single game. That was a deliberate decision made early, not a clever answer invented for this paragraph.
 
 2. THE CUSTOM CHARACTERS ARE THE BIT THAT COULD SLIP. Founding Animal gets you one custom animal drawn for you, Head Keeper gets you two, and we've said everything lands within a month of the campaign closing. Here's the honest maths: that work scales with how many of you there are. If this campaign goes far past its goal - lovely problem, still a problem - that one-month date is the first thing under pressure. What we're doing about it: characters get drawn in batches right through the month instead of piling up at the end, and character work goes to the front of the queue ahead of the general artwork. Your reward never waits behind a background.
 
-3. THE ARTWORK IS THE REAL JOB. Most of the games currently run on a plain background. The rules are finished; the look isn't. Bringing all fourteen up to properly finished is the single biggest chunk of work this money pays for, and anyone who tells you art comes in on schedule has never commissioned any. What we're doing about it: the games are fully playable right now, so art ships game by game as it's done. Nothing is sat waiting for everything.
+3. THE ARTWORK IS THE REAL JOB. Most of the games currently run on a plain background. The rules are finished; the look isn't. Bringing all fourteen up to properly finished is the single biggest chunk of work this money pays for, and anyone who tells you art comes in on schedule has never commissioned any. What we're doing about it: the games already play, so the art goes in game by game as it is finished rather than all at the end. Nothing sits waiting for everything, and a game that is ready does not wait for one that is not.
 
-4. MORE PLAYING COSTS MORE MONEY. Every game night is more AI calls and more hosting. The subscriptions are what pays for that once the campaign's over. If fewer people stick around than we hope, we cut back what we hand out for free - we do not touch anything a backer was promised.
+4. RUNNING IT COSTS MONEY, AND THIS CAMPAIGN DOES NOT PAY FOR THAT. Every game night after launch is more AI calls and more hosting. Those are ongoing costs and they come out of subscriptions, not out of your pledge - your pledge finishes the build and pays for what you were promised. If fewer people subscribe than we hope, we cut back what we hand out for free. We do not touch anything a backer was promised.
 
-5. AND THE BONUS ONE, BECAUSE IT'S ON THIS PAGE. We've said Rex is getting an actual speaking voice. He hasn't got one yet. He hosts in writing today, and the voice is genuinely still to come. That's precisely why it isn't part of any reward tier - if it lands, everybody gets it and it's a nice surprise. If the voice service doesn't work out, nobody loses a thing they paid for.
+5. AND THE BONUS ONE, BECAUSE IT'S ON THIS PAGE. We've said Rex is getting an actual speaking voice. He hasn't got one yet. He hosts in writing, and the voice is genuinely still to come. That's precisely why it isn't part of any reward tier - if it lands, everybody gets it and it's a nice surprise. If the voice service doesn't work out, nobody loses a thing they paid for.
 
 WHAT WE WILL NOT DO: take your money and quietly change the deal. The prices, the tiers, and exactly what's in each one are written on this page. They don't shrink after funding. I'll sell you a bottle cap and call it a collectible - I won't do that.
 ```
@@ -117,10 +117,10 @@ Twelve pairs. Kickstarter adds these one at a time.
 
 ```
 Q: When do I get my stuff?
-A: Within a month of the campaign closing. Your backer code and your access go out the moment it ends - there's nothing to build first, the thing already runs. The custom animals for Founding Animal and Head Keeper get drawn and delivered inside that same month. I'll be personally insufferable about it if we're running late.
+A: Within a month of the campaign closing. Your backer code and your access go out as soon as it ends - the games are built, so getting you in is not the part that takes time. The custom animals for Founding Animal and Head Keeper get drawn and delivered inside that same month. I'll be personally insufferable about it if we're running late.
 
 Q: Who's actually behind this?
-A: A small independent team, and no, you're not getting our names on a poster. Judge us on the thing instead - it's more use to you than a bio. PlayZoo isn't a concept or a mock-up, it's running software: fourteen games, the host, the phones, the club, all working today. Go and talk to me on the support page right now if you want to check. That's also why we're asking for $3,500 and not something that sounds like we're building it from scratch. We're not. We're finishing it.
+A: A small independent team, and no, you're not getting our names on a poster. Judge us on the thing instead - it's more use to you than a bio. PlayZoo isn't a concept or a mock-up - the fourteen games, the host and the phone controllers are built and working. What's missing is the artwork and my voice, which is what this campaign finishes. The games themselves open to backers first when it closes. Go and talk to me on the support page right now if you want to check there are real people here. That's also why we're asking for $3,500 and not something that sounds like we're building it from scratch. We're not. We're finishing it.
 
 Q: Do I have to download an app?
 A: No, and I'd be offended if you thought we'd do that to you. It runs in a browser on your telly or a laptop, everyone else points their phone camera at a QR code, done. No app store, no installs, nothing for your mates to sign up for while the pizza goes cold.
@@ -155,10 +155,37 @@ A: Yes. PlayZoo is white-label, so a venue can rebrand the colours and even rena
 
 ---
 
+## 6. Refund policy
+
+Kickstarter asks for this, and it is one of the two fields the reviewer quoted back on the sister
+project -- the other being Risks. It is written to be compliant by construction: it says what a
+pledge buys (a finite deliverable), it never describes the pledge as support for a business, and it
+does not offer refunds the platform's own terms do not allow.
+
+The trap to avoid: language like "your support keeps us going" or "helps cover our costs" turns a
+reward pledge into general business support, which is the exact framing that got the sister project
+pulled. A pledge here buys named things, and the policy says so.
+
+```
+WHAT YOUR PLEDGE IS. You are pre-ordering specific, named things: access to PlayZoo for a set number of months, a set number of games, a backer code, a place in the backers-only club, and - at Founding Animal and Head Keeper - custom animal characters drawn for you. It is not a donation and it is not general support for a business. Everything you are owed is listed on your reward, and the list does not shrink after funding.
+
+BEFORE THE CAMPAIGN ENDS. You can change or cancel your pledge yourself, any time before the campaign closes, straight from Kickstarter. You do not need our permission and you do not need to explain yourself. Nothing is charged until the campaign successfully funds.
+
+IF THE CAMPAIGN DOESN'T FUND. Nobody is charged a penny. Kickstarter is all-or-nothing, so if we miss $3,500 the pledges simply never collect.
+
+AFTER IT FUNDS. Once funds collect, pledges are not refundable through Kickstarter - the platform has no refund button, and anyone who tells you otherwise is guessing. What we commit to instead is this: if we cannot deliver something you were promised, we will tell you in a project update, say plainly why, and offer you either a replacement of equal or greater value or a refund arranged directly with us. We would rather hand money back than have you feel done over.
+
+WHAT WOULD NOT BE A REFUND CASE. Delivery landing late but landing. Rex's speaking voice not arriving - that is deliberately in no reward tier for exactly this reason, so nobody has paid for it. A game you did not enjoy. We will be honest with you about all three, but a missed taste is not a missed delivery.
+
+HOW TO REACH A HUMAN. Kickstarter messages, or the support desk on the project page. A real person reads both.
+```
+
+---
+
 ## Open risk on the record
 
 The one-month delivery date is a public promise. Access and backer codes are the easy half -- the
-software already runs. The half that can slip is the custom characters, because that work scales with
+software is built. The half that can slip is the custom characters, because that work scales with
 backer count; a campaign that lands far past $3,500 puts that date under pressure first, and missing a
 stated delivery date in month one is the most damaging thing a campaign can do. Flagged before launch,
 owner's call to keep it.

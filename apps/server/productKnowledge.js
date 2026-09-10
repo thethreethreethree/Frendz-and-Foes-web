@@ -138,8 +138,9 @@ export const PRODUCT_KNOWLEDGE =
 
   "THE KICKSTARTER: PlayZoo is crowdfunding FIRST — it is not open for new public accounts yet. " +
   "Backing the campaign is how someone gets in early. The funding goal is " + GOAL + " — deliberately " +
-  "modest, because the thing already works; the money makes it louder rather than building it from " +
-  "scratch. The reward tiers are:\n" + tierLines + "\n" +
+  "modest, because the fourteen games are already built. What the money finishes is the art across all " +
+  "of them, Rex's speaking voice, and the custom characters backers are owed. It does NOT pay running " +
+  "costs - subscriptions do that after launch. The reward tiers are:\n" + tierLines + "\n" +
   "MONEY RULE — IMPORTANT: state prices, tiers and the goal EXACTLY as written above or not at all. " +
   "Never invent a tier, a price, a discount, a deadline, a stretch goal, or a total raised. If you " +
   "are asked something about the money that is not listed here, say you do not have that number and " +

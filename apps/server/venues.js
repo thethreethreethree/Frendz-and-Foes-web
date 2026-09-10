@@ -129,7 +129,11 @@ export function renewVenue(slug, at = Date.now()) {
   const v = getVenue(slug);
   if (!v) return { error: "No such venue." };
   let next = (v.renews || at) + MONTH_MS;
-  while (next < at) next += MONTH_MS;
+  // STRICTLY greater, not >=. A renewal date landing exactly ON `at` is already due the
+  // instant it is written, so the venue is overdue again before the receipt prints. It shows
+  // up when a very overdue venue is caught up and the two Date.now() calls land in the same
+  // millisecond -- rare in life, most runs on a fast machine, which is how the test found it.
+  while (next <= at) next += MONTH_MS;
   try {
     db.prepare("UPDATE venues SET renews=?, status=CASE WHEN status='trial' THEN 'active' ELSE status END, updated=? WHERE slug=?")
       .run(next, Date.now(), slug);
