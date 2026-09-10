@@ -1,0 +1,214 @@
+<title>PlayZoo Campaign Compliance</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* PlayZoo's own brand, taken from the rendered story cards: midnight navy on near-black,
+   the violet eyebrow pill, the neon-green spend rail, amber stat numerals. Deliberately
+   single-theme -- the campaign itself only exists as neon-on-midnight -- so every colour
+   is painted explicitly and nothing borrows the host ground. */
+:root{
+  --ink:#090c15; --card:#151a2b; --edge:#2a3350; --edge2:#39456b;
+  --text:#e9edf8; --muted:#98a3c2; --dim:#6c779a;
+  --violet:#8b5cff; --neon:#63e35a; --amber:#f5a623; --rose:#ff5f73;
+  --disp:"Bricolage Grotesque",-apple-system,"Segoe UI",sans-serif;
+  --body:"Inter",-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"Cascadia Code",monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--text);font-family:var(--body);
+     font-size:15px;line-height:1.62;-webkit-font-smoothing:antialiased}
+.wrap{max-width:920px;margin:0 auto;padding:0 20px 96px}
+h1,h2,h3{font-family:var(--disp);font-weight:800;text-wrap:balance;margin:0;letter-spacing:-.015em}
+p{margin:0}
+code{font-family:var(--mono);font-size:.88em}
+em{color:var(--text);font-style:italic}
+
+.top{padding:56px 0 34px;border-bottom:1px solid var(--edge)}
+.pill{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:600;
+      letter-spacing:.16em;text-transform:uppercase;color:#12081f;background:var(--violet);
+      padding:6px 13px;border-radius:999px}
+h1{font-size:clamp(30px,5.4vw,50px);line-height:1.06;margin:18px 0 0}
+.lede{color:var(--muted);font-size:17px;max-width:62ch;margin-top:14px}
+.verdict{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+.vchip{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--edge);
+       border-radius:999px;padding:7px 15px;font-size:13px;color:var(--muted)}
+.vchip b{color:var(--text);font-weight:600}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--neon);flex:none;
+     box-shadow:0 0 0 3px rgba(99,227,90,.16)}
+
+section{margin-top:52px}
+.eyebrow{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.16em;
+         text-transform:uppercase;color:var(--dim)}
+h2{font-size:26px;margin:9px 0 6px}
+.sub{color:var(--muted);max-width:64ch}
+
+.quote{margin-top:22px;background:linear-gradient(180deg,rgba(255,95,115,.07),rgba(255,95,115,.02));
+       border:1px solid rgba(255,95,115,.28);border-left:3px solid var(--rose);
+       border-radius:0 12px 12px 0;padding:22px 24px}
+.quote p{font-size:16px;color:#ffd9de}
+.quote b{color:#fff}
+.quote .src{margin-top:13px;font-family:var(--mono);font-size:11.5px;color:var(--rose);
+            letter-spacing:.05em;text-transform:uppercase}
+
+.rules{display:grid;gap:12px;margin-top:22px}
+@media(min-width:760px){.rules{grid-template-columns:repeat(3,1fr)}}
+.rule{background:var(--card);border:1px solid var(--edge);border-radius:12px;padding:19px}
+.rule .n{font-family:var(--mono);font-size:11px;color:var(--violet);font-weight:600;letter-spacing:.1em}
+.rule h3{font-size:16.5px;margin:9px 0 7px;line-height:1.28}
+.rule p{color:var(--muted);font-size:13.5px;line-height:1.55}
+
+.pairs{display:grid;gap:14px;margin-top:22px}
+.pair{background:var(--card);border:1px solid var(--edge);border-radius:12px;padding:19px 20px}
+.pair>header{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:14px}
+.pair h3{font-size:16.5px}
+.loc{color:var(--dim);font-size:11.5px;background:var(--ink);border:1px solid var(--edge);
+     padding:2px 8px;border-radius:5px}
+.sides{display:grid;gap:11px}
+@media(min-width:700px){.sides{grid-template-columns:1fr 1fr}}
+.side{border-radius:9px;padding:14px 15px;font-size:13.5px;line-height:1.55}
+.side.old{background:rgba(255,95,115,.07);border:1px solid rgba(255,95,115,.24)}
+.side.old p{color:#ffc9d0;text-decoration:line-through;text-decoration-color:rgba(255,95,115,.55)}
+.side.old b{color:#fff}
+.side.none{background:rgba(154,164,196,.05);border:1px solid var(--edge)}
+.side.none p{color:var(--dim);font-style:italic}
+.side.new{background:rgba(99,227,90,.06);border:1px solid rgba(99,227,90,.26)}
+.side.new p{color:#d8ffd2}
+.side.new b{color:#fff}
+.tag{display:block;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.14em;
+     text-transform:uppercase;margin-bottom:7px}
+.old .tag{color:var(--rose)} .new .tag{color:var(--neon)} .none .tag{color:var(--dim)}
+.why{margin-top:12px;color:var(--muted);font-size:13px;padding-left:13px;border-left:2px solid var(--edge2)}
+
+.field{background:var(--card);border:1px solid var(--edge);border-radius:12px;
+       padding:19px 20px;margin-top:14px}
+.field>header{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:14px}
+.field h3{font-size:17.5px}
+.note{color:var(--muted);font-size:13px;margin-top:5px;max-width:60ch}
+.chip{flex:none;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.12em;
+      padding:4px 10px;border-radius:999px;white-space:nowrap}
+.chip.new{background:rgba(99,227,90,.14);color:var(--neon);border:1px solid rgba(99,227,90,.4)}
+.chip.rewritten{background:rgba(245,166,35,.14);color:var(--amber);border:1px solid rgba(245,166,35,.4)}
+.chip.unchanged{background:rgba(154,164,196,.1);color:var(--dim);border:1px solid var(--edge2)}
+.box{background:var(--ink);border:1px solid var(--edge);border-radius:9px;max-height:290px;
+     overflow:auto;padding:15px 17px}
+.box pre{margin:0;font-family:var(--mono);font-size:12.5px;line-height:1.72;color:#cdd6ee;
+         white-space:pre-wrap;word-wrap:break-word}
+.field>footer{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:14px}
+button.copy{font-family:var(--body);font-weight:600;font-size:13.5px;color:#0d0518;
+       background:var(--neon);border:0;border-radius:8px;padding:9px 17px;cursor:pointer;
+       min-height:40px;transition:filter .15s,background .15s,color .15s}
+button.copy:hover{filter:brightness(1.1)}
+button.copy:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+button.copy.ok{background:var(--violet);color:#fff}
+.done{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-size:13.5px;
+      cursor:pointer;min-height:40px}
+.done input{width:16px;height:16px;accent-color:var(--violet);cursor:pointer}
+.done.on{color:var(--neon)}
+.len{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+
+.todo{margin-top:20px;display:grid;gap:10px}
+.item{display:flex;gap:14px;background:var(--card);border:1px solid var(--edge);
+      border-radius:11px;padding:16px 18px}
+.item .who{flex:none;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.1em;
+      padding:4px 9px;border-radius:5px;height:fit-content;
+      background:rgba(139,92,255,.15);color:#c3a8ff;border:1px solid rgba(139,92,255,.4)}
+.item h3{font-size:15px;margin-bottom:4px}
+.item p{color:var(--muted);font-size:13.5px}
+footer.end{margin-top:56px;padding-top:22px;border-top:1px solid var(--edge);
+           color:var(--dim);font-size:12.5px;font-family:var(--mono);line-height:1.9}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<div class="top">
+  <span class="pill">Compliance rewrite &middot; 10 Sep 2026</span>
+  <h1>The campaign no longer says PlayZoo is a business that already runs.</h1>
+  <p class="lede">Kickstarter pulled Zwaptz for framing itself as an operating business raising money for ongoing costs. PlayZoo&rsquo;s page carried the identical framing in twelve places. All twelve are gone, and the page now states the development stage outright.</p>
+  <div class="verdict">
+    <span class="vchip"><span class="dot"></span><b>Live &amp; verified</b> on playzoo.snapaweb.com</span>
+    <span class="vchip"><span class="dot"></span><b>25/25</b> server tests</span>
+    <span class="vchip"><span class="dot"></span><b>3 fields</b> for you to paste</span>
+  </div>
+</div>
+
+<section>
+  <p class="eyebrow">Why any of this changed</p>
+  <h2>What the reviewer actually said</h2>
+  <div class="quote">
+    <p>&ldquo;Projects focused on raising funds for general business expenses are not allowed&hellip; you mention that <b>&lsquo;Zwaptz is running now&rsquo;</b>, and explain that the funding would go toward <b>&lsquo;parts that cost money continuously &mdash; the valuation models, hosting, and reaching enough people.&rsquo;</b> This currently frames the campaign as support for your ongoing operational costs&hellip; Instead, reframe the project so it&rsquo;s clearly funding a <b>specific, new, finite piece of work or deliverable</b>.&rdquo;</p>
+    <p class="src">Kickstarter review &middot; Zwaptz rejection</p>
+  </div>
+  <div class="rules">
+    <div class="rule"><p class="n">RULE 01</p><h3>Never say it already works</h3><p>PlayZoo is in development. The games sit behind <code>GAMES_OPEN</code> until the campaign closes, so &ldquo;play it right now&rdquo; was false as well as non-compliant.</p></div>
+    <div class="rule"><p class="n">RULE 02</p><h3>Never fund a continuous cost</h3><p>Hosting, servers, AI calls, general user acquisition. They may appear only in a sentence that denies your pledge pays for them.</p></div>
+    <div class="rule"><p class="n">RULE 03</p><h3>Silence is not compliance</h3><p>Deleting the claims was half the job. They asked for the opposite claim to be <em>made</em> &mdash; so the stage is now stated outright, twice.</p></div>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">Line by line</p>
+  <h2>What changed</h2>
+  <p class="sub">Seven of the twelve sites &mdash; every one that carried a claim rather than a turn of phrase.</p>
+  <div class="pairs">
+__PAIRS__
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">Your move</p>
+  <h2>Paste-ready fields</h2>
+  <p class="sub">These live in Kickstarter&rsquo;s dashboard, not in the repo &mdash; nothing on our side can push them for you. The text below is exactly what sits in <code>kickstarter/campaign-fields.md</code>.</p>
+__FIELDS__
+</section>
+
+<section>
+  <p class="eyebrow">Still open</p>
+  <h2>What this didn&rsquo;t cover</h2>
+  <div class="todo">
+    <div class="item"><span class="who">YOURS</span><div><h3>Generate the four images</h3><p>Three reward-tier images at 3:2, plus the Kickstarter project image. Prompts are already written, in <code>docs/prompts/</code>.</p></div></div>
+    <div class="item"><span class="who">YOURS</span><div><h3>Upload the twelve story cards</h3><p>Rebuilt and checked &mdash; <code>kickstarter/dist/story/</code>. Blocks 01, 10 and 11 carry the new copy.</p></div></div>
+    <div class="item"><span class="who">DECISION</span><div><h3>Post-Kickstarter consumer pricing</h3><p>&sect;7.2 of the backend design doc, still unanswered. It matters more now: the refund policy points at subscriptions as the thing that covers running costs.</p></div></div>
+  </div>
+</section>
+
+<footer class="end">
+  Commits 6bd2d77, 8252059, ce8d2cd, 65e1d64 &middot; guard at apps/server/ksCompliance.test.mjs<br>
+  Every field below is parsed from kickstarter/campaign-fields.md at build time, never from a snapshot.<br>
+  Verified live: John answers &ldquo;Not yet&rdquo; when asked whether PlayZoo is running, and names no hosting in the spend.
+</footer>
+</div>
+
+<script>
+const RAW = __JSON__;
+
+document.querySelectorAll("button.copy").forEach(function(b){
+  b.addEventListener("click", async function(){
+    const t = RAW[+b.dataset.i], old = b.textContent;
+    let ok = true;
+    try { await navigator.clipboard.writeText(t); }
+    catch (_) {
+      // Sandboxed frames can refuse the async clipboard; fall back to a selected textarea.
+      const ta = document.createElement("textarea");
+      ta.value = t; ta.style.position = "fixed"; ta.style.top = "-1000px";
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      try { ok = document.execCommand("copy"); } catch (__) { ok = false; }
+      ta.remove();
+    }
+    b.textContent = ok ? "Copied" : "Select it manually";
+    b.classList.add("ok");
+    setTimeout(function(){ b.textContent = old; b.classList.remove("ok"); }, 1600);
+  });
+});
+
+// Per-viewer convenience only: which fields you have already pasted in. Stays in this browser,
+// never shared and never read back -- losing it costs nothing, since you know what you pasted.
+document.querySelectorAll(".done input").forEach(function(c){
+  const k = "pz-ks-" + c.dataset.k;
+  try { c.checked = localStorage.getItem(k) === "1"; } catch (_) {}
+  const paint = function(){ c.closest(".done").classList.toggle("on", c.checked); };
+  paint();
+  c.addEventListener("change", function(){
+    paint();
+    try { localStorage.setItem(k, c.checked ? "1" : "0"); } catch (_) {}
+  });
+});
+</script>
