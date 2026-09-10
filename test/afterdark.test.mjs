@@ -203,3 +203,46 @@ test("removing someone already gone is refused, not crashed", () => {
   assert.equal(h.lastState().players.length, 3);
   assert.ok(h.errorsAfter(before).length > 0);
 });
+
+// --- the deck itself ------------------------------------------------------------------------------
+// Card text is DATA, pasted in from a supplied JSON file, so it never goes through a type checker
+// and no game test would notice it being malformed. The two things that actually break play are a
+// blank the client cannot fill, and a `pick` that disagrees with the number of blanks -- either one
+// puts a broken prompt on a television in front of a room of people.
+import { AD_PROMPTS, AD_RESPONSES } from "../apps/server/afterdark.js";
+
+test("the deck is big enough not to repeat itself in one night", () => {
+  assert.ok(AD_PROMPTS.length >= 100, `prompts: ${AD_PROMPTS.length}`);
+  assert.ok(AD_RESPONSES.length >= 400, `responses: ${AD_RESPONSES.length}`);
+});
+
+test("every prompt's blank is one the client can actually fill", () => {
+  // fillPrompt matches /_{3,}/. A blank of one or two underscores would render as itself.
+  const bad = AD_PROMPTS.filter((p) => /(?<!_)_{1,2}(?!_)/.test(p.text));
+  assert.deepEqual(bad.map((p) => p.text), [], "these have an underscore run too short to be a blank");
+});
+
+test("pick matches the number of blanks, or the prompt is a question", () => {
+  for (const p of AD_PROMPTS) {
+    const blanks = (p.text.match(/_{3,}/g) || []).length;
+    assert.ok(Number.isInteger(p.pick) && p.pick >= 1, `bad pick on: ${p.text}`);
+    // Question-style prompts carry no blank; the answer is appended instead.
+    if (blanks > 0) assert.equal(blanks, p.pick, `pick=${p.pick} but ${blanks} blank(s): ${p.text}`);
+  }
+});
+
+test("a hand can always satisfy the biggest prompt", () => {
+  const most = Math.max(...AD_PROMPTS.map((p) => p.pick));
+  assert.ok(most <= 7, `a prompt wants ${most} cards but a hand holds 7`);
+});
+
+test("no duplicate or empty cards", () => {
+  assert.equal(new Set(AD_PROMPTS.map((p) => p.text)).size, AD_PROMPTS.length, "duplicate prompt");
+  assert.equal(new Set(AD_RESPONSES).size, AD_RESPONSES.length, "duplicate response");
+  assert.ok(AD_PROMPTS.every((p) => p.text.trim()), "empty prompt");
+  assert.ok(AD_RESPONSES.every((r) => typeof r === "string" && r.trim()), "empty response");
+});
+
+test("no response is itself a blank, which would render as a hole in the sentence", () => {
+  assert.deepEqual(AD_RESPONSES.filter((r) => /_{3,}/.test(r)), []);
+});

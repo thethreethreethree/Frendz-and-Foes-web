@@ -1,0 +1,2509 @@
+{
+ "deck": "PlayZoo adult card set",
+ "version": 1,
+ "blank": "_____",
+ "black": [
+  {
+   "id": "b001",
+   "text": "My therapist's notes on me just say \"_____.\"",
+   "pick": 1
+  },
+  {
+   "id": "b002",
+   "text": "My divorce papers list the cause as _____.",
+   "pick": 1
+  },
+  {
+   "id": "b003",
+   "text": "I'm not saying it's cheating, but it's definitely _____.",
+   "pick": 1
+  },
+  {
+   "id": "b004",
+   "text": "HR has asked that we stop bringing _____ to the office.",
+   "pick": 1
+  },
+  {
+   "id": "b005",
+   "text": "I tapped out the second he brought out _____.",
+   "pick": 1
+  },
+  {
+   "id": "b006",
+   "text": "Grandma's last words were \"Don't let them find _____.\"",
+   "pick": 1
+  },
+  {
+   "id": "b007",
+   "text": "What did I find in my dad's search history?",
+   "pick": 1
+  },
+  {
+   "id": "b008",
+   "text": "Tonight on a very special true-crime documentary: _____.",
+   "pick": 1
+  },
+  {
+   "id": "b009",
+   "text": "The real reason I got kicked out of the hot tub: _____.",
+   "pick": 1
+  },
+  {
+   "id": "b010",
+   "text": "Nothing kills the mood faster than _____.",
+   "pick": 1
+  },
+  {
+   "id": "b011",
+   "text": "My OnlyFans niche is _____.",
+   "pick": 1
+  },
+  {
+   "id": "b012",
+   "text": "Scientists have finally cured erectile dysfunction with _____.",
+   "pick": 1
+  },
+  {
+   "id": "b013",
+   "text": "The estate sale was mostly _____.",
+   "pick": 1
+  },
+  {
+   "id": "b014",
+   "text": "Honey, we need to talk about _____.",
+   "pick": 1
+  },
+  {
+   "id": "b015",
+   "text": "The airline apologizes for _____ in seat 14C.",
+   "pick": 1
+  },
+  {
+   "id": "b016",
+   "text": "What's the worst thing to whisper during sex?",
+   "pick": 1
+  },
+  {
+   "id": "b017",
+   "text": "My dating profile says I'm looking for someone who's into _____.",
+   "pick": 1
+  },
+  {
+   "id": "b018",
+   "text": "This weekend's mandatory team-building activity: _____.",
+   "pick": 1
+  },
+  {
+   "id": "b019",
+   "text": "Coming this summer, a heartwarming animated movie about _____.",
+   "pick": 1
+  },
+  {
+   "id": "b020",
+   "text": "What made the pastor quit?",
+   "pick": 1
+  },
+  {
+   "id": "b021",
+   "text": "Welcome to Hell. Your eternal punishment is _____.",
+   "pick": 1
+  },
+  {
+   "id": "b022",
+   "text": "My last three brain cells are dedicated entirely to _____.",
+   "pick": 1
+  },
+  {
+   "id": "b023",
+   "text": "Airport security held up _____ and asked, \"Whose is this?\"",
+   "pick": 1
+  },
+  {
+   "id": "b024",
+   "text": "What's the secret ingredient in the church bake sale brownies?",
+   "pick": 1
+  },
+  {
+   "id": "b025",
+   "text": "Doctors are baffled. It turns out _____ is contagious.",
+   "pick": 1
+  },
+  {
+   "id": "b026",
+   "text": "Everything was fine at the baby shower until _____.",
+   "pick": 1
+  },
+  {
+   "id": "b027",
+   "text": "The one thing my parents still agree on: _____.",
+   "pick": 1
+  },
+  {
+   "id": "b028",
+   "text": "My sex tape is mostly just _____.",
+   "pick": 1
+  },
+  {
+   "id": "b029",
+   "text": "My ex and I are still fighting over custody of _____.",
+   "pick": 1
+  },
+  {
+   "id": "b030",
+   "text": "Why am I banned from the all-you-can-eat buffet?",
+   "pick": 1
+  },
+  {
+   "id": "b031",
+   "text": "Instead of a ring, he proposed with _____.",
+   "pick": 1
+  },
+  {
+   "id": "b032",
+   "text": "What's the real reason the neighbors moved out?",
+   "pick": 1
+  },
+  {
+   "id": "b033",
+   "text": "Crying in the shower because of _____. Again.",
+   "pick": 1
+  },
+  {
+   "id": "b034",
+   "text": "_____: the reason I'm on a list.",
+   "pick": 1
+  },
+  {
+   "id": "b035",
+   "text": "My wife's boyfriend keeps bringing _____ to dinner.",
+   "pick": 1
+  },
+  {
+   "id": "b036",
+   "text": "What's the one thing you shouldn't bring to a threesome?",
+   "pick": 1
+  },
+  {
+   "id": "b037",
+   "text": "The pharmacist lowered her voice and said, \"This may cause _____.\"",
+   "pick": 1
+  },
+  {
+   "id": "b038",
+   "text": "I've been celibate for three years because of _____.",
+   "pick": 1
+  },
+  {
+   "id": "b039",
+   "text": "The package arrived in an unmarked box. It's _____.",
+   "pick": 1
+  },
+  {
+   "id": "b040",
+   "text": "The deleted chapter of the Bible is all about _____.",
+   "pick": 1
+  },
+  {
+   "id": "b041",
+   "text": "Dad left to buy cigarettes and came back with _____.",
+   "pick": 1
+  },
+  {
+   "id": "b042",
+   "text": "What's keeping my marriage alive?",
+   "pick": 1
+  },
+  {
+   "id": "b043",
+   "text": "The honeymoon was ruined by _____.",
+   "pick": 1
+  },
+  {
+   "id": "b044",
+   "text": "What's in the office fridge that nobody will claim?",
+   "pick": 1
+  },
+  {
+   "id": "b045",
+   "text": "My LinkedIn headline: \"Passionate about _____.\"",
+   "pick": 1
+  },
+  {
+   "id": "b046",
+   "text": "BREAKING: Local man arrested for _____ at the mall.",
+   "pick": 1
+  },
+  {
+   "id": "b047",
+   "text": "What did they find during my colonoscopy?",
+   "pick": 1
+  },
+  {
+   "id": "b048",
+   "text": "What happened in Vegas that absolutely did not stay in Vegas?",
+   "pick": 1
+  },
+  {
+   "id": "b049",
+   "text": "What's the worst thing to hear through the bathroom door?",
+   "pick": 1
+  },
+  {
+   "id": "b050",
+   "text": "What's the real reason I'm still single?",
+   "pick": 1
+  },
+  {
+   "id": "b051",
+   "text": "I've been in therapy for three years to get over _____.",
+   "pick": 1
+  },
+  {
+   "id": "b052",
+   "text": "My next tattoo: _____, right across my ass.",
+   "pick": 1
+  },
+  {
+   "id": "b053",
+   "text": "The first thing I'm doing when I win the lottery: _____.",
+   "pick": 1
+  },
+  {
+   "id": "b054",
+   "text": "What's the worst thing to find in a hotel bed?",
+   "pick": 1
+  },
+  {
+   "id": "b055",
+   "text": "Mom, Dad, please sit down. I'm into _____.",
+   "pick": 1
+  },
+  {
+   "id": "b056",
+   "text": "The Vatican has officially approved _____.",
+   "pick": 1
+  },
+  {
+   "id": "b057",
+   "text": "What's getting me through this recession?",
+   "pick": 1
+  },
+  {
+   "id": "b058",
+   "text": "Why is Grandpa no longer invited to family reunions?",
+   "pick": 1
+  },
+  {
+   "id": "b059",
+   "text": "The ancient prophecy foretold _____.",
+   "pick": 1
+  },
+  {
+   "id": "b060",
+   "text": "What did I do at the office Christmas party?",
+   "pick": 1
+  },
+  {
+   "id": "b061",
+   "text": "My love language is _____.",
+   "pick": 1
+  },
+  {
+   "id": "b062",
+   "text": "The only way to satisfy my partner is _____.",
+   "pick": 1
+  },
+  {
+   "id": "b063",
+   "text": "My birth plan: no drugs, soft music, and _____.",
+   "pick": 1
+  },
+  {
+   "id": "b064",
+   "text": "What will get you kicked out of a funeral?",
+   "pick": 1
+  },
+  {
+   "id": "b065",
+   "text": "My grandparents' secret to sixty years of marriage: _____.",
+   "pick": 1
+  },
+  {
+   "id": "b066",
+   "text": "The real secret behind my father's success: _____.",
+   "pick": 1
+  },
+  {
+   "id": "b067",
+   "text": "Pro tip: never look up _____ on the work computer.",
+   "pick": 1
+  },
+  {
+   "id": "b068",
+   "text": "What would I save first in a house fire?",
+   "pick": 1
+  },
+  {
+   "id": "b069",
+   "text": "After our romantic candlelit dinner, we'll be moving on to _____.",
+   "pick": 1
+  },
+  {
+   "id": "b070",
+   "text": "Rich people don't want you to know about _____.",
+   "pick": 1
+  },
+  {
+   "id": "b071",
+   "text": "The world's saddest museum exhibit: _____.",
+   "pick": 1
+  },
+  {
+   "id": "b072",
+   "text": "This year's Olympics introduced a brand-new event: _____.",
+   "pick": 1
+  },
+  {
+   "id": "b073",
+   "text": "What's my proctologist's favorite story to tell at parties?",
+   "pick": 1
+  },
+  {
+   "id": "b074",
+   "text": "My body is a temple, and that temple is full of _____.",
+   "pick": 1
+  },
+  {
+   "id": "b075",
+   "text": "Plot twist: the killer was _____ all along.",
+   "pick": 1
+  },
+  {
+   "id": "b076",
+   "text": "What's the password to the sex dungeon?",
+   "pick": 1
+  },
+  {
+   "id": "b077",
+   "text": "What's that stain on the ceiling?",
+   "pick": 1
+  },
+  {
+   "id": "b078",
+   "text": "I promise to love you through sickness, health, and _____.",
+   "pick": 1
+  },
+  {
+   "id": "b079",
+   "text": "What woke up the entire hostel at 3 a.m.?",
+   "pick": 1
+  },
+  {
+   "id": "b080",
+   "text": "The most romantic thing a man has ever done for me: _____.",
+   "pick": 1
+  },
+  {
+   "id": "b081",
+   "text": "Why are there police outside my parents' house?",
+   "pick": 1
+  },
+  {
+   "id": "b082",
+   "text": "Red flag on the first date: _____.",
+   "pick": 1
+  },
+  {
+   "id": "b083",
+   "text": "The unspoken rule of the nude beach: never mention _____.",
+   "pick": 1
+  },
+  {
+   "id": "b084",
+   "text": "According to my doctor, it's not a rash. It's _____.",
+   "pick": 1
+  },
+  {
+   "id": "b085",
+   "text": "Tonight on the cooking channel: \"Twenty Ways to Serve _____.\"",
+   "pick": 1
+  },
+  {
+   "id": "b086",
+   "text": "What finally broke me?",
+   "pick": 1
+  },
+  {
+   "id": "b087",
+   "text": "_____: now available in a fun party size!",
+   "pick": 1
+  },
+  {
+   "id": "b088",
+   "text": "My sugar daddy gave me _____ instead of rent money.",
+   "pick": 1
+  },
+  {
+   "id": "b089",
+   "text": "What's my kink?",
+   "pick": 1
+  },
+  {
+   "id": "b090",
+   "text": "Here lies me. Cause of death: _____.",
+   "pick": 1
+  },
+  {
+   "id": "b091",
+   "text": "What got me through the divorce?",
+   "pick": 1
+  },
+  {
+   "id": "b092",
+   "text": "Blessed are the meek, for they shall inherit _____.",
+   "pick": 1
+  },
+  {
+   "id": "b093",
+   "text": "My rideshare driver would not stop talking about _____.",
+   "pick": 1
+  },
+  {
+   "id": "b094",
+   "text": "What's the worst gift to bring to a baby shower?",
+   "pick": 1
+  },
+  {
+   "id": "b095",
+   "text": "_____ is the reason I have trust issues.",
+   "pick": 1
+  },
+  {
+   "id": "b096",
+   "text": "The CEO's forty-minute apology video was about _____.",
+   "pick": 1
+  },
+  {
+   "id": "b097",
+   "text": "I can't believe I'm paying rent for _____.",
+   "pick": 1
+  },
+  {
+   "id": "b098",
+   "text": "My perfect Sunday: coffee, a long walk, and _____.",
+   "pick": 1
+  },
+  {
+   "id": "b099",
+   "text": "My mother-in-law handed me _____ and said, \"You need this.\"",
+   "pick": 1
+  },
+  {
+   "id": "b100",
+   "text": "My mom's new boyfriend is really into _____.",
+   "pick": 1
+  }
+ ],
+ "white": [
+  {
+   "id": "w001",
+   "text": "A threesome where everyone's just being polite"
+  },
+  {
+   "id": "w002",
+   "text": "Accidentally saying \"thank you\" after sex"
+  },
+  {
+   "id": "w003",
+   "text": "Faking an orgasm to end a conversation"
+  },
+  {
+   "id": "w004",
+   "text": "A sex swing that's now just where we dry laundry"
+  },
+  {
+   "id": "w005",
+   "text": "Screaming my own name during sex"
+  },
+  {
+   "id": "w006",
+   "text": "Sex so bad the neighbors left a sympathy card"
+  },
+  {
+   "id": "w007",
+   "text": "Grandma's surprisingly active dating profile"
+  },
+  {
+   "id": "w008",
+   "text": "Two virgins doing their absolute best"
+  },
+  {
+   "id": "w009",
+   "text": "Morning wood during a eulogy"
+  },
+  {
+   "id": "w010",
+   "text": "A condom that expired two presidents ago"
+  },
+  {
+   "id": "w011",
+   "text": "Getting caught masturbating by the robot vacuum"
+  },
+  {
+   "id": "w012",
+   "text": "A dildo left behind in a rental car"
+  },
+  {
+   "id": "w013",
+   "text": "Accidentally joining a swingers' barbecue"
+  },
+  {
+   "id": "w014",
+   "text": "A tasteful nude of my accountant"
+  },
+  {
+   "id": "w015",
+   "text": "Discovering my partner's kink is being ignored"
+  },
+  {
+   "id": "w016",
+   "text": "Birth control made entirely of optimism"
+  },
+  {
+   "id": "w017",
+   "text": "Dirty talk that's just me reading the grocery list"
+  },
+  {
+   "id": "w018",
+   "text": "Leaked nudes that got zero engagement"
+  },
+  {
+   "id": "w019",
+   "text": "An erection that won't leave during a job interview"
+  },
+  {
+   "id": "w020",
+   "text": "Queefing during a moment of silence"
+  },
+  {
+   "id": "w021",
+   "text": "Getting a boner from a strong breeze"
+  },
+  {
+   "id": "w022",
+   "text": "Butt stuff on the first date"
+  },
+  {
+   "id": "w023",
+   "text": "An OnlyFans with three subscribers, all of them cousins"
+  },
+  {
+   "id": "w024",
+   "text": "A fleshlight clearly visible through the trash bag"
+  },
+  {
+   "id": "w025",
+   "text": "Sexting the family group chat by accident"
+  },
+  {
+   "id": "w026",
+   "text": "Stepping on a used condom barefoot"
+  },
+  {
+   "id": "w027",
+   "text": "A sexual harassment seminar that ends in an orgy"
+  },
+  {
+   "id": "w028",
+   "text": "The vasectomy doctor's cold, cold hands"
+  },
+  {
+   "id": "w029",
+   "text": "Dry humping in a parked minivan"
+  },
+  {
+   "id": "w030",
+   "text": "A hickey from the dentist"
+  },
+  {
+   "id": "w031",
+   "text": "Nipples that look permanently surprised"
+  },
+  {
+   "id": "w032",
+   "text": "A penis shaped like a question mark"
+  },
+  {
+   "id": "w033",
+   "text": "Pegging, but make it corporate"
+  },
+  {
+   "id": "w034",
+   "text": "A butt plug with a tiny Eiffel Tower on the end"
+  },
+  {
+   "id": "w035",
+   "text": "Moaning a little too convincingly during a massage"
+  },
+  {
+   "id": "w036",
+   "text": "Dad's surprisingly well-organized porn folder"
+  },
+  {
+   "id": "w037",
+   "text": "A vibrator that connects to Bluetooth and announces itself to the whole car"
+  },
+  {
+   "id": "w038",
+   "text": "Edging through an entire video call"
+  },
+  {
+   "id": "w039",
+   "text": "The one pube that lives on the soap"
+  },
+  {
+   "id": "w040",
+   "text": "Getting walked in on the one time I tried something new"
+  },
+  {
+   "id": "w041",
+   "text": "A foot fetishist who works at a shoe store"
+  },
+  {
+   "id": "w042",
+   "text": "Period sex on a white couch"
+  },
+  {
+   "id": "w043",
+   "text": "A threesome with my therapist and her therapist"
+  },
+  {
+   "id": "w044",
+   "text": "A sex dungeon with a strict shoes-off policy"
+  },
+  {
+   "id": "w045",
+   "text": "Crying during sex, and not the good kind"
+  },
+  {
+   "id": "w046",
+   "text": "The missionary position, but with side quests"
+  },
+  {
+   "id": "w047",
+   "text": "Sex with a mime: silent, confusing, lots of pointing"
+  },
+  {
+   "id": "w048",
+   "text": "A sex doll who's a better listener than my ex"
+  },
+  {
+   "id": "w049",
+   "text": "My ex's sex tape, which is mostly him adjusting the camera"
+  },
+  {
+   "id": "w050",
+   "text": "A Brazilian wax performed by a nervous intern"
+  },
+  {
+   "id": "w051",
+   "text": "Anal beads on a key ring"
+  },
+  {
+   "id": "w052",
+   "text": "A glory hole at the public library"
+  },
+  {
+   "id": "w053",
+   "text": "Premature ejaculation on a nude beach"
+  },
+  {
+   "id": "w054",
+   "text": "Sending a nude, then a follow-up nude with better lighting"
+  },
+  {
+   "id": "w055",
+   "text": "Horny on main"
+  },
+  {
+   "id": "w056",
+   "text": "A blowjob that turned into a TED talk"
+  },
+  {
+   "id": "w057",
+   "text": "Handcuffs with no key and the landlord on his way up"
+  },
+  {
+   "id": "w058",
+   "text": "Sleeping with my boss's boss to get back at my boss"
+  },
+  {
+   "id": "w059",
+   "text": "Role-playing as a tax auditor"
+  },
+  {
+   "id": "w060",
+   "text": "A strap-on in the office Secret Santa"
+  },
+  {
+   "id": "w061",
+   "text": "The walk of shame through a church parking lot"
+  },
+  {
+   "id": "w062",
+   "text": "My neighbor's very loud sex and her very specific instructions"
+  },
+  {
+   "id": "w063",
+   "text": "A booty call from 2016"
+  },
+  {
+   "id": "w064",
+   "text": "Matching with my cousin on a dating app"
+  },
+  {
+   "id": "w065",
+   "text": "A sext that just says \"hey\""
+  },
+  {
+   "id": "w066",
+   "text": "A dick pic with a watermark"
+  },
+  {
+   "id": "w067",
+   "text": "A dick pic accidentally sent to Grandma"
+  },
+  {
+   "id": "w068",
+   "text": "Kissing with too much tongue, like a lizard drinking"
+  },
+  {
+   "id": "w069",
+   "text": "A wedding night spent entirely on the toilet"
+  },
+  {
+   "id": "w070",
+   "text": "Having a sex position named after me, and not in a good way"
+  },
+  {
+   "id": "w071",
+   "text": "Swinging with the in-laws"
+  },
+  {
+   "id": "w072",
+   "text": "Grabbing a stranger's butt on the train and just committing to it"
+  },
+  {
+   "id": "w073",
+   "text": "My mom's vibrator in the kitchen utensil drawer"
+  },
+  {
+   "id": "w074",
+   "text": "Finding out my parents have a safe word"
+  },
+  {
+   "id": "w075",
+   "text": "My parents' headboard, audible from the garage"
+  },
+  {
+   "id": "w076",
+   "text": "A wet dream about my 70-year-old landlord"
+  },
+  {
+   "id": "w077",
+   "text": "Getting spanked at the self-checkout"
+  },
+  {
+   "id": "w078",
+   "text": "An erotic novel written by my aunt, starring my uncle"
+  },
+  {
+   "id": "w079",
+   "text": "Balls that hang like a sad grandfather"
+  },
+  {
+   "id": "w080",
+   "text": "Boobs that point in two different directions"
+  },
+  {
+   "id": "w081",
+   "text": "A very small penis with a very big personality"
+  },
+  {
+   "id": "w082",
+   "text": "A sensual foot rub from a man named Keith"
+  },
+  {
+   "id": "w083",
+   "text": "A sex toy that's older than me"
+  },
+  {
+   "id": "w084",
+   "text": "A vibrator going off in my bag at a funeral"
+  },
+  {
+   "id": "w085",
+   "text": "Suspiciously sticky bedsheets at a five-star hotel"
+  },
+  {
+   "id": "w086",
+   "text": "Two hours of foreplay and then a sneeze"
+  },
+  {
+   "id": "w087",
+   "text": "A gentleman's club with a salad bar"
+  },
+  {
+   "id": "w088",
+   "text": "An orgy where nobody brought snacks"
+  },
+  {
+   "id": "w089",
+   "text": "A three-way call that turned into a three-way"
+  },
+  {
+   "id": "w090",
+   "text": "Getting a lap dance from someone who went to my high school"
+  },
+  {
+   "id": "w091",
+   "text": "Accidentally reading my dad's sexts"
+  },
+  {
+   "id": "w092",
+   "text": "A romance scam run by a very tired grandmother"
+  },
+  {
+   "id": "w093",
+   "text": "Cybersex with a spam bot"
+  },
+  {
+   "id": "w094",
+   "text": "My ex's mom, who was always a little flirty"
+  },
+  {
+   "id": "w095",
+   "text": "Getting off to the weather forecast"
+  },
+  {
+   "id": "w096",
+   "text": "A limp, apologetic erection"
+  },
+  {
+   "id": "w097",
+   "text": "A sex tape filmed vertically"
+  },
+  {
+   "id": "w098",
+   "text": "Doing cocaine off the lid of Grandpa's coffin"
+  },
+  {
+   "id": "w099",
+   "text": "Day three of a mushroom trip in a furniture superstore"
+  },
+  {
+   "id": "w100",
+   "text": "Microdosing at my nephew's baptism"
+  },
+  {
+   "id": "w101",
+   "text": "Getting blackout drunk at the company retreat"
+  },
+  {
+   "id": "w102",
+   "text": "A ketamine hole I still visit on weekends"
+  },
+  {
+   "id": "w103",
+   "text": "Smoking weed with the priest after confession"
+  },
+  {
+   "id": "w104",
+   "text": "A drug dealer who insists on sending invoices"
+  },
+  {
+   "id": "w105",
+   "text": "Getting too high to finish a sandwich"
+  },
+  {
+   "id": "w106",
+   "text": "Beer for breakfast because it's technically a grain"
+  },
+  {
+   "id": "w107",
+   "text": "My uncle's \"special\" brownies at Thanksgiving"
+  },
+  {
+   "id": "w108",
+   "text": "A hangover with its own zip code"
+  },
+  {
+   "id": "w109",
+   "text": "Vodka in a water bottle at 9 a.m."
+  },
+  {
+   "id": "w110",
+   "text": "Throwing up into my own hands to be polite"
+  },
+  {
+   "id": "w111",
+   "text": "Waking up in a ball pit with no memory of the last three days"
+  },
+  {
+   "id": "w112",
+   "text": "Licking a toad for spiritual reasons"
+  },
+  {
+   "id": "w113",
+   "text": "An ayahuasca retreat that was just a guy named Brad and a kettle"
+  },
+  {
+   "id": "w114",
+   "text": "Taking an edible right before a funeral"
+  },
+  {
+   "id": "w115",
+   "text": "The fourth tequila shot, which is when I start speaking fluent Spanish"
+  },
+  {
+   "id": "w116",
+   "text": "Sobriety, for about forty minutes"
+  },
+  {
+   "id": "w117",
+   "text": "Snorting crushed-up vitamins just to feel something"
+  },
+  {
+   "id": "w118",
+   "text": "Accidentally taking molly at a Tupperware party"
+  },
+  {
+   "id": "w119",
+   "text": "A guy at the rave explaining the universe to a traffic cone"
+  },
+  {
+   "id": "w120",
+   "text": "My sponsor's bar tab"
+  },
+  {
+   "id": "w121",
+   "text": "Getting so high I become a podcast"
+  },
+  {
+   "id": "w122",
+   "text": "Jell-O shots made by someone's dad"
+  },
+  {
+   "id": "w123",
+   "text": "A beer bong at a christening"
+  },
+  {
+   "id": "w124",
+   "text": "Waking up in Tijuana with a new tattoo and a new wife"
+  },
+  {
+   "id": "w125",
+   "text": "Poppers at a parent-teacher meeting"
+  },
+  {
+   "id": "w126",
+   "text": "A wine tasting where I swallowed every single sample"
+  },
+  {
+   "id": "w127",
+   "text": "A bong made out of a trophy I won in fourth grade"
+  },
+  {
+   "id": "w128",
+   "text": "A drug-sniffing dog who's also clearly on drugs"
+  },
+  {
+   "id": "w129",
+   "text": "Mixing three energy drinks and seeing God"
+  },
+  {
+   "id": "w130",
+   "text": "Diarrhea at a destination wedding"
+  },
+  {
+   "id": "w131",
+   "text": "A stranger's warm toilet seat"
+  },
+  {
+   "id": "w132",
+   "text": "Sharting in white linen pants"
+  },
+  {
+   "id": "w133",
+   "text": "Farting during the first kiss"
+  },
+  {
+   "id": "w134",
+   "text": "The back pimple I've been growing since high school"
+  },
+  {
+   "id": "w135",
+   "text": "Pooping at a party and the toilet won't flush"
+  },
+  {
+   "id": "w136",
+   "text": "An ingrown hair with ambition"
+  },
+  {
+   "id": "w137",
+   "text": "Gym socks that can stand up on their own"
+  },
+  {
+   "id": "w138",
+   "text": "Sneezing and peeing at the same time"
+  },
+  {
+   "id": "w139",
+   "text": "Earwax I'm too proud to throw away"
+  },
+  {
+   "id": "w140",
+   "text": "A burp that tastes like yesterday"
+  },
+  {
+   "id": "w141",
+   "text": "My doctor's finger, lingering"
+  },
+  {
+   "id": "w142",
+   "text": "Toilet paper stuck to my shoe for the entire date"
+  },
+  {
+   "id": "w143",
+   "text": "A porta-potty in July"
+  },
+  {
+   "id": "w144",
+   "text": "A livestreamed colonoscopy"
+  },
+  {
+   "id": "w145",
+   "text": "Food poisoning on a 14-hour flight"
+  },
+  {
+   "id": "w146",
+   "text": "A toenail in the salad"
+  },
+  {
+   "id": "w147",
+   "text": "Swamp ass on a leather couch"
+  },
+  {
+   "id": "w148",
+   "text": "Belly button lint I've been saving since college"
+  },
+  {
+   "id": "w149",
+   "text": "Dandruff like a light snowfall on a black suit"
+  },
+  {
+   "id": "w150",
+   "text": "Back hair you could braid"
+  },
+  {
+   "id": "w151",
+   "text": "A fart that's been following me around all day"
+  },
+  {
+   "id": "w152",
+   "text": "Peeing in the pool and making eye contact"
+  },
+  {
+   "id": "w153",
+   "text": "My uncle's toenail clippings on the couch"
+  },
+  {
+   "id": "w154",
+   "text": "A hot dog water sommelier"
+  },
+  {
+   "id": "w155",
+   "text": "Sweat stains shaped like my home state"
+  },
+  {
+   "id": "w156",
+   "text": "Vomiting on the rollercoaster, then riding it again"
+  },
+  {
+   "id": "w157",
+   "text": "Nose hair long enough to floss with"
+  },
+  {
+   "id": "w158",
+   "text": "A bra that's been worn for eleven straight days"
+  },
+  {
+   "id": "w159",
+   "text": "Lactose intolerance at a cheese festival"
+  },
+  {
+   "id": "w160",
+   "text": "Explosive diarrhea on a glass-bottom boat"
+  },
+  {
+   "id": "w161",
+   "text": "A tampon string at a pool party"
+  },
+  {
+   "id": "w162",
+   "text": "A pimple that popped onto the mirror and stayed there"
+  },
+  {
+   "id": "w163",
+   "text": "Crop-dusting the entire wedding reception"
+  },
+  {
+   "id": "w164",
+   "text": "Holding in a fart for a whole yoga class"
+  },
+  {
+   "id": "w165",
+   "text": "A foot fungus with its own ecosystem"
+  },
+  {
+   "id": "w166",
+   "text": "A skin tag I've grown attached to"
+  },
+  {
+   "id": "w167",
+   "text": "A booger on the ceiling from 2009"
+  },
+  {
+   "id": "w168",
+   "text": "The communal bar of soap at my uncle's house"
+  },
+  {
+   "id": "w169",
+   "text": "A stranger's hair in my hotel bathtub"
+  },
+  {
+   "id": "w170",
+   "text": "Smelling my own armpit in a meeting"
+  },
+  {
+   "id": "w171",
+   "text": "Spray tan streaks shaped like handprints"
+  },
+  {
+   "id": "w172",
+   "text": "Toe jam"
+  },
+  {
+   "id": "w173",
+   "text": "The sound a stomach makes during a silent auction"
+  },
+  {
+   "id": "w174",
+   "text": "The last square of toilet paper"
+  },
+  {
+   "id": "w175",
+   "text": "My grandpa's nose, which is just a second grandpa"
+  },
+  {
+   "id": "w176",
+   "text": "Bad breath that walks into the room before I do"
+  },
+  {
+   "id": "w177",
+   "text": "Grandma's ashes in the wrong Tupperware"
+  },
+  {
+   "id": "w178",
+   "text": "Dying alone, but with great Wi-Fi"
+  },
+  {
+   "id": "w179",
+   "text": "A will that leaves everything to the cat"
+  },
+  {
+   "id": "w180",
+   "text": "Getting dumped at a funeral"
+  },
+  {
+   "id": "w181",
+   "text": "A eulogy that's mostly a roast"
+  },
+  {
+   "id": "w182",
+   "text": "Being cremated with my phone still vibrating"
+  },
+  {
+   "id": "w183",
+   "text": "Hitting \"reply all\" on a condolence email"
+  },
+  {
+   "id": "w184",
+   "text": "Dad's surprise second family"
+  },
+  {
+   "id": "w185",
+   "text": "A clown at the funeral that nobody hired"
+  },
+  {
+   "id": "w186",
+   "text": "A coffin with cup holders"
+  },
+  {
+   "id": "w187",
+   "text": "The deep, crushing silence after \"I love you\""
+  },
+  {
+   "id": "w188",
+   "text": "Realizing my parents are just people who were bad at it"
+  },
+  {
+   "id": "w189",
+   "text": "Getting ghosted by my therapist"
+  },
+  {
+   "id": "w190",
+   "text": "A midlife crisis that started at 24"
+  },
+  {
+   "id": "w191",
+   "text": "The void, staring back and judging my outfit"
+  },
+  {
+   "id": "w192",
+   "text": "Crying in a warehouse store parking lot"
+  },
+  {
+   "id": "w193",
+   "text": "Existential dread with a side of fries"
+  },
+  {
+   "id": "w194",
+   "text": "Finding out my birth was a clerical error"
+  },
+  {
+   "id": "w195",
+   "text": "Dad leaving to get milk and texting \"k\" ever since"
+  },
+  {
+   "id": "w196",
+   "text": "Being the least attractive person at a nudist colony"
+  },
+  {
+   "id": "w197",
+   "text": "A hearse with truck nuts"
+  },
+  {
+   "id": "w198",
+   "text": "An open-casket funeral with a beauty filter"
+  },
+  {
+   "id": "w199",
+   "text": "Mistaking a wake for a surprise party"
+  },
+  {
+   "id": "w200",
+   "text": "Being outlived by my goldfish"
+  },
+  {
+   "id": "w201",
+   "text": "A retirement party for a man who died at his desk three weeks ago"
+  },
+  {
+   "id": "w202",
+   "text": "Death, but with a loyalty program"
+  },
+  {
+   "id": "w203",
+   "text": "A serial killer with lovely table manners"
+  },
+  {
+   "id": "w204",
+   "text": "A haunted house that's just my childhood home"
+  },
+  {
+   "id": "w205",
+   "text": "Being buried with my browser history"
+  },
+  {
+   "id": "w206",
+   "text": "The funeral slideshow that accidentally included nudes"
+  },
+  {
+   "id": "w207",
+   "text": "A Ouija board that only spells out passive-aggressive notes"
+  },
+  {
+   "id": "w208",
+   "text": "The Grim Reaper waiting in the drive-thru line"
+  },
+  {
+   "id": "w209",
+   "text": "Heaven, but it's a group chat with everyone I've ever wronged"
+  },
+  {
+   "id": "w210",
+   "text": "Hell, but it's an open-plan office"
+  },
+  {
+   "id": "w211",
+   "text": "Inheriting a haunted doll and three dollars"
+  },
+  {
+   "id": "w212",
+   "text": "A life insurance policy my wife keeps bringing up"
+  },
+  {
+   "id": "w213",
+   "text": "A family reunion with a court-appointed mediator"
+  },
+  {
+   "id": "w214",
+   "text": "My childhood, reviewed at two stars"
+  },
+  {
+   "id": "w215",
+   "text": "Mom saying \"I'm not mad, I'm just disappointed\""
+  },
+  {
+   "id": "w216",
+   "text": "Being mourned by exactly one online forum"
+  },
+  {
+   "id": "w217",
+   "text": "A priest who reads the wrong name at the funeral"
+  },
+  {
+   "id": "w218",
+   "text": "A tombstone with a typo"
+  },
+  {
+   "id": "w219",
+   "text": "Dying at the gym, which is why I don't go"
+  },
+  {
+   "id": "w220",
+   "text": "A widow who's clearly thrilled"
+  },
+  {
+   "id": "w221",
+   "text": "Losing a staring contest with a corpse"
+  },
+  {
+   "id": "w222",
+   "text": "Accidentally making out at a wake"
+  },
+  {
+   "id": "w223",
+   "text": "A mortician who's a little too into his job"
+  },
+  {
+   "id": "w224",
+   "text": "Dying in a way that becomes a warning label"
+  },
+  {
+   "id": "w225",
+   "text": "A stack of bodies in the freezer next to the ice cream"
+  },
+  {
+   "id": "w226",
+   "text": "A LinkedIn post about grief that ends in a sales pitch"
+  },
+  {
+   "id": "w227",
+   "text": "Accidentally calling my boss \"Mom\" in a board meeting"
+  },
+  {
+   "id": "w228",
+   "text": "A man who says he's an entrepreneur and means he sells vapes"
+  },
+  {
+   "id": "w229",
+   "text": "Getting promoted to a job I don't understand"
+  },
+  {
+   "id": "w230",
+   "text": "Linda from HR"
+  },
+  {
+   "id": "w231",
+   "text": "Saying \"per my last email\""
+  },
+  {
+   "id": "w232",
+   "text": "Microwaving fish in the office"
+  },
+  {
+   "id": "w233",
+   "text": "Replying all with my nudes"
+  },
+  {
+   "id": "w234",
+   "text": "A salary paid entirely in exposure"
+  },
+  {
+   "id": "w235",
+   "text": "A boss who says \"we're a family\" right before the layoffs"
+  },
+  {
+   "id": "w236",
+   "text": "Getting laid off by a chatbot"
+  },
+  {
+   "id": "w237",
+   "text": "A standing desk and a sitting soul"
+  },
+  {
+   "id": "w238",
+   "text": "The office printer, sensing my fear"
+  },
+  {
+   "id": "w239",
+   "text": "A spreadsheet that made a grown man cry"
+  },
+  {
+   "id": "w240",
+   "text": "The meeting about the meeting that could have been an email"
+  },
+  {
+   "id": "w241",
+   "text": "A LinkedIn endorsement for \"karaoke\""
+  },
+  {
+   "id": "w242",
+   "text": "A retirement account worth $19 and a gift card"
+  },
+  {
+   "id": "w243",
+   "text": "An NFT of my own death certificate"
+  },
+  {
+   "id": "w244",
+   "text": "My landlord's lingering, wet handshake"
+  },
+  {
+   "id": "w245",
+   "text": "Rent that went up because I smiled"
+  },
+  {
+   "id": "w246",
+   "text": "A timeshare presentation in Hell"
+  },
+  {
+   "id": "w247",
+   "text": "Tipping 30% out of fear"
+  },
+  {
+   "id": "w248",
+   "text": "Being 35 and still not knowing how taxes work"
+  },
+  {
+   "id": "w249",
+   "text": "Six figures of student debt and a degree in interpretive dance"
+  },
+  {
+   "id": "w250",
+   "text": "A self-checkout machine accusing me of theft"
+  },
+  {
+   "id": "w251",
+   "text": "Working from home in just a tie"
+  },
+  {
+   "id": "w252",
+   "text": "Forgetting my camera was on during a video call, on the toilet"
+  },
+  {
+   "id": "w253",
+   "text": "A performance review written by my own mother"
+  },
+  {
+   "id": "w254",
+   "text": "Being the emergency contact for a coworker I've never met"
+  },
+  {
+   "id": "w255",
+   "text": "A company pizza party during a mass layoff"
+  },
+  {
+   "id": "w256",
+   "text": "A motivational poster in a prison"
+  },
+  {
+   "id": "w257",
+   "text": "An intern who's clearly a narc"
+  },
+  {
+   "id": "w258",
+   "text": "The coworker who replies \"noted\" to everything"
+  },
+  {
+   "id": "w259",
+   "text": "Stealing toilet paper from work because I'm an adult"
+  },
+  {
+   "id": "w260",
+   "text": "Being paid in company stock of a company that's on fire"
+  },
+  {
+   "id": "w261",
+   "text": "Telling a job interviewer my greatest weakness is men"
+  },
+  {
+   "id": "w262",
+   "text": "A business card that just says \"Visionary\""
+  },
+  {
+   "id": "w263",
+   "text": "The guy from accounting who knows what I did"
+  },
+  {
+   "id": "w264",
+   "text": "A CEO who does ice baths and layoffs on the same morning"
+  },
+  {
+   "id": "w265",
+   "text": "Getting a raise of eleven cents an hour"
+  },
+  {
+   "id": "w266",
+   "text": "Replying \"you too\" when the waiter says \"enjoy your meal\""
+  },
+  {
+   "id": "w267",
+   "text": "My ex's new partner being extremely nice"
+  },
+  {
+   "id": "w268",
+   "text": "A group project where I'm the one doing nothing"
+  },
+  {
+   "id": "w269",
+   "text": "Saying \"we should hang out\" and meaning never"
+  },
+  {
+   "id": "w270",
+   "text": "A 45-minute voice memo from my aunt"
+  },
+  {
+   "id": "w271",
+   "text": "A participation trophy for my divorce"
+  },
+  {
+   "id": "w272",
+   "text": "Losing a fistfight with a goose in a parking lot"
+  },
+  {
+   "id": "w273",
+   "text": "Being left on read by God"
+  },
+  {
+   "id": "w274",
+   "text": "The friend who brings a guitar to the party"
+  },
+  {
+   "id": "w275",
+   "text": "A text from Mom that just says \"Call me\""
+  },
+  {
+   "id": "w276",
+   "text": "Being attractive only in bad lighting"
+  },
+  {
+   "id": "w277",
+   "text": "A dating profile where every photo has a dead fish"
+  },
+  {
+   "id": "w278",
+   "text": "Petting the dog at a party for three hours to avoid people"
+  },
+  {
+   "id": "w279",
+   "text": "Accidentally liking my ex's photo from 2014"
+  },
+  {
+   "id": "w280",
+   "text": "Starting a cult by accident"
+  },
+  {
+   "id": "w281",
+   "text": "A haunted vacation rental with a 4.9-star rating"
+  },
+  {
+   "id": "w282",
+   "text": "Sending a thumbs-up to \"Grandpa passed away\""
+  },
+  {
+   "id": "w283",
+   "text": "A man who calls his car \"she\""
+  },
+  {
+   "id": "w284",
+   "text": "A roommate who labels her eggs"
+  },
+  {
+   "id": "w285",
+   "text": "A 30-year-old man who still says \"rawr\""
+  },
+  {
+   "id": "w286",
+   "text": "A cousin who's \"doing really well in Dubai\" and won't elaborate"
+  },
+  {
+   "id": "w287",
+   "text": "My mom describing her sex life in detail"
+  },
+  {
+   "id": "w288",
+   "text": "A dad joke that ended a marriage"
+  },
+  {
+   "id": "w289",
+   "text": "A marriage held together by a shared streaming password"
+  },
+  {
+   "id": "w290",
+   "text": "Gaslighting my houseplants"
+  },
+  {
+   "id": "w291",
+   "text": "An intervention, but for being annoying"
+  },
+  {
+   "id": "w292",
+   "text": "Therapy-speak used to dump someone"
+  },
+  {
+   "id": "w293",
+   "text": "A guy who's really, really into swords"
+  },
+  {
+   "id": "w294",
+   "text": "A podcast hosted by two men named Josh"
+  },
+  {
+   "id": "w295",
+   "text": "Mansplaining periods to someone on her period"
+  },
+  {
+   "id": "w296",
+   "text": "A gender reveal party that burned down a forest"
+  },
+  {
+   "id": "w297",
+   "text": "A self-help book written by a man with four divorces"
+  },
+  {
+   "id": "w298",
+   "text": "An emotional support alligator"
+  },
+  {
+   "id": "w299",
+   "text": "Men who describe themselves as \"sapiosexual\""
+  },
+  {
+   "id": "w300",
+   "text": "A vegan who brings it up within four seconds"
+  },
+  {
+   "id": "w301",
+   "text": "Having a crush on the GPS voice"
+  },
+  {
+   "id": "w302",
+   "text": "Being the fun uncle, but with a warrant"
+  },
+  {
+   "id": "w303",
+   "text": "My inner child, who is also a disappointment"
+  },
+  {
+   "id": "w304",
+   "text": "Waving back at someone who was waving at the person behind me"
+  },
+  {
+   "id": "w305",
+   "text": "Telling the barista \"love you\" by accident"
+  },
+  {
+   "id": "w306",
+   "text": "A man who explains the movie while I'm watching it"
+  },
+  {
+   "id": "w307",
+   "text": "An influencer crying in her car about a brand deal"
+  },
+  {
+   "id": "w308",
+   "text": "A wellness influencer's coffee enema tutorial"
+  },
+  {
+   "id": "w309",
+   "text": "My uncle's opinions about women, served with the turkey"
+  },
+  {
+   "id": "w310",
+   "text": "My aunt arguing with a bot online for six hours"
+  },
+  {
+   "id": "w311",
+   "text": "My mom commenting \"beautiful!!\" on my nudes"
+  },
+  {
+   "id": "w312",
+   "text": "A 3 a.m. online order for a canoe"
+  },
+  {
+   "id": "w313",
+   "text": "My dad crying at a breastaurant"
+  },
+  {
+   "id": "w314",
+   "text": "A man who does CrossFit and hasn't told you yet, but will"
+  },
+  {
+   "id": "w315",
+   "text": "Getting stuck in a revolving door with my ex"
+  },
+  {
+   "id": "w316",
+   "text": "Being recognized by my therapist at a nightclub"
+  },
+  {
+   "id": "w317",
+   "text": "A karaoke song about cheating, sung while my partner watches"
+  },
+  {
+   "id": "w318",
+   "text": "A haircut that made me look like a disappointed lawyer"
+  },
+  {
+   "id": "w319",
+   "text": "Running into my high school bully, who is now my gynecologist"
+  },
+  {
+   "id": "w320",
+   "text": "A man with a fedora and strong opinions about the moon"
+  },
+  {
+   "id": "w321",
+   "text": "Clapping when the plane lands"
+  },
+  {
+   "id": "w322",
+   "text": "Getting a birthday card from my dentist and nobody else"
+  },
+  {
+   "id": "w323",
+   "text": "Meeting my girlfriend's parents while hungover"
+  },
+  {
+   "id": "w324",
+   "text": "The sex talk from my grandfather, with diagrams"
+  },
+  {
+   "id": "w325",
+   "text": "My dad using the eggplant emoji sincerely"
+  },
+  {
+   "id": "w326",
+   "text": "A family photo where everyone's lying"
+  },
+  {
+   "id": "w327",
+   "text": "A baby who looks exactly like the mailman"
+  },
+  {
+   "id": "w328",
+   "text": "A paternity test at the gender reveal"
+  },
+  {
+   "id": "w329",
+   "text": "Thanksgiving dinner with both of my exes"
+  },
+  {
+   "id": "w330",
+   "text": "Being the favorite child by process of elimination"
+  },
+  {
+   "id": "w331",
+   "text": "Mom's new boyfriend, who's younger than me"
+  },
+  {
+   "id": "w332",
+   "text": "Stepdad energy"
+  },
+  {
+   "id": "w333",
+   "text": "A couples' therapist who clearly takes sides"
+  },
+  {
+   "id": "w334",
+   "text": "Couples' therapy with my side piece"
+  },
+  {
+   "id": "w335",
+   "text": "A husband whose only hobby is the grill"
+  },
+  {
+   "id": "w336",
+   "text": "A wife who's \"just friends\" with her personal trainer"
+  },
+  {
+   "id": "w337",
+   "text": "An open relationship that's only open on one side"
+  },
+  {
+   "id": "w338",
+   "text": "Getting dumped via slide presentation"
+  },
+  {
+   "id": "w339",
+   "text": "An ex who kept the dog and my dignity"
+  },
+  {
+   "id": "w340",
+   "text": "My wife's boyfriend's jet ski"
+  },
+  {
+   "id": "w341",
+   "text": "A kid who calls the pool guy \"Dad\""
+  },
+  {
+   "id": "w342",
+   "text": "Wedding vows with a non-disclosure agreement"
+  },
+  {
+   "id": "w343",
+   "text": "An engagement ring found during a colonoscopy"
+  },
+  {
+   "id": "w344",
+   "text": "A mother-in-law who brings her own knives"
+  },
+  {
+   "id": "w345",
+   "text": "A wedding DJ who only plays breakup songs"
+  },
+  {
+   "id": "w346",
+   "text": "The best man's speech about the groom's first three wives"
+  },
+  {
+   "id": "w347",
+   "text": "Loving my dog more than my husband and not hiding it"
+  },
+  {
+   "id": "w348",
+   "text": "A love triangle with my wife and the robot vacuum"
+  },
+  {
+   "id": "w349",
+   "text": "Grandma asking when I'm getting married, at my divorce party"
+  },
+  {
+   "id": "w350",
+   "text": "A prenup longer than the marriage"
+  },
+  {
+   "id": "w351",
+   "text": "Getting back with my ex for the third time, out of spite"
+  },
+  {
+   "id": "w352",
+   "text": "My brother-in-law's crypto pitch at Christmas"
+  },
+  {
+   "id": "w353",
+   "text": "The cousin who peaked at the family talent show"
+  },
+  {
+   "id": "w354",
+   "text": "A dad who fixes everything with duct tape and silence"
+  },
+  {
+   "id": "w355",
+   "text": "Mom's emotional support wine glass the size of a fishbowl"
+  },
+  {
+   "id": "w356",
+   "text": "A wedding where the bride's ex is the officiant"
+  },
+  {
+   "id": "w357",
+   "text": "A bachelor party in a small, unprepared town"
+  },
+  {
+   "id": "w358",
+   "text": "Being the rebound for someone's rebound"
+  },
+  {
+   "id": "w359",
+   "text": "Being baptized against my will at a pool party"
+  },
+  {
+   "id": "w360",
+   "text": "A megachurch with a fog machine"
+  },
+  {
+   "id": "w361",
+   "text": "A pastor with three Lamborghinis"
+  },
+  {
+   "id": "w362",
+   "text": "Satan's surprisingly good skincare routine"
+  },
+  {
+   "id": "w363",
+   "text": "An exorcism that's mostly just yelling"
+  },
+  {
+   "id": "w364",
+   "text": "The Rapture, but I wasn't invited"
+  },
+  {
+   "id": "w365",
+   "text": "A haunted talking toy that only says my ex's name"
+  },
+  {
+   "id": "w366",
+   "text": "A Victorian ghost who's extremely horny"
+  },
+  {
+   "id": "w367",
+   "text": "The Tooth Fairy's crippling debt"
+  },
+  {
+   "id": "w368",
+   "text": "The Easter Bunny's second family"
+  },
+  {
+   "id": "w369",
+   "text": "A vampire who faints at the sight of blood"
+  },
+  {
+   "id": "w370",
+   "text": "A werewolf going through menopause"
+  },
+  {
+   "id": "w371",
+   "text": "Cupid, drunk, with a crossbow"
+  },
+  {
+   "id": "w372",
+   "text": "Bigfoot's dick pic"
+  },
+  {
+   "id": "w373",
+   "text": "A dragon hoarding Tupperware lids"
+  },
+  {
+   "id": "w374",
+   "text": "Death's LinkedIn profile"
+  },
+  {
+   "id": "w375",
+   "text": "The Loch Ness Monster's OnlyFans"
+  },
+  {
+   "id": "w376",
+   "text": "A unicorn with erectile dysfunction"
+  },
+  {
+   "id": "w377",
+   "text": "An alien abduction with a surprisingly thorough probe"
+  },
+  {
+   "id": "w378",
+   "text": "A genie who only grants passive-aggressive wishes"
+  },
+  {
+   "id": "w379",
+   "text": "A fairy godmother on her third DUI"
+  },
+  {
+   "id": "w380",
+   "text": "Mermaid pubes"
+  },
+  {
+   "id": "w381",
+   "text": "A sexy stepbrother from a very low-budget movie"
+  },
+  {
+   "id": "w382",
+   "text": "A demon who just wants to be told he's doing a good job"
+  },
+  {
+   "id": "w383",
+   "text": "A psychic who only predicts yeast infections"
+  },
+  {
+   "id": "w384",
+   "text": "A tarot card that says \"No, babe\""
+  },
+  {
+   "id": "w385",
+   "text": "A prayer circle that turned into a pyramid scheme"
+  },
+  {
+   "id": "w386",
+   "text": "Confessing my sins to a priest who's taking notes for his novel"
+  },
+  {
+   "id": "w387",
+   "text": "Holy water that's just tap water and a guy named Gary"
+  },
+  {
+   "id": "w388",
+   "text": "A cursed mirror that only shows my bank balance"
+  },
+  {
+   "id": "w389",
+   "text": "A time traveler who came back just to laugh at my haircut"
+  },
+  {
+   "id": "w390",
+   "text": "Getting reincarnated as a public bench"
+  },
+  {
+   "id": "w391",
+   "text": "A séance where Grandpa just complains about the thermostat"
+  },
+  {
+   "id": "w392",
+   "text": "Seventeen hot dogs and a dream"
+  },
+  {
+   "id": "w393",
+   "text": "A foot-long sub with an actual foot in it"
+  },
+  {
+   "id": "w394",
+   "text": "Ranch dressing as a lifestyle"
+  },
+  {
+   "id": "w395",
+   "text": "A charcuterie board of regrets"
+  },
+  {
+   "id": "w396",
+   "text": "A casserole made with love and 40% mayonnaise"
+  },
+  {
+   "id": "w397",
+   "text": "My aunt's potato salad, left out since noon"
+  },
+  {
+   "id": "w398",
+   "text": "A single, sad string cheese"
+  },
+  {
+   "id": "w399",
+   "text": "The back room of the all-you-can-eat buffet"
+  },
+  {
+   "id": "w400",
+   "text": "A birthday cake shaped like my dad's colon"
+  },
+  {
+   "id": "w401",
+   "text": "Eating mayonnaise straight from the jar at a funeral"
+  },
+  {
+   "id": "w402",
+   "text": "Eating an entire rotisserie chicken alone in my car"
+  },
+  {
+   "id": "w403",
+   "text": "Licking a sandwich so no one else will eat it"
+  },
+  {
+   "id": "w404",
+   "text": "The last slice of pizza, and the violence that followed"
+  },
+  {
+   "id": "w405",
+   "text": "A bucket of lukewarm shrimp"
+  },
+  {
+   "id": "w406",
+   "text": "A burrito that changed my life, then ruined it"
+  },
+  {
+   "id": "w407",
+   "text": "A spoonful of lard, for courage"
+  },
+  {
+   "id": "w408",
+   "text": "A pigeon with a gambling problem"
+  },
+  {
+   "id": "w409",
+   "text": "A raccoon wearing my underwear"
+  },
+  {
+   "id": "w410",
+   "text": "A dolphin with a restraining order against me"
+  },
+  {
+   "id": "w411",
+   "text": "A mysterious wet spot on the bus seat"
+  },
+  {
+   "id": "w412",
+   "text": "A catfish who turned out to be my dad"
+  },
+  {
+   "id": "w413",
+   "text": "A clown doing his taxes and weeping"
+  },
+  {
+   "id": "w414",
+   "text": "Grandpa's war stories, which are all about a woman named Trish"
+  },
+  {
+   "id": "w415",
+   "text": "An ice sculpture of my genitals at the office party"
+  },
+  {
+   "id": "w416",
+   "text": "A mattress from the side of the road"
+  },
+  {
+   "id": "w417",
+   "text": "A Renaissance faire orgy"
+  },
+  {
+   "id": "w418",
+   "text": "Two raccoons in a trench coat applying for a mortgage"
+  },
+  {
+   "id": "w419",
+   "text": "A garbage bag full of wigs"
+  },
+  {
+   "id": "w420",
+   "text": "A tattoo of my ex's name, covered up with a worse ex's name"
+  },
+  {
+   "id": "w421",
+   "text": "A lower-back tattoo of a dolphin jumping through a heart"
+  },
+  {
+   "id": "w422",
+   "text": "A tramp stamp that says \"Exit Only\""
+  },
+  {
+   "id": "w423",
+   "text": "A horse that's been through a divorce"
+  },
+  {
+   "id": "w424",
+   "text": "A pirate with an ankle monitor"
+  },
+  {
+   "id": "w425",
+   "text": "A centaur's awkward first date"
+  },
+  {
+   "id": "w426",
+   "text": "A guy in a hot dog costume, weeping"
+  },
+  {
+   "id": "w427",
+   "text": "A seagull that stole my engagement ring"
+  },
+  {
+   "id": "w428",
+   "text": "A squirrel on cocaine"
+  },
+  {
+   "id": "w429",
+   "text": "A goat that ate my passport"
+  },
+  {
+   "id": "w430",
+   "text": "A mall kiosk guy who won't let me leave"
+  },
+  {
+   "id": "w431",
+   "text": "An inflatable tube man with depression"
+  },
+  {
+   "id": "w432",
+   "text": "A shopping cart with one bad wheel and a vendetta"
+  },
+  {
+   "id": "w433",
+   "text": "A crow who's been following me since the funeral"
+  },
+  {
+   "id": "w434",
+   "text": "A duck that's clearly a cop"
+  },
+  {
+   "id": "w435",
+   "text": "A possum living in my ceiling, paying no rent"
+  },
+  {
+   "id": "w436",
+   "text": "A true-crime documentary narrated by the killer's mom"
+  },
+  {
+   "id": "w437",
+   "text": "A cooking competition where the secret ingredient is sadness"
+  },
+  {
+   "id": "w438",
+   "text": "A superhero whose only power is making it weird"
+  },
+  {
+   "id": "w439",
+   "text": "A boy band made of divorced dads"
+  },
+  {
+   "id": "w440",
+   "text": "A Christmas movie where the hot lawyer quits her job to marry a lumberjack"
+  },
+  {
+   "id": "w441",
+   "text": "A cult with a really good merch table"
+  },
+  {
+   "id": "w442",
+   "text": "Getting canceled for something I posted in 2009"
+  },
+  {
+   "id": "w443",
+   "text": "Being mildly famous in Belgium"
+  },
+  {
+   "id": "w444",
+   "text": "A celebrity perfume that smells like a lawsuit"
+  },
+  {
+   "id": "w445",
+   "text": "A motivational speaker who lives in a van"
+  },
+  {
+   "id": "w446",
+   "text": "A male stripper named Officer Dave who's actually a cop"
+  },
+  {
+   "id": "w447",
+   "text": "A stripper with a better retirement plan than mine"
+  },
+  {
+   "id": "w448",
+   "text": "A reality show where the prize is a divorce"
+  },
+  {
+   "id": "w449",
+   "text": "A sex scene in a movie I'm watching with my parents"
+  },
+  {
+   "id": "w450",
+   "text": "A gaming chair that costs more than my car"
+  },
+  {
+   "id": "w451",
+   "text": "A crypto wallet with a password I wrote on a napkin in Cancún"
+  },
+  {
+   "id": "w452",
+   "text": "A man who's \"not like other guys\" and is exactly like other guys"
+  },
+  {
+   "id": "w453",
+   "text": "A life coach who's 22 and lives with his parents"
+  },
+  {
+   "id": "w454",
+   "text": "A billionaire's space trip that nobody watched"
+  },
+  {
+   "id": "w455",
+   "text": "A smart fridge that's disappointed in me"
+  },
+  {
+   "id": "w456",
+   "text": "A dating app that keeps showing me my ex, but older"
+  },
+  {
+   "id": "w457",
+   "text": "My phone's screen time report, read aloud at my wedding"
+  },
+  {
+   "id": "w458",
+   "text": "The middle seat between two honeymooners"
+  },
+  {
+   "id": "w459",
+   "text": "Losing my luggage and my virginity in the same airport"
+  },
+  {
+   "id": "w460",
+   "text": "A norovirus conga line on a cruise ship"
+  },
+  {
+   "id": "w461",
+   "text": "A backpacker who found himself and won't shut up about it"
+  },
+  {
+   "id": "w462",
+   "text": "A hostel bunk bed that squeaks in rhythm"
+  },
+  {
+   "id": "w463",
+   "text": "Pulling a muscle while sneezing"
+  },
+  {
+   "id": "w464",
+   "text": "Grandpa's new girlfriend, who's 31 and loves him for his personality"
+  },
+  {
+   "id": "w465",
+   "text": "A retirement home with a thriving drug trade"
+  },
+  {
+   "id": "w466",
+   "text": "A retirement home orgy with mandatory hydration breaks"
+  },
+  {
+   "id": "w467",
+   "text": "A cat that knows what I did"
+  },
+  {
+   "id": "w468",
+   "text": "My dog humping the priest's leg"
+  },
+  {
+   "id": "w469",
+   "text": "A cat that leaves dead birds on my pillow as a performance review"
+  },
+  {
+   "id": "w470",
+   "text": "A gym membership I've paid for since 2019 and used twice"
+  },
+  {
+   "id": "w471",
+   "text": "Protein shakes for dinner and tears for dessert"
+  },
+  {
+   "id": "w472",
+   "text": "A softball team of divorced dads with something to prove"
+  },
+  {
+   "id": "w473",
+   "text": "An Advent calendar full of tequila shots"
+  },
+  {
+   "id": "w474",
+   "text": "Valentine's Day alone with a family-size lasagna"
+  },
+  {
+   "id": "w475",
+   "text": "A New Year's resolution that lasted until 12:04"
+  },
+  {
+   "id": "w476",
+   "text": "A sexy Halloween costume of a tax form"
+  },
+  {
+   "id": "w477",
+   "text": "A baby shower with a stripper"
+  },
+  {
+   "id": "w478",
+   "text": "Sitting at the kids' table at thirty-five"
+  },
+  {
+   "id": "w479",
+   "text": "My doctor googling my symptoms in front of me"
+  },
+  {
+   "id": "w480",
+   "text": "A prostate exam with way too much eye contact"
+  },
+  {
+   "id": "w481",
+   "text": "A thrift store couch with a history"
+  },
+  {
+   "id": "w482",
+   "text": "A pool noodle used for something it was never designed for"
+  },
+  {
+   "id": "w483",
+   "text": "A cheap motel hot tub with a mysterious film on top"
+  },
+  {
+   "id": "w484",
+   "text": "A bouncy castle full of drunk adults"
+  },
+  {
+   "id": "w485",
+   "text": "A reverse mortgage on my self-respect"
+  },
+  {
+   "id": "w486",
+   "text": "A tiny house that ended my marriage"
+  },
+  {
+   "id": "w487",
+   "text": "A stripper pole in the living room of a very normal family"
+  },
+  {
+   "id": "w488",
+   "text": "A home security camera that caught everything"
+  },
+  {
+   "id": "w489",
+   "text": "A neighbor who mows his lawn in a thong"
+  },
+  {
+   "id": "w490",
+   "text": "An HOA president with a god complex"
+  },
+  {
+   "id": "w491",
+   "text": "A road trip with my ex and her new husband"
+  },
+  {
+   "id": "w492",
+   "text": "Road head in a car wash"
+  },
+  {
+   "id": "w493",
+   "text": "An AI girlfriend who left me for a smarter user"
+  },
+  {
+   "id": "w494",
+   "text": "An ex who got hot the second we broke up"
+  },
+  {
+   "id": "w495",
+   "text": "A burner account for watching my ex's new girlfriend"
+  },
+  {
+   "id": "w496",
+   "text": "A therapist who says \"hmm\" and nothing else"
+  },
+  {
+   "id": "w497",
+   "text": "A wellness retreat that takes your phone and your savings"
+  },
+  {
+   "id": "w498",
+   "text": "A sound bath that ended in a fistfight"
+  },
+  {
+   "id": "w499",
+   "text": "A tattoo artist who misspelled \"regret\""
+  },
+  {
+   "id": "w500",
+   "text": "A pregnancy scare at a retirement home"
+  }
+ ]
+}

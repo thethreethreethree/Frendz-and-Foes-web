@@ -42,6 +42,9 @@ export function forgetCaPlayer(room: string) {
 /** Render a prompt with its blank(s) filled by the given answer(s). */
 export function fillPrompt(text: string, cards: string[]): string {
   let i = 0;
-  const filled = text.replace(/___/g, () => { const c = cards[i++]; return c ? c.replace(/\.$/, "") : "___"; });
+  // `_{3,}`, not `___`: the deck the owner supplied writes its blank as five underscores, and a
+  // fixed three-underscore match would have eaten three and left "__" showing in every prompt.
+  // Matching a RUN means any future deck's blank width just works.
+  const filled = text.replace(/_{3,}/g, () => { const c = cards[i++]; return c ? c.replace(/\.$/, "") : "___"; });
   return filled === text && cards.length ? `${text} ${cards.join(" / ")}` : filled;
 }
