@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Murder2Player } from "../murder2/Murder2Player";
 import { FeudTeamView } from "../feud/FeudTeamView";
 import { BingoPlayer } from "../bingo/BingoPlayer";
@@ -8,7 +8,8 @@ import { JustOnePlayer } from "../justone/JustOnePlayer";
 import { BallparkPlayer } from "../ballpark/BallparkPlayer";
 import { TelestrationsPlayer } from "../telestrations/TelestrationsPlayer";
 import { AfterDarkPlayer } from "../afterdark/AfterDarkPlayer";
-import { BINGO_ROOM, getGameFromUrl, getRoleFromUrl, getRoomFromUrl, getTeamFromUrl, setUrlRoom } from "../net/room";
+import { BINGO_ROOM, getGameFromUrl, getRoleFromUrl, getRoomFromUrl, getTeamFromUrl, setUrlGame, setUrlRoom } from "../net/room";
+import type { GameType } from "../net/socket";
 
 // Players reach this by scanning a join QR (carries ?room=). Murder → each player's own screen;
 // Frendz and Foes (?game=feud&team=…&role=…) → that team's answer/viewer phone; Bingo
@@ -17,6 +18,36 @@ import { BINGO_ROOM, getGameFromUrl, getRoleFromUrl, getRoomFromUrl, getTeamFrom
 export function PlayerRoute() {
   const [room] = useState(() => getRoomFromUrl());
   const [code, setCode] = useState("");
+  const [asked, setAsked] = useState(false);
+
+  // A typed room code carries no game, and resolving one from the URL means resolving a DEFAULT --
+  // so a player who typed the code for a Trivia night was silently dropped into a different game.
+  // The display invites typing ("or enter room code"), so this is a normal path, not an edge case.
+  // Ask the room what it is running, then route on the answer.
+  const urlHasGame = new URLSearchParams(window.location.search).has("game");
+  useEffect(() => {
+    if (!room || urlHasGame || asked) return;
+    let live = true;
+    (async () => {
+      try {
+        const res = await fetch(`/api/room/${encodeURIComponent(room)}`);
+        const data = await res.json();
+        if (!live) return;
+        if (data?.game) { setUrlGame(data.game as GameType); window.location.reload(); return; }
+      } catch { /* fall through to the join screen below */ }
+      if (live) setAsked(true);
+    })();
+    return () => { live = false; };
+  }, [room, urlHasGame, asked]);
+
+  // Don't render a guessed game while the answer is still in flight.
+  if (room && !urlHasGame && !asked) {
+    return (
+      <div className="ff-backdrop grid h-full place-items-center p-6 text-center">
+        <div className="ff-title text-2xl text-white/80">Finding room {room}…</div>
+      </div>
+    );
+  }
 
   if (!room) {
     return (

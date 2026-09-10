@@ -180,6 +180,26 @@ app.get("/healthz", (_req, res) => res.json({ ok: true }));
 // The combination is reported below and shouted at boot rather than blocked: a deliberate free
 // window is a legitimate choice, and the server does not get to overrule the owner. It only has to
 // make it impossible to do by accident.
+// NOTE ON PLACEMENT: this must sit with the other /api routes, ABOVE the SPA catch-all at the
+// bottom (`app.get("*")`). Registered after it, Express never reaches it and the fetch quietly
+// receives index.html instead -- which is how it was written the first time, and why the probe
+// that called it got "<!doctype html>" back rather than JSON.
+// What game is this room running? For the phone that TYPED a room code instead of scanning a QR.
+//
+// The display invites exactly that ("or enter room code 8NAC"), but a typed code carries no game,
+// and the player route resolved the game from the URL -- which defaults -- so those players were
+// routed by a guess and silently landed in the wrong game entirely. Asking the room is the only
+// answer that is actually correct.
+//
+// Deliberately thin: a room code is four characters and guessable, so this reveals only which game
+// is running -- never the roster, the snapshot, or anything a player could not already see by
+// joining. Unknown rooms answer honestly rather than inventing a default.
+app.get("/api/room/:code", (req, res) => {
+  const code = String(req.params.code || "").toUpperCase();
+  const r = rooms.get(code);
+  res.json({ exists: !!r, game: r?.game ?? null });
+});
+
 app.get("/api/status", (req, res) => {
   res.json({
     gamesOpen: process.env.GAMES_OPEN === "true",
@@ -1134,6 +1154,7 @@ function getRoom(code) {
   return r;
 }
 
+
 function presence(room) {
   const peers = [...room.peers.values()];
   const count = (role) => peers.filter((p) => p.role === role).length;
@@ -1411,6 +1432,13 @@ io.on("connection", (socket) => {
     socket.data.code = code;
     socket.join(code);
     const r = getRoom(code);
+    // Remember what this room is RUNNING. Nothing recorded it before, so nothing could answer the
+    // question "what game is room 8NAC?" -- which is why a player who typed the room code instead
+    // of scanning was routed by a guess (getGameFromUrl defaults) and landed in the wrong game.
+    // Only the hosting surfaces get to say: a player phone must never relabel the room.
+    if ((socket.data.role === "host" || socket.data.role === "display") && typeof game === "string" && game) {
+      r.game = game;
+    }
     r.peers.set(socket.id, { role: socket.data.role, teamId: socket.data.teamId });
     console.log(`[ff-server] ${socket.data.role} joined ${code} (peers: ${r.peers.size})`);
 

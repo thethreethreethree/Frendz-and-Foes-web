@@ -115,5 +115,33 @@ const displaySrc = readFileSync(join(WEB, "routes", "DisplayRoute.tsx"), "utf8")
 check("no DisplayPairing is rendered without one", !/<DisplayPairing \/>/.test(displaySrc),
       "a bare <DisplayPairing /> is the old bug");
 
+// --- a typed room code must be ROUTED BY THE ROOM, not by a default -------------------------------
+// The display invites typing ("or enter room code 8NAC"), but a typed code carries no game, and
+// PlayerRoute resolved one from the URL -- i.e. from getGameFromUrl's default -- so a player joining
+// a Trivia night by code was silently dropped into a different game. Same class as the QR bug, on
+// the side where most of the people are.
+const playerSrc = readFileSync(join(WEB, "routes", "PlayerRoute.tsx"), "utf8");
+check("PlayerRoute asks the server which game a bare room code is running",
+      /api\/room\//.test(playerSrc),
+      "routing a typed code by a default is a guess wearing a confident face");
+check("and does not render a guessed game while that answer is in flight",
+      /Finding room/.test(playerSrc));
+
+// The endpoint has to sit ABOVE the SPA catch-all or Express never reaches it and the fetch quietly
+// gets index.html back. That is exactly how it was written the first time; the probe caught it only
+// because it tried to JSON.parse "<!doctype html>".
+const serverSrc = readFileSync(join(HERE, "index.js"), "utf8");
+// Match REGISTRATIONS, not prose: the comment above the endpoint mentions app.get("*") by name,
+// and a naive indexOf finds that documentation first and reports the opposite of the truth.
+const at = (re) => { const m = serverSrc.match(re); return m ? m.index : -1; };
+const roomRoute = at(/^\s*app\.get\("\/api\/room\/:code"/m);
+const catchAll = at(/^\s*app\.get\("\*"/m);
+check("the room lookup endpoint exists", roomRoute > -1);
+check("and is registered BEFORE the SPA catch-all", roomRoute > -1 && catchAll > -1 && roomRoute < catchAll,
+      "registered after it, every request returns index.html instead of JSON");
+check("only a host or display may set a room's game",
+      /role === "host" \|\| socket\.data\.role === "display"[\s\S]{0,120}r\.game = game/.test(serverSrc),
+      "a player phone must never relabel the room out from under everyone");
+
 console.log(fails ? `\n${fails} FAILED` : "\nall control-route provider checks passed");
 process.exit(fails ? 1 : 0);
