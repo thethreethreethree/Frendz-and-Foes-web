@@ -193,6 +193,18 @@
   .critter span{font-family:var(--mono);font-size:.64rem;letter-spacing:.05em;text-transform:uppercase;
                 color:var(--muted);line-height:1.2}
 
+  /* development-stage band. The money block is where a reader decides whether this is a
+     finished product being scaled or an unfinished one being completed -- so the build state is
+     an ELEMENT here, not a clause in the middle of a paragraph people skim. Amber is already in
+     the palette and is not redefined by the light theme, so the tint holds in both. */
+  .stage{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem .9rem;margin:1.15rem 0 .1rem;
+         padding:.9rem 1.05rem;border:1px solid rgba(245,158,11,.45);border-radius:.7rem;
+         background:rgba(245,158,11,.09)}
+  .stage b{font-family:var(--mono);font-size:.7rem;font-weight:700;letter-spacing:.13em;
+           text-transform:uppercase;color:#2a1a02;background:var(--amber);
+           padding:.32rem .62rem;border-radius:999px;white-space:nowrap}
+  .stage p{margin:0;color:var(--ink);font-size:.98rem;max-width:56ch}
+
   /* money breakdown */
   .spend{display:grid;gap:.75rem;margin:1.25rem 0;grid-template-columns:1fr}
   .spend div{border-left:3px solid var(--teal);padding:.15rem 0 .15rem 1rem}
@@ -484,7 +496,8 @@
     <div class="blockin">
       <h2>What the $3,500 actually does.</h2>
       <div class="huge">$3,500</div>
-      <p class="muted">It's a deliberately modest goal, because the hard part is done: fourteen games, the rules, the host, the phone controllers. What isn't done is the <b>finishing</b> — the art, my voice, and the development that turns fourteen built games into a version one you can hold. That's what this pays for, and nothing else. It doesn't keep a business running, because there isn't one running yet.</p>
+      <div class="stage"><b>In development</b><p>PlayZoo is not finished and it is not open to the public. Fourteen games are built and play properly — the artwork, my voice and the release itself are still to come.</p></div>
+      <p class="muted">So don't read &ldquo;modest goal&rdquo; as &ldquo;nearly done&rdquo;. What is still missing is the <b>finishing</b> — the artwork across all fourteen games, my actual speaking voice, and the development that turns fourteen built games into a version one you can hold. That is what this pays for, and nothing else. It doesn't keep a business running, because there isn't one running yet.</p>
       <div class="spend">
         <div><b>Give me a voice.</b><p>11Labs text-to-speech and speech-to-text, so I roast you out loud and you can talk back — instead of me being a very sarcastic block of text.</p></div>
         <div><b>System development.</b><p>The engineering left to finish version one — the fourteen games finished off, the phone controllers hardened, and the whole thing packaged up as a release you can actually get your hands on.</p></div>

@@ -104,6 +104,15 @@ check("the page states outright that PlayZoo is in development",
 check("and says the money is not keeping anything running",
       /nothing is running yet|isn't one running yet/i.test(spend));
 
+// The money block is where a reader decides whether this is a finished product being scaled or an
+// unfinished one being completed. Saying so in the middle of a paragraph was not enough: the owner
+// photographed a card that read as nearly-done. The stage is now a labelled ELEMENT there.
+check("the money block carries a visible development-stage band",
+      /class="stage"/.test(spend) && /In development<\/b>/.test(spend),
+      "prose in the middle of a card is what people skim past");
+check("the band states both halves: not finished, not open",
+      /PlayZoo is not finished and it is not open to the public/.test(spend));
+
 // --- claim 4: the page does not promise a reviewer something the lock screen contradicts ------------
 // The campaign told people to go and try the games. GAMES_OPEN is false, so the invitation resolves
 // to "the games unlock when our Kickstarter wraps". A reviewer clicking that reads it as a live
