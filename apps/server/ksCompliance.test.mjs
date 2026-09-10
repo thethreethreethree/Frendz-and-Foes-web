@@ -126,7 +126,7 @@ check("it promises no refund the platform cannot deliver",
       /pledges are not refundable/i.test(fields) && !/refund arranged directly/i.test(fields),
       "an informal 'we'll sort you out' is the same liability with none of the clarity");
 check("the risks field leads with the development stage",
-      /PlayZoo is IN DEVELOPMENT/.test(fields),
+      /PlayZoo is in development/i.test(fields),
       "this is the field the reviewer quoted on the sister project");
 
 console.log(fails ? `\n${fails} FAILED` : "\nall Kickstarter compliance checks passed");

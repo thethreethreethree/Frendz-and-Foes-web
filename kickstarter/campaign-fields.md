@@ -85,28 +85,40 @@ assistance. Make whatever claim is true at submission time.
 
 ## 3. Risks and challenges
 
-Five risks, each with a mitigation that is true of the actual build. Point 5 covers Rex's 11Labs
-speaking voice, which block 04 of `kickstarter/body.html` advertises as on the way and which is not
-shipped -- worth declaring rather than leaving for a backer to notice.
+Written in a plain professional register, deliberately. Every other field on this page keeps Rex's
+and John's voice, because that voice is what sells the project to backers and it was never what
+Kickstarter objected to. This field is the exception: it is the one a reviewer assesses first, this
+project is being submitted after a sister project was rejected, and a risk disclosure written in a
+cartoon character's voice reads as not taking the review seriously. Owner's instruction 2026-09-10,
+scoped to this field alone.
+
+It leads with the development stage for the compliance reason recorded in
+[apps/server/ksCompliance.test.mjs](../apps/server/ksCompliance.test.mjs). Point 5 declares that
+Rex's 11Labs speaking voice is not shipped, which block 04 of `kickstarter/body.html` advertises as
+on the way -- worth declaring rather than leaving for a backer to discover.
 
 ```
-Right. This is the part where I'm meant to look you in the eye and tell you what could go wrong. Fine by me - I'd rather you heard it from me than found it out later.
+PlayZoo is in development. It is not open to the public, it is not trading, and this campaign is not raising money to cover the costs of an existing operation. The funding pays for a specific, finite piece of work: completing version one and releasing it.
 
-But first, where this actually stands, because it decides everything else you read here: PlayZoo is IN DEVELOPMENT. It is not open, it is not trading, and there is no business here quietly ticking over that your money props up. What there is, is a build that is most of the way done - and this campaign pays to finish it. That is the whole shape of it. Which is not to say it is a drawing on a napkin. The fourteen games are built and the rules work. Rex is built. The phone controllers are built. What is not done is the finishing - the artwork, and giving Rex an actual voice - and that is precisely what your money is for. The games are not open to the public yet; backers get in first when this closes. Which is exactly why we're asking for three and a half grand instead of eighty. We are not building PlayZoo from nothing. We are finishing it and getting it out the door. So the question that sinks most campaigns - "will these people ever deliver anything" - is a much smaller question here than you're used to asking. And if you want to check there is somebody real behind this before you pledge, go and argue with John on the support page. He is switched on right now and he will insult you free of charge.
+What is already built: fourteen games, with their rules complete and working; Rex, the in-product AI host; the phone controllers players use; and the backers' club. What remains is the finishing work - the artwork across all fourteen games, Rex's speaking voice, and the development needed to package the whole thing as a release. That is what the $3,500 pays for, and it is why the goal is $3,500 rather than a figure that would imply we are starting from nothing.
 
-Now. You asked what could bite us. Four things, and one bonus.
+The games are not open to the public yet. Backers get in first when the campaign closes.
 
-1. WE RENT THE BRAIN. Rex's personality is ours - we wrote every rule he follows. But the model that actually speaks his lines is somebody else's service, and we pay for it by the word. If their prices jump or their service goes wobbly, what it costs us to run PlayZoo after launch moves, and we don't get a vote. What we did about it: we built Rex against a standard interface from day one, and the provider is a setting, not something welded into the code. We can move him to a different model without rewriting a single game. That was a deliberate decision made early, not a clever answer invented for this paragraph.
+If you would like to confirm there are real people behind this before pledging, our support assistant is available on the project page now and will answer questions directly.
 
-2. THE CUSTOM CHARACTERS ARE THE BIT THAT COULD SLIP. Founding Animal gets you one custom animal drawn for you, Head Keeper gets you two, and we've said everything lands within a month of the campaign closing. Here's the honest maths: that work scales with how many of you there are. If this campaign goes far past its goal - lovely problem, still a problem - that one-month date is the first thing under pressure. What we're doing about it: characters get drawn in batches right through the month instead of piling up at the end, and character work goes to the front of the queue ahead of the general artwork. Your reward never waits behind a background.
+The five risks we consider material, and what we have done about each:
 
-3. THE ARTWORK IS THE REAL JOB. Most of the games currently run on a plain background. The rules are finished; the look isn't. Bringing all fourteen up to properly finished is the single biggest chunk of work this money pays for, and anyone who tells you art comes in on schedule has never commissioned any. What we're doing about it: the games already play, so the art goes in game by game as it is finished rather than all at the end. Nothing sits waiting for everything, and a game that is ready does not wait for one that is not.
+1. WE DEPEND ON A THIRD-PARTY AI PROVIDER. Rex's personality and every rule he follows are ours, but the language model that generates his lines is a third-party service billed by usage. If that provider's pricing or reliability changes, what it costs us to operate PlayZoo after launch changes with it, and we have no control over that. Mitigation: Rex was built against a standard provider interface from the outset, and the provider is a configuration setting rather than something embedded in the code. We can move to a different model without rewriting any game.
 
-4. RUNNING IT COSTS MONEY, AND THIS CAMPAIGN DOES NOT PAY FOR THAT. Every game night after launch is more AI calls and more hosting. Those are ongoing costs and they come out of subscriptions, not out of your pledge - your pledge finishes the build and pays for what you were promised. If fewer people subscribe than we hope, we cut back what we hand out for free. We do not touch anything a backer was promised.
+2. THE CUSTOM CHARACTERS ARE THE REWARD MOST LIKELY TO SLIP. Founding Animal includes one custom animal character drawn for the backer; Head Keeper includes two. We have committed to delivering everything within one month of the campaign closing. That work scales directly with the number of backers, so if the campaign substantially exceeds its goal, this delivery date is the first commitment to come under pressure. Mitigation: character work is drawn in batches throughout the month rather than accumulating at the end, and it is prioritised ahead of general artwork. No backer's reward waits behind a background illustration.
 
-5. AND THE BONUS ONE, BECAUSE IT'S ON THIS PAGE. We've said Rex is getting an actual speaking voice. He hasn't got one yet. He hosts in writing, and the voice is genuinely still to come. That's precisely why it isn't part of any reward tier - if it lands, everybody gets it and it's a nice surprise. If the voice service doesn't work out, nobody loses a thing they paid for.
+3. THE ARTWORK IS THE LARGEST REMAINING TASK. Most of the games currently run on a plain background. The rules are complete; the visual design is not. Bringing all fourteen games to a finished standard is the single largest piece of work this funding covers, and art schedules are difficult to estimate accurately. Mitigation: the games are playable, so artwork is added game by game as it is completed rather than all at once. No finished game waits on an unfinished one.
 
-WHAT WE WILL NOT DO: take your money and quietly change the deal. The prices, the tiers, and exactly what's in each one are written on this page. They don't shrink after funding. I'll sell you a bottle cap and call it a collectible - I won't do that.
+4. RUNNING COSTS ARE REAL, AND THIS CAMPAIGN DOES NOT FUND THEM. After launch, every game night generates AI usage and hosting costs. Those are ongoing operational costs and they are funded by subscription revenue, not by pledges. A pledge completes the build and pays for the rewards promised to that backer. If subscription uptake is lower than we expect, we will reduce what we offer free of charge. We will not reduce anything a backer was promised.
+
+5. REX'S SPEAKING VOICE IS NOT YET IMPLEMENTED. This page describes Rex gaining an actual speaking voice. He does not have one yet; he currently hosts in text. That is why the voice is deliberately excluded from every reward tier. If it is delivered, all backers receive it. If the voice service proves unworkable, no backer loses anything they paid for.
+
+WHAT WE WILL NOT DO: alter the offer after funding. The prices, the tiers, and the contents of each tier are stated on this page and will not be reduced once the campaign closes.
 ```
 
 ---
