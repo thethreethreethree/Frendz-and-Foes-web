@@ -1,5 +1,6 @@
 import { useCodenames } from "./useCodenames";
-import { cnStart, cnReset, type CnTeam } from "../net/codenames";
+import { cnStart, cnReset, cnKick, type CnTeam } from "../net/codenames";
+import { PlayerRoster } from "../net/PlayerRoster";
 import { StatusPill } from "../net/pairing";
 import { AvatarBadge } from "../net/avatars";
 import { getBrand } from "../brand/theme";
@@ -47,6 +48,18 @@ export function CodenamesHost({ room }: { room: string }) {
             </div>
           );
         })}
+      </div>
+
+      <div className="mt-4 rounded-2xl border border-line bg-surface p-3">
+        <div className="text-sm"><b>Everyone ({state.players.length})</b></div>
+        <PlayerRoster
+          players={state.players.map((p) => ({
+            ...p,
+            note: p.team ? `${p.team === "red" ? "Red" : "Blue"} ${p.role === "spymaster" ? "spymaster" : "agent"}` : "no team",
+          }))}
+          onRemove={cnKick}
+          empty="Nobody has joined yet."
+        />
       </div>
 
       <div className="mt-4 space-y-2">

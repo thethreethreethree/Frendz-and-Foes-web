@@ -1,5 +1,6 @@
 import { useBallpark } from "./useBallpark";
-import { bpStart, bpAdvance, bpNext, bpReset } from "../net/ballpark";
+import { PlayerRoster } from "../net/PlayerRoster";
+import { bpStart, bpAdvance, bpNext, bpReset , bpKick} from "../net/ballpark";
 import { StatusPill } from "../net/pairing";
 import { getBrand } from "../brand/theme";
 
@@ -21,7 +22,8 @@ export function BallparkHost({ room }: { room: string }) {
       {error && <div className="mb-2 rounded-lg bg-danger px-3 py-2 text-sm font-semibold text-white">{error}</div>}
 
       <div className="rounded-2xl border border-line bg-surface p-3">
-        <div className="text-sm"><b>Players ({n}):</b> {state.players.map((p) => p.name).join(", ") || "—"}</div>
+        <div className="text-sm"><b>Players ({n})</b></div>
+        <PlayerRoster players={state.players} onRemove={bpKick} />
         {state.phase !== "lobby" && <div className="mt-1 text-sm text-muted">Round {state.round}/{state.totalRounds}</div>}
       </div>
 

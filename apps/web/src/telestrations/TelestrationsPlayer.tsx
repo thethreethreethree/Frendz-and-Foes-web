@@ -9,8 +9,20 @@ import { HowToPlay } from "../net/howtoplay";
 const PEN_COLORS = ["#111827", "#dc2626", "#2563eb", "#16a34a", "#f59e0b", "#ffffff"];
 
 export function TelestrationsPlayer({ room }: { room: string }) {
-  const { state, you, error, join } = useTelestrations(room, "player");
+  const { state, you, error, removed, join } = useTelestrations(room, "player");
   const label = getBrand().games.telestrations?.label ?? "Sketch Relay";
+  // Say it plainly rather than bouncing them back to the join form as though nothing happened.
+  if (removed) return (
+    <Wrap>
+      <div className="grid h-full place-items-center p-6 text-center">
+        <div>
+          <div className="ff-title text-2xl">You're out</div>
+          <p className="mt-2 text-sm text-muted">The host removed you from this game. Join again if that was a mistake.</p>
+          <div className="mt-5"><AvatarNameForm label={label} onJoin={join} error={error} /></div>
+        </div>
+      </div>
+    </Wrap>
+  );
   if (!you) return <Wrap><AvatarNameForm label={label} onJoin={join} error={error} /></Wrap>;
   if (!state) return <Wrap><p className="text-muted">Connecting…</p></Wrap>;
 

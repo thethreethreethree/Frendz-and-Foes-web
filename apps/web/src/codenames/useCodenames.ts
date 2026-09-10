@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { getSocket } from "../net/socket";
-import { loadCnPlayer, saveCnPlayer, cnJoin, cnSync, type CnState, type CnYou } from "../net/codenames";
+import { loadCnPlayer, saveCnPlayer, forgetCNPlayer, cnJoin, cnSync, type CnState, type CnYou } from "../net/codenames";
 import { resolveSlug } from "../brand/resolve";
 
 // Shared hook for all Cover Ops surfaces. host/display watch via cn:sync (+ generic join so the host
@@ -10,6 +10,7 @@ export function useCodenames(room: string, role: "host" | "display" | "player") 
   const [state, setState] = useState<CnState | null>(null);
   const [you, setYou] = useState<CnYou | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [removed, setRemoved] = useState(false);
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
@@ -32,18 +33,22 @@ export function useCodenames(room: string, role: "host" | "display" | "player") 
       clearTimeout(clearTimer);
       clearTimer = setTimeout(() => setError(null), 3500);
     };
+    // The host removed us. Forget the stored identity FIRST: `enter` re-joins on every reconnect,
+    // so without this the phone walks straight back into the game it was removed from.
+    const onKicked = () => { forgetCNPlayer(room); setRemoved(true); setYou(null); };
     s.on("connect", enter);
     s.on("disconnect", () => setConnected(false));
     s.on("cn:state", onState);
     s.on("cn:you", onYou);
     s.on("cn:error", onError);
+    s.on("cn:kicked", onKicked);
     if (s.connected) enter();
     return () => {
       clearTimeout(clearTimer);
       s.off("connect", enter);
       s.off("cn:state", onState);
       s.off("cn:you", onYou);
-      s.off("cn:error", onError);
+      s.off("cn:error", onError); s.off("cn:kicked", onKicked);
     };
   }, [room, role]);
 
@@ -56,10 +61,10 @@ export function useCodenames(room: string, role: "host" | "display" | "player") 
   }, [you?.id, you?.rejoinToken, room]);
 
   const join = (name: string, avatar?: string) => {
-    saveCnPlayer(room, { name, ...(avatar ? { avatar } : {}) });
+    setRemoved(false); saveCnPlayer(room, { name, ...(avatar ? { avatar } : {}) });
     const st = loadCnPlayer(room);
     cnJoin(room, name, st.avatar, st.id, st.rejoinToken);
   };
 
-  return { state, you, error, connected, join };
+  return { state, you, error, removed, connected, join };
 }

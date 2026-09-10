@@ -28,6 +28,15 @@ export const joNext = () => getSocket().emit("jo:next");
 export const joReset = () => getSocket().emit("jo:reset");
 
 const key = (room: string) => `ff:justone:${room}`;
+
+/** Host removes a player who has left the room. */
+export const joKick = (id: string) => getSocket().emit("jo:kick", { id });
+
+/** Drop the stored identity so a removed player's phone does not auto-rejoin. */
+export function forgetJOPlayer(room: string) {
+  try { localStorage.removeItem(key(room)); } catch { /* ignore */ }
+}
+
 export function loadJoPlayer(room: string): { id?: string; name?: string; avatar?: string; rejoinToken?: string } {
   try { return JSON.parse(localStorage.getItem(key(room)) || "{}"); } catch { return {}; }
 }

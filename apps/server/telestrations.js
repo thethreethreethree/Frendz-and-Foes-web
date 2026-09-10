@@ -185,6 +185,41 @@ export function registerTelestrationsHandlers(io, socket, rooms, roomKey = (r) =
     push(code);
   }
 
+  // Host removes a player who has left.
+  //
+  // NOTE what is deliberately NOT touched: m.order. It is a fixed seating ring and the books ride
+  // on it -- heldBookIndex is (pIdx - turn + N) % N. Splicing someone out mid-game changes N and
+  // re-maps EVERY book to the wrong player, so some get drawn twice and others get skipped.
+  // Dropping them from m.players is enough: nothing waits on them, their book keeps circulating,
+  // their seat simply contributes nothing, and the reveal still names them because ownerName was
+  // captured when the books were built.
+  socket.on("te:kick", ({ id }) => {
+    const code = hostCode(); const m = code && rooms.get(code)?.telestrations;
+    if (!m) return;
+    if (!isHost()) return err("Only the host can remove a player.");
+    const p = m.players.get(id);
+    if (!p) return err("That player has already gone.");
+    const socketId = p.socketId;
+    m.players.delete(id);
+    m.submitted.delete(id);
+    if (m.phase === "lobby") { const i = m.order.indexOf(id); if (i !== -1) m.order.splice(i, 1); }
+    if (socketId) io.to(socketId).emit("te:kicked", { name: p.name });
+    if (m.phase === "playing") advanceIfDone(m, code);
+    push(code);
+  });
+
+  socket.on("disconnect", () => {
+    const code = socket.data.teCode; const m = code && rooms.get(code)?.telestrations;
+    const pid = socket.data.tePlayerId;
+    if (!m || !pid) return;
+    const p = m.players.get(pid);
+    if (!p || p.socketId !== socket.id) return;
+    p.socketId = null;
+    // Their drawing is not coming. Without this the round waits on a phone that has left.
+    if (m.phase === "playing") advanceIfDone(m, code);
+    push(code);
+  });
+
   socket.on("te:submit", ({ strokes, text }) => {
     const code = socket.data.teCode;
     const m = code && rooms.get(code)?.telestrations;

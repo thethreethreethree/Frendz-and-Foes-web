@@ -26,6 +26,15 @@ export const bpNext = () => getSocket().emit("bp:next");
 export const bpReset = () => getSocket().emit("bp:reset");
 
 const key = (room: string) => `ff:ballpark:${room}`;
+
+/** Host removes a player who has left the room. */
+export const bpKick = (id: string) => getSocket().emit("bp:kick", { id });
+
+/** Drop the stored identity so a removed player's phone does not auto-rejoin. */
+export function forgetBPPlayer(room: string) {
+  try { localStorage.removeItem(key(room)); } catch { /* ignore */ }
+}
+
 export function loadBpPlayer(room: string): { id?: string; name?: string; avatar?: string; rejoinToken?: string } {
   try { return JSON.parse(localStorage.getItem(key(room)) || "{}"); } catch { return {}; }
 }

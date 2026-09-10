@@ -1,5 +1,6 @@
 import { useJustOne } from "./useJustOne";
-import { joStart, joReveal, joNext, joReset } from "../net/justone";
+import { PlayerRoster } from "../net/PlayerRoster";
+import { joStart, joReveal, joNext, joReset , joKick} from "../net/justone";
 import { StatusPill } from "../net/pairing";
 import { getBrand } from "../brand/theme";
 
@@ -22,7 +23,8 @@ export function JustOneHost({ room }: { room: string }) {
       {error && <div className="mb-2 rounded-lg bg-danger px-3 py-2 text-sm font-semibold text-white">{error}</div>}
 
       <div className="rounded-2xl border border-line bg-surface p-3">
-        <div className="text-sm"><b>Players ({state.players.length}):</b> {state.players.map((p) => p.name).join(", ") || "—"}</div>
+        <div className="text-sm"><b>Players ({state.players.length})</b></div>
+        <PlayerRoster players={state.players} onRemove={joKick} />
         {state.phase !== "lobby" && <div className="mt-1 text-sm text-muted">Round {state.round}/{state.totalRounds} · Score {state.score} · Guesser: {guesser}</div>}
       </div>
 

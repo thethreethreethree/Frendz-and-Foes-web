@@ -1,4 +1,5 @@
 import { useAfterDark } from "./useAfterDark";
+import { PlayerRoster } from "../net/PlayerRoster";
 import { caStart, caNext, caReset, caKick } from "../net/afterdark";
 import { StatusPill } from "../net/pairing";
 import { getBrand } from "../brand/theme";
@@ -19,24 +20,10 @@ export function AfterDarkHost({ room }: { room: string }) {
       {error && <div className="mb-2 rounded-lg bg-danger px-3 py-2 text-sm font-semibold text-white">{error}</div>}
       <div className="rounded-2xl border border-line bg-surface p-3">
         <div className="text-sm"><b>Players ({state.players.length})</b></div>
-        {state.players.length === 0 ? (
-          <div className="mt-1 text-sm text-muted">Nobody yet.</div>
-        ) : (
-          <ul className="mt-2 flex flex-col gap-1.5">
-            {state.players.map((p) => (
-              <li key={p.id} className="flex items-center gap-2 text-sm">
-                {/* Offline is the tell the host needs: it marks who has already walked out. */}
-                <span className={`h-2 w-2 flex-none rounded-full ${p.connected ? "bg-buzz-green" : "bg-tang"}`} />
-                <span className="min-w-0 flex-1 truncate">{p.name}{p.isJudge ? " · judge" : ""}{p.connected ? "" : " · offline"}</span>
-                <button
-                  onClick={() => { if (confirm(`Remove ${p.name} from the game?`)) caKick(p.id); }}
-                  className="ff-tap flex-none rounded-lg border border-line px-2.5 py-1 text-xs font-semibold text-muted"
-                  aria-label={`Remove ${p.name}`}
-                >Remove</button>
-              </li>
-            ))}
-          </ul>
-        )}
+        <PlayerRoster
+          players={state.players.map((p) => ({ ...p, note: p.isJudge ? "judge" : undefined }))}
+          onRemove={caKick}
+        />
         {state.phase !== "lobby" && <div className="mt-1 text-sm text-muted">Round {state.round} · Judge {judge}{state.phase === "submitting" ? ` · ${submitted}/${nonJudge} played` : ""}</div>}
       </div>
       <div className="mt-4 space-y-2">

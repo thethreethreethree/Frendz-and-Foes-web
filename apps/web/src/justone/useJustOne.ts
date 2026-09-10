@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { getSocket } from "../net/socket";
-import { loadJoPlayer, saveJoPlayer, joJoin, joSync, type JoState, type JoYou } from "../net/justone";
+import { loadJoPlayer, saveJoPlayer, forgetJOPlayer, joJoin, joSync, type JoState, type JoYou } from "../net/justone";
 import { resolveSlug } from "../brand/resolve";
 
 // Shared hook for all Solo Clue surfaces. Players join by name (auto-rejoin with stored id+token);
@@ -11,6 +11,7 @@ export function useJustOne(room: string, role: "host" | "display" | "player") {
   const [you, setYou] = useState<JoYou | null>(null);
   const [word, setWord] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [removed, setRemoved] = useState(false);
 
   useEffect(() => {
     const s = getSocket();
@@ -28,11 +29,15 @@ export function useJustOne(room: string, role: "host" | "display" | "player") {
     const onWord = (w: string | null) => setWord(w);
     let clearTimer: ReturnType<typeof setTimeout>;
     const onError = (msg: string) => { setError(String(msg)); clearTimeout(clearTimer); clearTimer = setTimeout(() => setError(null), 3500); };
+    // The host removed us. Forget the stored identity FIRST: `enter` re-joins on every reconnect,
+    // so without this the phone walks straight back into the game it was removed from.
+    const onKicked = () => { forgetJOPlayer(room); setRemoved(true); setYou(null); };
     s.on("connect", enter);
     s.on("jo:state", onState);
     s.on("jo:you", onYou);
     s.on("jo:word", onWord);
     s.on("jo:error", onError);
+    s.on("jo:kicked", onKicked);
     if (s.connected) enter();
     return () => {
       clearTimeout(clearTimer);
@@ -40,7 +45,7 @@ export function useJustOne(room: string, role: "host" | "display" | "player") {
       s.off("jo:state", onState);
       s.off("jo:you", onYou);
       s.off("jo:word", onWord);
-      s.off("jo:error", onError);
+      s.off("jo:error", onError); s.off("jo:kicked", onKicked);
     };
   }, [room, role]);
 
@@ -53,10 +58,10 @@ export function useJustOne(room: string, role: "host" | "display" | "player") {
   }, [you?.id, you?.rejoinToken, room]);
 
   const join = (name: string, avatar?: string) => {
-    saveJoPlayer(room, { name, ...(avatar ? { avatar } : {}) });
+    setRemoved(false); saveJoPlayer(room, { name, ...(avatar ? { avatar } : {}) });
     const st = loadJoPlayer(room);
     joJoin(room, name, st.avatar, st.id, st.rejoinToken);
   };
 
-  return { state, you, word, error, join };
+  return { state, you, word, error, removed, join };
 }

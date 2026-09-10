@@ -7,9 +7,21 @@ import { HowToPlay } from "../net/howtoplay";
 import { getBrand } from "../brand/theme";
 
 export function CodenamesPlayer({ room }: { room: string }) {
-  const { state, you, error, join } = useCodenames(room, "player");
+  const { state, you, error, removed, join } = useCodenames(room, "player");
   const label = getBrand().games.codenames?.label ?? "Cover Ops";
 
+  // Say it plainly rather than bouncing them back to the join form as though nothing happened.
+  if (removed) return (
+    <Wrap>
+      <div className="grid h-full place-items-center p-6 text-center">
+        <div>
+          <div className="ff-title text-2xl">You're out</div>
+          <p className="mt-2 text-sm text-muted">The host removed you from this game. Join again if that was a mistake.</p>
+          <div className="mt-5"><AvatarNameForm label={label} onJoin={join} error={error} /></div>
+        </div>
+      </div>
+    </Wrap>
+  );
   if (!you) return <Wrap><AvatarNameForm label={label} onJoin={join} error={error} /></Wrap>;
   if (!state) return <Wrap><p className="text-muted">Connecting…</p></Wrap>;
 

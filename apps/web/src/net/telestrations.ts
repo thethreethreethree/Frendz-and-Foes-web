@@ -32,6 +32,15 @@ export const teRevealNext = () => getSocket().emit("te:revealNext");
 export const teReset = () => getSocket().emit("te:reset");
 
 const key = (room: string) => `ff:telestrations:${room}`;
+
+/** Host removes a player who has left the room. */
+export const teKick = (id: string) => getSocket().emit("te:kick", { id });
+
+/** Drop the stored identity so a removed player's phone does not auto-rejoin. */
+export function forgetTEPlayer(room: string) {
+  try { localStorage.removeItem(key(room)); } catch { /* ignore */ }
+}
+
 export function loadTePlayer(room: string): { id?: string; name?: string; avatar?: string; rejoinToken?: string } {
   try { return JSON.parse(localStorage.getItem(key(room)) || "{}"); } catch { return {}; }
 }

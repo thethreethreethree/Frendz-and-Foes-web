@@ -51,6 +51,15 @@ export const cnEndTurn = () => getSocket().emit("cn:endTurn");
 export const cnReset = (full = false) => getSocket().emit("cn:reset", { full });
 
 const key = (room: string) => `ff:codenames:${room}`;
+
+/** Host removes a player who has left the room. */
+export const cnKick = (id: string) => getSocket().emit("cn:kick", { id });
+
+/** Drop the stored identity so a removed player's phone does not auto-rejoin. */
+export function forgetCNPlayer(room: string) {
+  try { localStorage.removeItem(key(room)); } catch { /* ignore */ }
+}
+
 export function loadCnPlayer(room: string): { id?: string; name?: string; avatar?: string; rejoinToken?: string } {
   try { return JSON.parse(localStorage.getItem(key(room)) || "{}"); } catch { return {}; }
 }

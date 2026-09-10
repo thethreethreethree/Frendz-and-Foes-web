@@ -199,6 +199,47 @@ export function registerBallparkHandlers(io, socket, rooms, roomKey = (r) => Str
     broadcast(code);
   });
 
+  // Re-ask whichever question the current phase is waiting on. A departure may have been the last
+  // thing holding the round up, and until this existed nothing re-checked after a player vanished.
+  function advanceIfAllIn(m) {
+    const active = connectedPlayers(m);
+    if (active.length === 0) return;
+    if (m.phase === "guessing" && active.every((x) => m.guesses.has(x.id))) { buildSorted(m); m.phase = "betting"; }
+    else if (m.phase === "betting" && active.every((x) => m.bets.has(x.id))) score(m);
+  }
+
+  socket.on("bp:kick", ({ id }) => {
+    const code = hostCode(); const m = code && rooms.get(code)?.ballpark;
+    if (!m) return;
+    if (!isHost()) return err("Only the host can remove a player.");
+    const p = m.players.get(id);
+    if (!p) return err("That player has already gone.");
+    const socketId = p.socketId;
+    m.players.delete(id);
+    m.guesses.delete(id);
+    m.bets.delete(id);
+    if (m.players.size < 2 && m.phase !== "lobby" && m.phase !== "ended") {
+      m.phase = "lobby"; m.round = 0; m.question = null; m.answer = null;
+      m.guesses = new Map(); m.bets = new Map(); m.sorted = []; m.winningValue = null;
+    } else {
+      advanceIfAllIn(m);
+    }
+    if (socketId) io.to(socketId).emit("bp:kicked", { name: p.name });
+    broadcast(code);
+  });
+
+  socket.on("disconnect", () => {
+    const code = socket.data.bpCode; const m = code && rooms.get(code)?.ballpark;
+    const pid = socket.data.bpPlayerId;
+    if (!m || !pid) return;
+    const p = m.players.get(pid);
+    if (!p || p.socketId !== socket.id) return;
+    p.socketId = null;
+    // Their guess/bet is not coming. Without this the round waits on a phone that has left.
+    advanceIfAllIn(m);
+    broadcast(code);
+  });
+
   // Host may force past a stuck guessing/betting phase.
   socket.on("bp:advance", () => {
     const code = hostCode();

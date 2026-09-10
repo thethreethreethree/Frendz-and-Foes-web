@@ -166,6 +166,35 @@ export function registerCodenamesHandlers(io, socket, rooms, roomKey = (r) => St
   const hostCode = () => socket.data.cnCode || socket.data.code;
   const isHost = () => socket.data.role === "host";
 
+  // Host removes a player who has left. Cover Ops never waits on everybody at once, so there is no
+  // stall to clear here -- but if a SPYMASTER walks out their team has nobody who can give a clue,
+  // and the seat has to be freed so another player can take it via cn:setTeam.
+  socket.on("cn:kick", ({ id }) => {
+    const code = hostCode(); const m = code && rooms.get(code)?.codenames;
+    if (!m) return;
+    if (!isHost()) return err("Only the host can remove a player.");
+    const p = m.players.get(id);
+    if (!p) return err("That player has already gone.");
+    const socketId = p.socketId;
+    const wasSpymaster = p.role === "spymaster" ? p.team : null;
+    m.players.delete(id);
+    if (wasSpymaster) m.log.push(`${p.name} left — ${wasSpymaster} needs a new spymaster.`);
+    if (socketId) io.to(socketId).emit("cn:kicked", { name: p.name });
+    push(code);
+  });
+
+  socket.on("disconnect", () => {
+    const code = socket.data.cnCode; const m = code && rooms.get(code)?.codenames;
+    const pid = socket.data.cnPlayerId;
+    if (!m || !pid) return;
+    const p = m.players.get(pid);
+    if (!p || p.socketId !== socket.id) return;
+    // Keep the player: their team and role are their seat, and Cover Ops players reconnect into it.
+    // Only the connected flag changes, so the room can SEE who has dropped.
+    p.socketId = null;
+    push(code);
+  });
+
   socket.on("cn:start", () => {
     const code = hostCode();
     const m = code && rooms.get(code)?.codenames;

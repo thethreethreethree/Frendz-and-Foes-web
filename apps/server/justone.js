@@ -162,8 +162,66 @@ export function registerJustOneHandlers(io, socket, rooms, roomKey = (r) => Stri
     if (!w || /\s/.test(w)) return err("One word only.");
     m.clues.set(p.id, w);
     // Auto-advance to reveal once every connected clue-giver has written one.
+    advanceIfWritten(m);
+    push(code);
+  });
+
+  // Extracted so a departure can re-ask the same question. Someone leaving may be the last person
+  // the round was waiting on, and until this existed nothing re-checked after a player vanished.
+  function advanceIfWritten(m) {
+    if (m.phase !== "writing") return;
     const writers = nonGuessers(m).filter((x) => x.socketId);
     if (writers.length > 0 && writers.every((x) => m.clues.has(x.id))) doReveal(m);
+  }
+
+  // Take a player out and leave the round playable. They hold a slot in the guessing rotation
+  // (m.order, indexed by m.guesserIdx) and may have already written a clue.
+  function removeJoPlayer(m, id) {
+    if (!m.players.has(id)) return false;
+    const idx = m.order.indexOf(id);
+    if (idx !== -1) {
+      m.order.splice(idx, 1);
+      if (idx < m.guesserIdx) m.guesserIdx -= 1;
+    }
+    m.guesserIdx = m.order.length ? ((m.guesserIdx % m.order.length) + m.order.length) % m.order.length : 0;
+    m.clues.delete(id);
+    m.players.delete(id);
+    return true;
+  }
+
+  // Below three there is no game: one guesser and at least two clue-givers is the minimum.
+  function repairJo(m) {
+    if (m.phase === "lobby" || m.phase === "ended") return;
+    if (m.players.size < 3) {
+      m.phase = "lobby"; m.round = 0; m.word = null;
+      m.clues = new Map(); m.survivors = []; m.cancelled = []; m.lastGot = null;
+      return;
+    }
+    advanceIfWritten(m);
+  }
+
+  socket.on("jo:kick", ({ id }) => {
+    const code = hostCode(); const m = code && rooms.get(code)?.justone;
+    if (!m) return;
+    if (!isHost()) return err("Only the host can remove a player.");
+    const p = m.players.get(id);
+    if (!p) return err("That player has already gone.");
+    const socketId = p.socketId;
+    removeJoPlayer(m, id);
+    repairJo(m);
+    if (socketId) io.to(socketId).emit("jo:kicked", { name: p.name });
+    push(code);
+  });
+
+  socket.on("disconnect", () => {
+    const code = socket.data.joCode; const m = code && rooms.get(code)?.justone;
+    const pid = socket.data.joPlayerId;
+    if (!m || !pid) return;
+    const p = m.players.get(pid);
+    if (!p || p.socketId !== socket.id) return;
+    p.socketId = null;
+    // Their clue is not coming. Without this the round waits on a phone that has left.
+    advanceIfWritten(m);
     push(code);
   });
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { getSocket } from "../net/socket";
-import { loadBpPlayer, saveBpPlayer, bpJoin, bpSync, type BpState, type BpYou } from "../net/ballpark";
+import { loadBpPlayer, saveBpPlayer, forgetBPPlayer, bpJoin, bpSync, type BpState, type BpYou } from "../net/ballpark";
 import { resolveSlug } from "../brand/resolve";
 
 // Shared hook for all Ballpark surfaces. Players join by name (auto-rejoin); host/display watch via
@@ -10,6 +10,7 @@ export function useBallpark(room: string, role: "host" | "display" | "player") {
   const [state, setState] = useState<BpState | null>(null);
   const [you, setYou] = useState<BpYou | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [removed, setRemoved] = useState(false);
 
   useEffect(() => {
     const s = getSocket();
@@ -26,17 +27,21 @@ export function useBallpark(room: string, role: "host" | "display" | "player") {
     const onYou = (y: BpYou) => setYou(y);
     let clearTimer: ReturnType<typeof setTimeout>;
     const onError = (msg: string) => { setError(String(msg)); clearTimeout(clearTimer); clearTimer = setTimeout(() => setError(null), 3500); };
+    // The host removed us. Forget the stored identity FIRST: `enter` re-joins on every
+    // reconnect, so without this the phone walks straight back into the game it was removed from.
+    const onKicked = () => { forgetBPPlayer(room); setRemoved(true); setYou(null); };
     s.on("connect", enter);
     s.on("bp:state", onState);
     s.on("bp:you", onYou);
     s.on("bp:error", onError);
+    s.on("bp:kicked", onKicked);
     if (s.connected) enter();
     return () => {
       clearTimeout(clearTimer);
       s.off("connect", enter);
       s.off("bp:state", onState);
       s.off("bp:you", onYou);
-      s.off("bp:error", onError);
+      s.off("bp:error", onError); s.off("bp:kicked", onKicked);
     };
   }, [room, role]);
 
@@ -49,10 +54,10 @@ export function useBallpark(room: string, role: "host" | "display" | "player") {
   }, [you?.id, you?.rejoinToken, room]);
 
   const join = (name: string, avatar?: string) => {
-    saveBpPlayer(room, { name, ...(avatar ? { avatar } : {}) });
+    setRemoved(false); saveBpPlayer(room, { name, ...(avatar ? { avatar } : {}) });
     const st = loadBpPlayer(room);
     bpJoin(room, name, st.avatar, st.id, st.rejoinToken);
   };
 
-  return { state, you, error, join };
+  return { state, you, error, removed, join };
 }

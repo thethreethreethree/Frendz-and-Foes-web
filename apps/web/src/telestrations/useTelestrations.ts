@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { getSocket } from "../net/socket";
-import { loadTePlayer, saveTePlayer, teJoin, teSync, type TeState, type TeYou } from "../net/telestrations";
+import { loadTePlayer, saveTePlayer, forgetTEPlayer, teJoin, teSync, type TeState, type TeYou } from "../net/telestrations";
 import { resolveSlug } from "../brand/resolve";
 
 // Shared hook for all Sketch Relay surfaces. Players join by name (auto-rejoin); host/display watch
@@ -9,6 +9,7 @@ export function useTelestrations(room: string, role: "host" | "display" | "playe
   const [state, setState] = useState<TeState | null>(null);
   const [you, setYou] = useState<TeYou | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [removed, setRemoved] = useState(false);
 
   useEffect(() => {
     const s = getSocket();
@@ -20,12 +21,16 @@ export function useTelestrations(room: string, role: "host" | "display" | "playe
     const onYou = (y: TeYou) => setYou(y);
     let clearTimer: ReturnType<typeof setTimeout>;
     const onError = (msg: string) => { setError(String(msg)); clearTimeout(clearTimer); clearTimer = setTimeout(() => setError(null), 3500); };
+    // The host removed us. Forget the stored identity FIRST: `enter` re-joins on every
+    // reconnect, so without this the phone walks straight back into the game it was removed from.
+    const onKicked = () => { forgetTEPlayer(room); setRemoved(true); setYou(null); };
     s.on("connect", enter);
     s.on("te:state", onState);
     s.on("te:you", onYou);
     s.on("te:error", onError);
+    s.on("te:kicked", onKicked);
     if (s.connected) enter();
-    return () => { clearTimeout(clearTimer); s.off("connect", enter); s.off("te:state", onState); s.off("te:you", onYou); s.off("te:error", onError); };
+    return () => { clearTimeout(clearTimer); s.off("connect", enter); s.off("te:state", onState); s.off("te:you", onYou); s.off("te:error", onError); s.off("te:kicked", onKicked); };
   }, [room, role]);
 
   const idRef = useRef<string | undefined>(undefined);
@@ -33,6 +38,6 @@ export function useTelestrations(room: string, role: "host" | "display" | "playe
     if (you?.id && you.id !== idRef.current) { idRef.current = you.id; saveTePlayer(room, { id: you.id, ...(you.rejoinToken ? { rejoinToken: you.rejoinToken } : {}) }); }
   }, [you?.id, you?.rejoinToken, room]);
 
-  const join = (name: string, avatar?: string) => { saveTePlayer(room, { name, ...(avatar ? { avatar } : {}) }); const st = loadTePlayer(room); teJoin(room, name, st.avatar, st.id, st.rejoinToken); };
-  return { state, you, error, join };
+  const join = (name: string, avatar?: string) => { setRemoved(false); saveTePlayer(room, { name, ...(avatar ? { avatar } : {}) }); const st = loadTePlayer(room); teJoin(room, name, st.avatar, st.id, st.rejoinToken); };
+  return { state, you, error, removed, join };
 }

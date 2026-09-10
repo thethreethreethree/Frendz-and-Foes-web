@@ -6,8 +6,20 @@ import { HowToPlay } from "../net/howtoplay";
 import { getBrand } from "../brand/theme";
 
 export function BallparkPlayer({ room }: { room: string }) {
-  const { state, you, error, join } = useBallpark(room, "player");
+  const { state, you, error, removed, join } = useBallpark(room, "player");
   const label = getBrand().games.ballpark?.label ?? "Ballpark";
+  // Say it plainly rather than bouncing them back to the join form as though nothing happened.
+  if (removed) return (
+    <Wrap>
+      <div className="grid h-full place-items-center p-6 text-center">
+        <div>
+          <div className="ff-title text-2xl">You're out</div>
+          <p className="mt-2 text-sm text-muted">The host removed you from this game. Join again if that was a mistake.</p>
+          <div className="mt-5"><AvatarNameForm label={label} onJoin={join} error={error} /></div>
+        </div>
+      </div>
+    </Wrap>
+  );
   if (!you) return <Wrap><AvatarNameForm label={label} onJoin={join} error={error} /></Wrap>;
   if (!state) return <Wrap><p className="text-muted">Connecting…</p></Wrap>;
   const me = state.players.find((p) => p.id === you.id);
