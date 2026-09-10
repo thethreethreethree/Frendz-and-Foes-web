@@ -3,7 +3,7 @@ import { useCodenames } from "./useCodenames";
 import { useRexHost, RexBanner } from "../host/RexHost";
 import { CodenamesBoard } from "./CodenamesBoard";
 import { Logo } from "../display/Logo";
-import { QR } from "../net/pairing";
+import { QR, HostQR } from "../net/pairing";
 import { codenamesJoinUrl, controllerUrl } from "../net/room";
 import { getBrand } from "../brand/theme";
 import { AvatarBadge } from "../net/avatars";
@@ -79,7 +79,7 @@ export function CodenamesDisplay({ room }: { room: string }) {
           ))}
         </div>
         <p className="mt-1 text-xs uppercase tracking-[0.18em] text-muted">Agents on file</p>
-        <p className="mt-3 text-sm text-muted">Host controller: <span className="font-mono">{controllerUrl(room)}</span></p>
+        <HostQR room={room} />
       </Center>
     );
   }

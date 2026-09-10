@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useJustOne } from "./useJustOne";
 import { useRexHost, RexBanner } from "../host/RexHost";
 import { Logo } from "../display/Logo";
-import { QR } from "../net/pairing";
+import { QR, HostQR } from "../net/pairing";
 import { AvatarBadge } from "../net/avatars";
 import { justoneJoinUrl, controllerUrl } from "../net/room";
 import { getBrand } from "../brand/theme";
@@ -63,7 +63,7 @@ export function JustOneDisplay({ room }: { room: string }) {
           </div>
           <Roster state={state} />
         </div>
-        <p className="mt-4 text-sm text-muted">Host: <span className="font-mono">{controllerUrl(room)}</span></p>
+        <HostQR room={room} />
       </Center>
     );
   }

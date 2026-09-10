@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useAfterDark } from "./useAfterDark";
 import { useRexHost, RexBanner } from "../host/RexHost";
 import { Logo } from "../display/Logo";
-import { QR } from "../net/pairing";
+import { QR, HostQR } from "../net/pairing";
 import { afterdarkJoinUrl, controllerUrl } from "../net/room";
 import { fillPrompt, type CaState } from "../net/afterdark";
 import { getBrand } from "../brand/theme";
@@ -60,7 +60,7 @@ export function AfterDarkDisplay({ room }: { room: string }) {
           <div className="text-center"><QR text={afterdarkJoinUrl(room)} size={200} /><div className="ff-title mt-2 text-4xl tracking-[0.3em] text-ink">{room}</div></div>
           <div className="rounded-xl border border-line p-3 text-left" style={{ minWidth: 160 }}><div className="ff-title text-xl">Players ({state.players.length})</div><div className="mt-2 flex flex-col gap-1.5 text-sm">{state.players.length === 0 ? "—" : state.players.map((p) => (<span key={p.id} className="flex items-center gap-2"><AvatarBadge avatar={p.avatar} name={p.name} size={24} />{p.name}</span>))}</div></div>
         </div>
-        <p className="mt-4 text-sm text-muted">Host: <span className="font-mono">{controllerUrl(room)}</span></p>
+        <HostQR room={room} />
       </Center>
     );
   }

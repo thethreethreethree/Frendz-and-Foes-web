@@ -22,6 +22,7 @@ import { PictionaryControl } from "../pictionary/PictionaryControl";
 import { TelestrationsHost } from "../telestrations/TelestrationsHost";
 import { AfterDarkHost } from "../afterdark/AfterDarkHost";
 import { GamePicker } from "./GamePicker";
+import { SocketConnectionProvider } from "../net/SocketConnection";
 import { BINGO_ROOM, generateRoomCode, getGameFromUrl, getRoomFromUrl, setUrlGame, setUrlRoom } from "../net/room";
 import type { GameType } from "../net/socket";
 
@@ -77,7 +78,11 @@ export function ControlRoute() {
           Open the host link from the Cover Ops display QR.
         </div>
       );
-    return <CodenamesHost room={room} />;
+    return (
+      <SocketConnectionProvider room={room}>
+        <CodenamesHost room={room} />
+      </SocketConnectionProvider>
+    );
   }
 
   if (game === "justone") {
@@ -87,7 +92,11 @@ export function ControlRoute() {
           Open the host link from the Solo Clue display QR.
         </div>
       );
-    return <JustOneHost room={room} />;
+    return (
+      <SocketConnectionProvider room={room}>
+        <JustOneHost room={room} />
+      </SocketConnectionProvider>
+    );
   }
 
   if (game === "ballpark") {
@@ -97,7 +106,11 @@ export function ControlRoute() {
           Open the host link from the Ballpark display QR.
         </div>
       );
-    return <BallparkHost room={room} />;
+    return (
+      <SocketConnectionProvider room={room}>
+        <BallparkHost room={room} />
+      </SocketConnectionProvider>
+    );
   }
 
   if (game === "pictionary") {
@@ -121,7 +134,11 @@ export function ControlRoute() {
           Open the host link from the Sketch Relay display QR.
         </div>
       );
-    return <TelestrationsHost room={room} />;
+    return (
+      <SocketConnectionProvider room={room}>
+        <TelestrationsHost room={room} />
+      </SocketConnectionProvider>
+    );
   }
 
   if (game === "afterdark") {
@@ -131,7 +148,11 @@ export function ControlRoute() {
           Open the host link from the After Dark display QR.
         </div>
       );
-    return <AfterDarkHost room={room} />;
+    return (
+      <SocketConnectionProvider room={room}>
+        <AfterDarkHost room={room} />
+      </SocketConnectionProvider>
+    );
   }
 
   if (game === "bingo") {

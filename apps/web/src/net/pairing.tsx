@@ -16,6 +16,25 @@ export function QR({ text, size = 160 }: { text: string; size?: number }) {
 }
 
 // Live connection status pill, reads role from the shared connection info.
+// The host controller's address, as something you can SCAN.
+//
+// The five server-authoritative games (After Dark, Sketch Relay, Ballpark, Solo Clue, Cover Ops)
+// have no phone-first entry -- they are excluded from the /control picker because the DISPLAY mints
+// the room and shows the player QR. That left the host URL printed as small text on a television,
+// to be typed by hand. A second QR is the only thing that works from across a room.
+export function HostQR({ room }: { room: string }) {
+  return (
+    <div className="mt-4 inline-flex items-center gap-3 rounded-xl border border-line px-3 py-2">
+      <QR text={controllerUrl(room)} size={76} />
+      <div className="text-left">
+        <div className="ff-title text-base tracking-wider text-ink">HOST</div>
+        <div className="text-xs text-muted">Scan to run the game from your phone</div>
+        <div className="mt-0.5 font-mono text-[10px] text-muted">{controllerUrl(room)}</div>
+      </div>
+    </div>
+  );
+}
+
 export function StatusPill() {
   const connection = useConnection();
   const { connected, presence, role, room } = connection;
