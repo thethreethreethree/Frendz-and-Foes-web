@@ -63,7 +63,7 @@ THE PRODUCT FEATURE. PlayZoo is a party-games night hosted by Rex, an AI zookeep
 
 THE ARTWORK. Character portraits, game backdrops and imagery on this campaign page are AI-generated from prompts we wrote ourselves, describing our own original characters - twenty animals we created, named and gave personalities to, and fourteen games we designed. The prompts do not name, reference or imitate any living artist, studio or existing artwork, and no third party's images were supplied as input or used as training data. The game rules, the code, the character writing and the product design are our own.
 
-WHAT THE FUNDING IS FOR. The goal is $3,500, and it funds finishing PlayZoo and releasing version one. Fourteen games are built and the rules work, but the games are not open to the public and most still run on a plain background. The money pays for the art across all fourteen, Rex's voice, and the custom characters backers are owed. None of it funds AI development, and none of it covers running costs.
+WHAT THE FUNDING IS FOR. The goal is $3,500, and it funds finishing PlayZoo and releasing version one. Fourteen games are built and the rules work, but the games are not open to the public and most still run on a plain background. The money pays for the art across all fourteen, Rex's voice, and the system development left to finish version one. None of it funds AI development, and none of it covers running costs.
 ```
 
 ### John's version
@@ -75,7 +75,7 @@ THE ONE THAT TALKS. Rex is our AI zookeeper. He hosts the whole night - does the
 
 THE ONE THAT'S DRAWN. The character portraits, the game backdrops, the artwork on this page - AI-generated, from prompts we wrote ourselves, describing our own animals. Twenty of them. We made them up, named them, gave them their personality problems. The prompts don't name, copy or imitate any living artist, any studio, or anybody's existing work, and we didn't feed anyone else's images in as reference or training data. The games, the rules, the code and the writing are ours.
 
-WHERE THE MONEY GOES. Three thousand five hundred dollars. That's it. Fourteen games are built and the rules work - what is missing is the finishing. The money buys the art across all fourteen games, Rex's actual speaking voice, and the custom characters backers are owed. It does not pay our running costs; subscriptions do that after launch. Not one cent goes to building AI - we rent that model like everyone else, and we would rather say so plainly than have you find out later.
+WHERE THE MONEY GOES. Three thousand five hundred dollars. That's it. Fourteen games are built and the rules work - what is missing is the finishing. The money buys the art across all fourteen games, Rex's actual speaking voice, and the system development that turns fourteen built games into a finished version one. It does not pay our running costs; subscriptions do that after launch. Not one cent goes to building AI - we rent that model like everyone else, and we would rather say so plainly than have you find out later.
 ```
 
 Neither version claims all campaign copy is human-written, because parts were drafted with AI
@@ -92,7 +92,7 @@ shipped -- worth declaring rather than leaving for a backer to notice.
 ```
 Right. This is the part where I'm meant to look you in the eye and tell you what could go wrong. Fine by me - I'd rather you heard it from me than found it out later.
 
-But first, the thing that actually matters, and I want you to sit with it for a second: this is not a drawing on a napkin. The fourteen games are built and the rules work. Rex is built. The phone controllers are built. What is not done is the finishing - the artwork, and giving Rex an actual voice - and that is precisely what your money is for. The games are not open to the public yet; backers get in first when this closes. Which is exactly why we're asking for three and a half grand instead of eighty. We are not building PlayZoo from nothing. We are finishing it and getting it out the door. So the question that sinks most campaigns - "will these people ever deliver anything" - is a much smaller question here than you're used to asking. And if you want to check there is somebody real behind this before you pledge, go and argue with John on the support page. He is switched on right now and he will insult you free of charge.
+But first, where this actually stands, because it decides everything else you read here: PlayZoo is IN DEVELOPMENT. It is not open, it is not trading, and there is no business here quietly ticking over that your money props up. What there is, is a build that is most of the way done - and this campaign pays to finish it. That is the whole shape of it. Which is not to say it is a drawing on a napkin. The fourteen games are built and the rules work. Rex is built. The phone controllers are built. What is not done is the finishing - the artwork, and giving Rex an actual voice - and that is precisely what your money is for. The games are not open to the public yet; backers get in first when this closes. Which is exactly why we're asking for three and a half grand instead of eighty. We are not building PlayZoo from nothing. We are finishing it and getting it out the door. So the question that sinks most campaigns - "will these people ever deliver anything" - is a much smaller question here than you're used to asking. And if you want to check there is somebody real behind this before you pledge, go and argue with John on the support page. He is switched on right now and he will insult you free of charge.
 
 Now. You asked what could bite us. Four things, and one bonus.
 
@@ -158,24 +158,30 @@ A: Yes. PlayZoo is white-label, so a venue can rebrand the colours and even rena
 ## 6. Refund policy
 
 Kickstarter asks for this, and it is one of the two fields the reviewer quoted back on the sister
-project -- the other being Risks. It is written to be compliant by construction: it says what a
-pledge buys (a finite deliverable), it never describes the pledge as support for a business, and it
-does not offer refunds the platform's own terms do not allow.
+project -- the other being Risks. It does two jobs: it keeps the compliant framing (a pledge buys
+named things, never general support for a business), and it states what happens after funding.
 
-The trap to avoid: language like "your support keeps us going" or "helps cover our costs" turns a
-reward pledge into general business support, which is the exact framing that got the sister project
-pulled. A pledge here buys named things, and the policy says so.
+**Owner's decision, 2026-09-10: no commitment beyond Kickstarter's own terms.** Asked whether to
+promise a replacement-or-direct-refund if something can't be delivered, the owner chose to promise
+nothing the platform does not already provide. So this policy says plainly that collected pledges
+are not refundable, rather than implying a safety net that would then have to be honoured by hand.
+Do not soften this later into "we'll sort you out" -- an informal promise is the same liability as a
+formal one, with none of the clarity.
+
+The trap it still avoids: language like "your support keeps us going" or "helps cover our costs"
+turns a reward pledge into general business support, which is the exact framing that got the sister
+project pulled. A pledge here buys named things, and the policy says so in its first line.
 
 ```
 WHAT YOUR PLEDGE IS. You are pre-ordering specific, named things: access to PlayZoo for a set number of months, a set number of games, a backer code, a place in the backers-only club, and - at Founding Animal and Head Keeper - custom animal characters drawn for you. It is not a donation and it is not general support for a business. Everything you are owed is listed on your reward, and the list does not shrink after funding.
 
 BEFORE THE CAMPAIGN ENDS. You can change or cancel your pledge yourself, any time before the campaign closes, straight from Kickstarter. You do not need our permission and you do not need to explain yourself. Nothing is charged until the campaign successfully funds.
 
-IF THE CAMPAIGN DOESN'T FUND. Nobody is charged a penny. Kickstarter is all-or-nothing, so if we miss $3,500 the pledges simply never collect.
+IF THE CAMPAIGN DOESN'T FUND. Nobody is charged a penny. Kickstarter is all-or-nothing, so if we miss $3,500 the pledges simply never collect and there is nothing to refund.
 
-AFTER IT FUNDS. Once funds collect, pledges are not refundable through Kickstarter - the platform has no refund button, and anyone who tells you otherwise is guessing. What we commit to instead is this: if we cannot deliver something you were promised, we will tell you in a project update, say plainly why, and offer you either a replacement of equal or greater value or a refund arranged directly with us. We would rather hand money back than have you feel done over.
+AFTER IT FUNDS. Once the funds collect, pledges are not refundable. Kickstarter has no refund button and we are not offering one alongside it. We would rather tell you that straight than imply a safety net that isn't there. What you have instead is a list on your reward that does not change after funding, and updates that tell you honestly where the work has got to - including when it is going slower than we said.
 
-WHAT WOULD NOT BE A REFUND CASE. Delivery landing late but landing. Rex's speaking voice not arriving - that is deliberately in no reward tier for exactly this reason, so nobody has paid for it. A game you did not enjoy. We will be honest with you about all three, but a missed taste is not a missed delivery.
+TWO THINGS WORTH KNOWING BEFORE YOU PLEDGE. Rex's speaking voice is deliberately not part of any reward tier, precisely because it is the piece most likely to slip - so nobody is paying for something that might not arrive. And if delivery runs late, you will hear it from us in a project update rather than work it out from the silence.
 
 HOW TO REACH A HUMAN. Kickstarter messages, or the support desk on the project page. A real person reads both.
 ```

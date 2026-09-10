@@ -5,7 +5,7 @@
 // ongoing operational costs... reframe the project so it's clearly funding a specific, new, finite
 // piece of work or deliverable."
 //
-// PlayZoo's page had the identical framing in ELEVEN places, plus a line inviting the reviewer to go
+// PlayZoo's page had the identical framing in TWELVE places, plus a line inviting the reviewer to go
 // and play the games -- which are locked behind GAMES_OPEN, so that link shows a lock screen. Copy
 // gets rewritten often and by hand; the phrase that sank the sister project is a natural thing to
 // type. This makes it fail here instead of at review.
@@ -86,14 +86,23 @@ for (const [name, text] of SURFACES) {
 
 // --- claim 3: the four spend buckets are finite deliverables ---------------------------------------
 // The reviewer asked for "a specific, new, finite piece of work or deliverable". Hosting was one of
-// the four buckets on the page; it is now the custom characters backers are owed.
+// the four buckets on the page; it is now system development -- building the thing, not running it.
 const spend = read("kickstarter/body.html");
 check("no spend bucket is servers or hosting",
       !/<b>Keep the zoo standing\.<\/b>/.test(spend),
       "that bucket was literally 'Servers and hosting'");
-check("a spend bucket names what backers physically receive",
-      /The animals you're owed\./.test(spend),
-      "at least one bucket must be a deliverable, not a cost centre");
+check("a spend bucket is development work, not a cost centre",
+      /<b>System development\.<\/b>/.test(spend),
+      "owner's call 2026-09-10: the funds BUILD the thing, they do not keep it running");
+
+// The reviewer did not just ask Zwaptz to delete a claim -- they asked for the opposite claim to be
+// made: "reframe the project so it's clearly funding a specific, new, finite piece of work". Saying
+// nothing about the stage is how the page ended up implying it was live. So the stage must be STATED.
+check("the page states outright that PlayZoo is in development",
+      /PlayZoo is in development/i.test(spend),
+      "block 01 must name the stage, not leave it to be inferred");
+check("and says the money is not keeping anything running",
+      /nothing is running yet|isn't one running yet/i.test(spend));
 
 // --- claim 4: the page does not promise a reviewer something the lock screen contradicts ------------
 // The campaign told people to go and try the games. GAMES_OPEN is false, so the invitation resolves
@@ -112,6 +121,13 @@ check("and that backers get in first when it closes",
 check("a refund policy exists", /## 6\. Refund policy/.test(fields));
 check("it says a pledge buys named things, not general support",
       /not a donation and it is not general support for a business/i.test(fields));
+// Owner's call 2026-09-10: promise nothing the platform does not already provide.
+check("it promises no refund the platform cannot deliver",
+      /pledges are not refundable/i.test(fields) && !/refund arranged directly/i.test(fields),
+      "an informal 'we'll sort you out' is the same liability with none of the clarity");
+check("the risks field leads with the development stage",
+      /PlayZoo is IN DEVELOPMENT/.test(fields),
+      "this is the field the reviewer quoted on the sister project");
 
 console.log(fails ? `\n${fails} FAILED` : "\nall Kickstarter compliance checks passed");
 process.exit(fails ? 1 : 0);
