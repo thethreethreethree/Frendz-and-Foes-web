@@ -23,6 +23,8 @@ export const caSubmit = (cards: string[]) => getSocket().emit("ca:submit", { car
 export const caPick = (i: number) => getSocket().emit("ca:pick", { i });
 export const caNext = () => getSocket().emit("ca:next");
 export const caReset = () => getSocket().emit("ca:reset");
+/** Host removes a player who has left the room. */
+export const caKick = (id: string) => getSocket().emit("ca:kick", { id });
 
 const key = (room: string) => `ff:afterdark:${room}`;
 export function loadCaPlayer(room: string): { id?: string; name?: string; avatar?: string; rejoinToken?: string } {
@@ -30,6 +32,11 @@ export function loadCaPlayer(room: string): { id?: string; name?: string; avatar
 }
 export function saveCaPlayer(room: string, v: { id?: string; name?: string; avatar?: string; rejoinToken?: string }) {
   try { localStorage.setItem(key(room), JSON.stringify({ ...loadCaPlayer(room), ...v })); } catch { /* ignore */ }
+}
+
+/** Drop the stored identity so a removed player's phone does not auto-rejoin on reconnect. */
+export function forgetCaPlayer(room: string) {
+  try { localStorage.removeItem(key(room)); } catch { /* ignore */ }
 }
 
 /** Render a prompt with its blank(s) filled by the given answer(s). */

@@ -93,3 +93,113 @@ test("next round rotates the judge and refills hands", () => {
   assert.notEqual(st.judgeId, firstJudge);
   assert.ok(st.players.every((p) => p.handCount === st.config.handSize)); // refilled
 });
+
+// --- removing players -----------------------------------------------------------------------------
+// The owner runs these at bars: people wander off mid-round. Two separate problems live here.
+//
+// 1. THE STALL. A round advances when every non-judge WITH A socketId has submitted, and nothing
+//    cleared socketId when a phone vanished. Someone who went home counted as active forever, so
+//    the round waited on a card that was never coming -- and ca:next only works in "reveal", so the
+//    host could not skip past it either. The game was simply stuck.
+// 2. No way for the host to remove anyone at all.
+function bigGame(n = 4) {
+  const h = harness();
+  const players = [];
+  for (let i = 0; i < n; i++) {
+    const s = h.connect(String.fromCharCode(97 + i));
+    s.send("ca:join", { room: "R", name: "P" + i });
+    players.push(s);
+  }
+  const host = h.connect("host", true);
+  host.send("ca:start");
+  return { h, players, host };
+}
+
+const submitFor = (h, s) => {
+  const st = h.lastState();
+  const hand = h.youFor(s.socket.id).hand;
+  s.send("ca:submit", { cards: hand.slice(0, st.prompt.pick) });
+};
+
+test("a player who disconnects stops blocking the round", () => {
+  const { h, players } = bigGame(4);
+  const judge = h.lastState().judgeId;
+  const others = players.filter((p) => p.pid() !== judge);
+
+  submitFor(h, others[0]);
+  submitFor(h, others[1]);
+  assert.equal(h.lastState().phase, "submitting", "still waiting on the third player");
+
+  // The third player's phone goes dark. Before the fix this hung here forever.
+  others[2].send("disconnect");
+  assert.equal(h.lastState().phase, "judging", "the round moves on without the player who left");
+});
+
+test("the host can remove a player, and that unblocks the round too", () => {
+  const { h, players, host } = bigGame(4);
+  const judge = h.lastState().judgeId;
+  const others = players.filter((p) => p.pid() !== judge);
+
+  submitFor(h, others[0]);
+  submitFor(h, others[1]);
+  assert.equal(h.lastState().phase, "submitting");
+
+  host.send("ca:kick", { id: others[2].pid() });
+  const st = h.lastState();
+  assert.equal(st.phase, "judging");
+  assert.equal(st.players.length, 3, "the removed player is gone from the roster");
+  assert.ok(!st.players.some((p) => p.id === others[2].pid()));
+});
+
+test("removing the judge hands the role on instead of stranding the round", () => {
+  const { h, players, host } = bigGame(4);
+  const judgeBefore = h.lastState().judgeId;
+  host.send("ca:kick", { id: judgeBefore });
+  const st = h.lastState();
+  assert.equal(st.players.length, 3);
+  assert.notEqual(st.judgeId, judgeBefore, "somebody else is judge now");
+  assert.ok(st.players.some((p) => p.id === st.judgeId), "and they are a player who is still here");
+  assert.ok(st.judgeId, "the judge seat is never left empty");
+});
+
+test("a removed player's card comes off the table", () => {
+  const { h, players, host } = bigGame(4);
+  const judge = h.lastState().judgeId;
+  const others = players.filter((p) => p.pid() !== judge);
+  for (const o of others) submitFor(h, o);
+  assert.equal(h.lastState().phase, "judging");
+  assert.equal(h.lastState().revealed.length, 3);
+
+  host.send("ca:kick", { id: others[0].pid() });
+  const rev = h.lastState().revealed;
+  assert.equal(rev.length, 2, "their submission goes with them");
+  // `i` is what the judge taps, so it must stay a clean 0..n-1 after the removal.
+  assert.deepEqual(rev.map((r) => r.i), [0, 1], "the remaining cards are re-indexed");
+});
+
+test("dropping below the minimum returns the room to the lobby", () => {
+  const { h, players, host } = bigGame(4);
+  host.send("ca:kick", { id: players[0].pid() });
+  assert.notEqual(h.lastState().phase, "lobby", "three players can still play");
+  host.send("ca:kick", { id: players[1].pid() });
+  const st = h.lastState();
+  assert.equal(st.phase, "lobby", "two cannot, so the room waits rather than pretending to play");
+  assert.equal(st.players.length, 2);
+});
+
+test("only the host can remove a player", () => {
+  const { h, players } = bigGame(4);
+  const before = h.emitted.length;
+  players[0].send("ca:kick", { id: players[1].pid() });
+  assert.equal(h.lastState().players.length, 4, "nobody was removed");
+  assert.ok(h.errorsAfter(before).length > 0, "and the player is told why");
+});
+
+test("removing someone already gone is refused, not crashed", () => {
+  const { h, players, host } = bigGame(4);
+  host.send("ca:kick", { id: players[0].pid() });
+  const before = h.emitted.length;
+  host.send("ca:kick", { id: players[0].pid() });
+  assert.equal(h.lastState().players.length, 3);
+  assert.ok(h.errorsAfter(before).length > 0);
+});

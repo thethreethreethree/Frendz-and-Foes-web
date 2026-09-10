@@ -106,6 +106,64 @@ function shuffle(arr) { const a = [...arr]; for (let i = a.length - 1; i > 0; i-
 const judgeId = (m) => m.order[m.judgeIdx] ?? null;
 const nonJudges = (m) => [...m.players.values()].filter((p) => p.id !== judgeId(m));
 
+// Fewest players the game works with. The judge does not play a card, so three is two cards to
+// choose between -- below that there is no contest to judge.
+export const AD_MIN_PLAYERS = 3;
+
+// Take a player out and leave the room PLAYABLE.
+//
+// Deleting from the Map is the easy part. The player also holds a slot in the judge rotation
+// (m.order, indexed by m.judgeIdx), may be the judge right now, and may have a card already face
+// down on the table. Miss any of those and the room survives in a state it can never leave.
+function removePlayer(m, id) {
+  if (!m.players.has(id)) return false;
+
+  const idx = m.order.indexOf(id);
+  if (idx !== -1) {
+    m.order.splice(idx, 1);
+    // Keep judgeIdx pointing at the player it already pointed at. If the judge is the one leaving,
+    // the slot naturally falls to whoever moved up, which is the next judge anyway.
+    if (idx < m.judgeIdx) m.judgeIdx -= 1;
+  }
+  m.judgeIdx = m.order.length ? ((m.judgeIdx % m.order.length) + m.order.length) % m.order.length : 0;
+
+  m.submissions.delete(id);
+  // Re-index, because `i` is what the judge taps to pick a card.
+  m.revealed = m.revealed.filter((r) => r.pid !== id).map((r, i) => ({ ...r, i }));
+  m.players.delete(id);
+  return true;
+}
+
+// Move the room on if a departure just unblocked it, or back to the lobby if it cannot continue.
+//
+// THE BUG THIS FIXES: a round advances when every non-judge WITH A socketId has submitted. Nothing
+// cleared socketId when a phone vanished, so a player who left the bar counted as active forever
+// and the round waited on a card that was never coming. ca:next only works in "reveal", so the host
+// could not skip past it either -- the game was simply stuck.
+function repairPhase(m) {
+  if (m.phase === "lobby" || m.phase === "ended") return;
+
+  if (m.players.size < AD_MIN_PLAYERS) {
+    m.phase = "lobby"; m.round = 0; m.prompt = null;
+    m.submissions = new Map(); m.revealed = []; m.winner = null;
+    for (const p of m.players.values()) p.hand = [];
+    return;
+  }
+
+  if (m.phase === "submitting") {
+    const active = nonJudges(m).filter((x) => x.socketId);
+    if (active.length > 0 && active.every((x) => m.submissions.has(x.id))) {
+      m.revealed = shuffle([...m.submissions.entries()].map(([pid, cs]) => ({ pid, cards: cs }))).map((r, i) => ({ i, ...r }));
+      m.phase = "judging";
+    }
+    return;
+  }
+
+  // Everyone whose card was on the table has gone. Deal the round again rather than strand the
+  // judge in front of an empty table with nothing to pick.
+  if (m.phase === "judging" && m.revealed.length === 0) { m.phase = "submitting"; newPrompt(m); }
+}
+
 function drawResponses(m, n) {
   const out = [];
   for (let k = 0; k < n; k++) {
@@ -168,13 +226,41 @@ export function registerAfterDarkHandlers(io, socket, rooms, roomKey = (r) => St
   socket.on("ca:start", () => {
     const code = hostCode(); const m = code && rooms.get(code)?.afterdark;
     if (!m || m.phase !== "lobby") return;
-    if (m.players.size < 3) return err("Need at least 3 players.");
+    if (m.players.size < AD_MIN_PLAYERS) return err(`Need at least ${AD_MIN_PLAYERS} players.`);
     m.order = shuffle([...m.players.keys()]);
     m.responseDeck = shuffle(AD_RESPONSES); m.responsePos = 0;
     m.promptDeck = shuffle(AD_PROMPTS); m.promptPos = 0;
     m.judgeIdx = 0; m.round = 1;
     for (const p of m.players.values()) { p.score = 0; p.hand = drawResponses(m, m.config.handSize); }
     m.phase = "submitting"; newPrompt(m);
+    push(code);
+  });
+
+  // Host removes a player who has left. Bar reality: people wander off mid-round and the game
+  // should not be held hostage by an empty chair.
+  socket.on("ca:kick", ({ id }) => {
+    const code = hostCode(); const m = code && rooms.get(code)?.afterdark;
+    if (!m) return;
+    if (!isHost()) return err("Only the host can remove a player.");
+    const p = m.players.get(id);
+    if (!p) return err("That player has already gone.");
+    const { name, socketId } = p;
+    removePlayer(m, id);
+    repairPhase(m);
+    // Tell their phone, so a device still sitting on the table does not silently rejoin.
+    if (socketId) io.to(socketId).emit("ca:kicked", { name });
+    push(code);
+  });
+
+  socket.on("disconnect", () => {
+    const code = socket.data.caCode; const m = code && rooms.get(code)?.afterdark;
+    const pid = socket.data.caPlayerId;
+    if (!m || !pid) return;
+    const p = m.players.get(pid);
+    // Ignore a stale socket belonging to a player who has already reconnected on a new one.
+    if (!p || p.socketId !== socket.id) return;
+    p.socketId = null;
+    repairPhase(m);
     push(code);
   });
 

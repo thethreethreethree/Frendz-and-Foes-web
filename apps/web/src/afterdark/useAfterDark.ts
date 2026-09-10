@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { getSocket } from "../net/socket";
-import { loadCaPlayer, saveCaPlayer, caJoin, caSync, type CaState, type CaYou } from "../net/afterdark";
+import { loadCaPlayer, saveCaPlayer, forgetCaPlayer, caJoin, caSync, type CaState, type CaYou } from "../net/afterdark";
 import { resolveSlug } from "../brand/resolve";
 
 // Shared hook for all After Dark surfaces. Players join by name (auto-rejoin); host/display watch via
@@ -9,6 +9,7 @@ export function useAfterDark(room: string, role: "host" | "display" | "player") 
   const [state, setState] = useState<CaState | null>(null);
   const [you, setYou] = useState<CaYou | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [removed, setRemoved] = useState(false);
 
   useEffect(() => {
     const s = getSocket();
@@ -20,12 +21,16 @@ export function useAfterDark(room: string, role: "host" | "display" | "player") 
     const onYou = (y: CaYou) => setYou(y);
     let clearTimer: ReturnType<typeof setTimeout>;
     const onError = (msg: string) => { setError(String(msg)); clearTimeout(clearTimer); clearTimer = setTimeout(() => setError(null), 3500); };
+    // The host removed us. Forget the stored identity FIRST: `enter` re-joins on every reconnect,
+    // so without this the phone would quietly walk back into the game the host just removed it from.
+    const onKicked = () => { forgetCaPlayer(room); setRemoved(true); setYou(null); };
     s.on("connect", enter);
     s.on("ca:state", onState);
     s.on("ca:you", onYou);
     s.on("ca:error", onError);
+    s.on("ca:kicked", onKicked);
     if (s.connected) enter();
-    return () => { clearTimeout(clearTimer); s.off("connect", enter); s.off("ca:state", onState); s.off("ca:you", onYou); s.off("ca:error", onError); };
+    return () => { clearTimeout(clearTimer); s.off("connect", enter); s.off("ca:state", onState); s.off("ca:you", onYou); s.off("ca:error", onError); s.off("ca:kicked", onKicked); };
   }, [room, role]);
 
   const idRef = useRef<string | undefined>(undefined);
@@ -33,6 +38,6 @@ export function useAfterDark(room: string, role: "host" | "display" | "player") 
     if (you?.id && you.id !== idRef.current) { idRef.current = you.id; saveCaPlayer(room, { id: you.id, ...(you.rejoinToken ? { rejoinToken: you.rejoinToken } : {}) }); }
   }, [you?.id, you?.rejoinToken, room]);
 
-  const join = (name: string, avatar?: string) => { saveCaPlayer(room, { name, ...(avatar ? { avatar } : {}) }); const st = loadCaPlayer(room); caJoin(room, name, st.avatar, st.id, st.rejoinToken); };
-  return { state, you, error, join };
+  const join = (name: string, avatar?: string) => { setRemoved(false); saveCaPlayer(room, { name, ...(avatar ? { avatar } : {}) }); const st = loadCaPlayer(room); caJoin(room, name, st.avatar, st.id, st.rejoinToken); };
+  return { state, you, error, removed, join };
 }

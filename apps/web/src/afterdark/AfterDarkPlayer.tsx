@@ -6,8 +6,16 @@ import { AvatarNameForm, AvatarBadge } from "../net/avatars";
 import { HowToPlay } from "../net/howtoplay";
 
 export function AfterDarkPlayer({ room }: { room: string }) {
-  const { state, you, error, join } = useAfterDark(room, "player");
+  const { state, you, error, removed, join } = useAfterDark(room, "player");
   const label = getBrand().games.afterdark?.label ?? "After Dark";
+  // Say so plainly, rather than bouncing them back to the join form as if nothing happened.
+  if (removed) return (
+    <Wrap><Center>
+      <div className="ff-title text-2xl">You're out</div>
+      <p className="mt-2 text-sm text-muted">The host removed you from this game. Join again if that was a mistake.</p>
+      <div className="mt-5 w-full"><AvatarNameForm label={label} onJoin={join} error={error} /></div>
+    </Center></Wrap>
+  );
   if (!you) return <Wrap><AvatarNameForm label={label} onJoin={join} error={error} /></Wrap>;
   if (!state) return <Wrap><p className="text-muted">Connecting…</p></Wrap>;
   const me = state.players.find((p) => p.id === you.id);
