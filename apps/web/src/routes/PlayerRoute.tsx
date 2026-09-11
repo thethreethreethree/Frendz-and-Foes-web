@@ -9,6 +9,11 @@ import { BallparkPlayer } from "../ballpark/BallparkPlayer";
 import { TelestrationsPlayer } from "../telestrations/TelestrationsPlayer";
 import { AfterDarkPlayer } from "../afterdark/AfterDarkPlayer";
 import { BINGO_ROOM, getGameFromUrl, getRoleFromUrl, getRoomFromUrl, getTeamFromUrl, setUrlGame, setUrlRoom } from "../net/room";
+import { getBrand } from "../brand/theme";
+
+// Played on the host's phone + the TV. No player component exists for any of these -- check
+// apps/web/src/<game>/ and you will find Control and Display only.
+const HOST_ONLY_GAMES: GameType[] = ["taboo", "headsup", "reverse", "monikers", "pictionary"];
 import type { GameType } from "../net/socket";
 
 // Players reach this by scanning a join QR (carries ?room=). Murder → each player's own screen;
@@ -100,6 +105,27 @@ export function PlayerRoute() {
   const team = getTeamFromUrl();
   if (game === "feud" && team) {
     return <FeudTeamView room={room} teamId={team} role={getRoleFromUrl() ?? "answerer"} />;
+  }
+
+  // These five are played on the HOST'S phone and the big screen — they have no player surface at
+  // all (Control + Display only; there is no OffLimitsPlayer, HeadsUpPlayer, and so on). They used
+  // to fall through to Murder2Player, so a guest who scanned or typed into an Off Limits room was
+  // shown "Murder Mystery — PICK YOUR ANIMAL" and invited to join a game nobody was playing.
+  // Saying so plainly beats sending them somewhere confidently wrong.
+  if (HOST_ONLY_GAMES.includes(game)) {
+    const label = getBrand().games[game]?.label ?? game;
+    return (
+      <div className="ff-backdrop grid h-full place-items-center p-6 text-center">
+        <div className="max-w-xs">
+          <div className="ff-title text-3xl text-pink">{label}</div>
+          <p className="mt-3 text-sm text-white/80">
+            This one is played on the host&rsquo;s phone and the big screen — you don&rsquo;t need a
+            screen of your own. Put the phone down and watch the telly.
+          </p>
+          <p className="mt-3 font-mono text-xs text-white/50">Room {room}</p>
+        </div>
+      </div>
+    );
   }
 
   return <Murder2Player room={room} />;

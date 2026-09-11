@@ -200,6 +200,21 @@ export function registerMurder2Handlers(io, socket, rooms, roomKey = (r) => Stri
   const sendYouAll = (m) => { for (const p of m.players.values()) sendYou(m, p); };
 
   // --- Lobby: join + pick a character ---------------------------------------------------------
+  // The host and display ask for the room's state on arrival.
+  //
+  // THIS WAS MISSING. Every other server-authoritative game has a *:sync that ensures the room and
+  // pushes state straight back; murder had none, so the host and display emitted only the generic
+  // relay "join" and then waited for a broadcast that only fires when a PLAYER acts. Open the
+  // Murder host controller before anyone has joined and it sat on "Connecting…" forever -- the host
+  // could not even see the lobby or configure the game. Found by loading every surface in a browser.
+  socket.on("m2:sync", ({ room }) => {
+    if (!room) return;
+    const code = roomKey(room);
+    socket.join(code);
+    socket.data.code2 = code;
+    socket.emit("m2:state", publicState(ensure(rooms, code)));
+  });
+
   socket.on("m2:join", ({ room, name, avatar, playerId, rejoinToken }) => {
     if (!room || !name) return;
     const code = roomKey(room);

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { getSocket } from "../net/socket";
 import { resolveSlug } from "../brand/resolve";
 import {
-  loadPlayer2, savePlayer2, m2Join,
+  loadPlayer2, savePlayer2, m2Join, m2Sync,
   type V2State, type V2You, type V2Announce,
 } from "../net/murder2";
 
@@ -25,6 +25,9 @@ export function useMurder2(room: string, role: "host" | "display" | "player") {
         if (st.name) m2Join(room, st.name, st.avatar, st.id, st.rejoinToken);
       } else {
         s.emit("join", { room, role, game: "murder", brand: resolveSlug() });
+        // Ask for the room's state. Without this the host waits for a broadcast that only a
+        // player action produces, and sits on "Connecting…" until somebody joins.
+        m2Sync(room);
       }
     };
     const onState = (st: V2State) => setState(st);

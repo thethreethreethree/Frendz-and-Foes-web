@@ -63,6 +63,7 @@ export type V2Announce =
 
 export const m2Join = (room: string, name: string, avatar?: string, playerId?: string, rejoinToken?: string) =>
   getSocket().emit("m2:join", { room, name, avatar, playerId, rejoinToken });
+export const m2Sync = (room: string) => getSocket().emit("m2:sync", { room });
 export const m2Pick = (characterId: string) => getSocket().emit("m2:pick", { characterId });
 export const m2Config = (cfg: { killTarget?: number; cooldownSec?: number }) => getSocket().emit("m2:config", cfg);
 export const m2Start = () => getSocket().emit("m2:start");
