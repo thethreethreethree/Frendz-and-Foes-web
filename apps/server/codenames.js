@@ -180,7 +180,7 @@ export function registerCodenamesHandlers(io, socket, rooms, roomKey = (r) => St
     m.players.delete(id);
     if (wasSpymaster) m.log.push(`${p.name} left — ${wasSpymaster} needs a new spymaster.`);
     if (socketId) io.to(socketId).emit("cn:kicked", { name: p.name });
-    push(code);
+    broadcast(code);
   });
 
   socket.on("disconnect", () => {
@@ -192,7 +192,7 @@ export function registerCodenamesHandlers(io, socket, rooms, roomKey = (r) => St
     // Keep the player: their team and role are their seat, and Cover Ops players reconnect into it.
     // Only the connected flag changes, so the room can SEE who has dropped.
     p.socketId = null;
-    push(code);
+    broadcast(code);
   });
 
   socket.on("cn:start", () => {
