@@ -18,10 +18,10 @@ const CHROME = process.env.CHROME_PATH || "C:/Program Files/Google/Chrome/Applic
 const PORT = 9240;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const GAMES = [
+const GAMES = (process.env.SMOKE_GAMES || [
   "feud", "bingo", "murder", "trivia", "taboo", "headsup", "reverse",
   "monikers", "codenames", "justone", "ballpark", "pictionary", "telestrations", "afterdark",
-];
+].join(",")).split(",");
 const SURFACES = ["display", "control", "play"];
 
 // A surface counts as rendered when it shows something a person could act on. "Connecting…" is not
@@ -42,7 +42,7 @@ if (!page) { console.error("could not attach to Chrome at", CHROME); process.exi
 
 const ws = new WebSocket(page.webSocketDebuggerUrl, { perMessageDeflate: false });
 await new Promise((r) => ws.on("open", r));
-let id = 0; const pending = new Map(); let consoleErrors = [];
+let id = 0; const pending = new Map(); let consoleErrors = []; let badAssets = [];
 ws.on("message", (raw) => {
   const m = JSON.parse(raw);
   if (m.id && pending.has(m.id)) { pending.get(m.id)(m); pending.delete(m.id); return; }
@@ -50,17 +50,27 @@ ws.on("message", (raw) => {
     const d = m.params?.exceptionDetails;
     consoleErrors.push(d?.exception?.description || d?.text || "exception");
   }
+  // THE GRAPHIC CHECK. A picture with a wrong path fails exactly like today's logic bugs: nothing
+  // throws, nothing fails a test, the page just renders a hole. The browser knows; ask it.
+  if (m.method === "Network.responseReceived") {
+    const r = m.params?.response;
+    if (r && r.status >= 400 && !/favicon|\/api\//.test(r.url)) badAssets.push(`${r.status} ${r.url.split("/").pop()}`);
+  }
+  if (m.method === "Network.loadingFailed" && m.params?.type === "Image") {
+    badAssets.push(`failed image (${m.params.errorText})`);
+  }
 });
 const send = (method, params = {}) => new Promise((res) => { const n = ++id; pending.set(n, res); ws.send(JSON.stringify({ id: n, method, params })); });
 const ev = async (e) => (await send("Runtime.evaluate", { expression: e, returnByValue: true })).result?.result?.value;
 
 await send("Runtime.enable");
 await send("Page.enable");
+await send("Network.enable");
 
 const results = [];
 for (const game of GAMES) {
   for (const surface of SURFACES) {
-    consoleErrors = [];
+    consoleErrors = []; badAssets = [];
     const room = "SM" + Math.floor(10 + Math.random() * 89);
     await send("Page.navigate", { url: `${BASE}/?room=${room}&game=${game}#/${surface}` });
 
@@ -78,9 +88,12 @@ for (const game of GAMES) {
     }
     if (!verdict) verdict = text ? (/^(Connecting…|Finding room)/.test(text) ? "STUCK" : "NOT-APP") : "BLANK";
     const thrown = consoleErrors.filter((e) => !/favicon|manifest|net::ERR/i.test(e));
-    results.push({ game, surface, verdict, thrown: thrown.length, text: text.slice(0, 54) });
+    // Give lazy art a moment to request itself before judging what is missing.
+    await sleep(1200);
+    const assets = [...new Set(badAssets)];
+    results.push({ game, surface, verdict, thrown: thrown.length, assets, text: text.slice(0, 54) });
     const mark = verdict === "ok" ? (thrown.length ? "warn" : "ok  ") : verdict;
-    console.log(`${mark.padEnd(6)} ${game.padEnd(14)} ${surface.padEnd(8)} ${thrown.length ? "[" + thrown.length + " thrown] " : ""}${text.slice(0, 46)}`);
+    console.log(`${mark.padEnd(6)} ${game.padEnd(14)} ${surface.padEnd(8)} ${assets.length ? "[" + assets.length + " BAD ASSET] " : ""}${thrown.length ? "[" + thrown.length + " thrown] " : ""}${text.slice(0, 40)}`);
   }
 }
 
@@ -91,6 +104,9 @@ console.log(`  ${results.length} surfaces checked`);
 console.log(`  ${bad.length} broken, ${warn.length} rendered but threw`);
 for (const b of bad) console.log(`    ${b.verdict}  ${b.game}/${b.surface}  ${b.text}`);
 for (const w of warn) console.log(`    threw ${w.thrown}  ${w.game}/${w.surface}`);
+const broke = results.filter((r) => r.assets.length);
+console.log(`  ${broke.length} surfaces with a missing or failed graphic`);
+for (const b of broke) console.log(`    ${b.game}/${b.surface}: ${b.assets.slice(0, 4).join(", ")}`);
 
 ws.close(); chrome.kill();
 process.exit(bad.length ? 1 : 0);

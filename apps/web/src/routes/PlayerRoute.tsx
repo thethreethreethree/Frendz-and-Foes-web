@@ -107,6 +107,24 @@ export function PlayerRoute() {
     return <FeudTeamView room={room} teamId={team} role={getRoleFromUrl() ?? "answerer"} />;
   }
 
+  // Frendz and Foes players join through their TEAM's QR, so a bare code carries no team and there
+  // is no team phone to show. This used to fall through to Murder2Player, so someone who typed the
+  // room code was handed "Murder Mystery — PICK YOUR ANIMAL" in the middle of a Frendz and Foes
+  // game. Point them at the code that actually works instead.
+  if (game === "feud") {
+    return (
+      <div className="ff-backdrop grid h-full place-items-center p-6 text-center">
+        <div className="max-w-xs">
+          <div className="ff-title text-3xl text-pink">{getBrand().games.feud?.label ?? "Frendz and Foes"}</div>
+          <p className="mt-3 text-sm text-white/80">
+            Each team has its own code. Scan your team&rsquo;s QR from the big screen and you&rsquo;re in.
+          </p>
+          <p className="mt-3 font-mono text-xs text-white/50">Room {room}</p>
+        </div>
+      </div>
+    );
+  }
+
   // These five are played on the HOST'S phone and the big screen — they have no player surface at
   // all (Control + Display only; there is no OffLimitsPlayer, HeadsUpPlayer, and so on). They used
   // to fall through to Murder2Player, so a guest who scanned or typed into an Off Limits room was
