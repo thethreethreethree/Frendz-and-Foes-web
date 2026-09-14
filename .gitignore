@@ -29,3 +29,7 @@ tools/promo/*.mp4
 # Licensed music for the promo. Kept out of git: it is a third-party asset with its own licence,
 # and the licence, not the repo, is what grants the right to use it.
 tools/promo/audio/
+
+# Python bytecode from the tools/ scripts
+__pycache__/
+*.pyc

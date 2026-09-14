@@ -1,111 +1,95 @@
-# HANDOVER — process `GRAPHIC ASSETS/TRIVIA`
+# HANDOVER — `GRAPHIC ASSETS/TRIVIA` — DONE
 
-For the next agent. Written 2026-09-15 at the end of a session that could not finish the job.
+Closes the handover written 2026-09-15 by a session that inspected 6 of 26 files and stopped.
 
 ## The request, verbatim
 
 > "PLEASE PROCESS THESE IMAGES. some needs to have their background remove, and some might be
 > duplicates, please inspect all of the images and process them."
 
-Folder: `GRAPHIC ASSETS/TRIVIA/` — 26 files, 65.3 MB, untracked (not in git).
+## Outcome
 
-## State: 6 of 26 inspected. Nothing processed. Nothing altered.
+- **All 26 inspected**, one file at a time, each described from the pixels. `EVIDENCE.md` is the
+  manifest and is the authority on what every file contains.
+- **18 keyed** to real-alpha PNGs → `GRAPHIC ASSETS/TRIVIA/transparent/`, full 2048×2048 RGBA,
+  with `_preview/` JPEGs and `_check/` verification sheets. Each result was opened over **both a
+  white and a black ground** before being called done.
+- **8 scene plates left untouched** — the six owl reaction plates, the bar lounge, and the
+  leaderboard rig. Their backgrounds are real artwork, not a painted checkerboard.
+- **Duplicates: there are none.** The only real candidates, the two `Quiz_night_animal_emblem_design`
+  files 74 seconds apart, are different pictures — different disc colour, different eyes, different
+  expression, different checker tone. Keep both. The earlier 8×8 average-hash "distance 0" result
+  was the hash measuring their shared backdrop and is disproven.
+- **Nothing was deleted, and no source was modified.**
 
-`EVIDENCE.md` at the repo root is the Phase 0 manifest and is the thing to continue, not restart.
-It already holds full descriptions of six files and the hard facts for all 26.
+## Where things are, and why
 
----
+| what | where |
+|---|---|
+| keyed PNGs | `GRAPHIC ASSETS/TRIVIA/transparent/*.png` |
+| previews | `GRAPHIC ASSETS/TRIVIA/transparent/_preview/*.jpg` |
+| verification sheets (white \| black) | `GRAPHIC ASSETS/TRIVIA/transparent/_check/*.jpg` |
+| the tool | `tools/assets/dekey.py` |
+| the manifest | `EVIDENCE.md` |
 
-## Read this before you open anything
+The destination was not invented: it copies the layout already established by
+`GRAPHIC ASSETS/CHARACTER GRAPHIC ASSETS/transparent/`.
 
-**1. Downscale BEFORE you read any image at native size.**
-Once a conversation holds several images, the API caps *every* image in it at 2000 px on the longest
-edge. The emblems are 2048 px square. Reading six at native size retroactively blocked every further
-image read in the last session — including 1000 px previews. It cannot be undone mid-session.
-
-Do this first, then only ever open the previews:
+**The PNGs are on disk but deliberately not committed**, for the same reason: that existing
+`transparent/` folder is untracked too, and this repo consistently keeps source art out of git
+(`Media Assets/` and `tools/promo/src/` are both ignored as large binaries). 18 files at 2048×2048
+RGBA is 98 MB. The tool that regenerates them in about a minute is committed instead:
 
 ```
-python tools/assets/previews.py "GRAPHIC ASSETS/TRIVIA" <outdir> 1000
+python tools/assets/dekey.py "GRAPHIC ASSETS/TRIVIA"
 ```
 
-Full frames, never crops — a crop hides the corner that carries the painted checkerboard. The script
-asserts its output count, because an earlier version truncated names to 40 characters and silently
-collapsed `Quiz_night_animal_emblem_design_…044340` and `…044433` onto each other: 26 in, 25 out,
-nothing errored, and the missing pair was the exact duplicate question under investigation.
+## What is still open — owner's decisions
 
-**2. Do not trust any automated background detector. One was written and it is wrong.**
-Measured against the six files that were actually looked at, it got four wrong:
+1. **Ten emblems have nowhere to go.** `apps/web/src/trivia/assets.ts` wires **three** round badges
+   (science, sports, entertainment). This folder supplies **thirteen** emblems. Whether trivia gains
+   categories is a product decision nobody has made. The slot-by-slot mapping is in `EVIDENCE.md`.
+2. **Five source defects, logged not fixed** — all are regeneration problems, not keying problems:
+   - a **human finger** presses the buzzer in `Thumb_slamming_big_button`, in a cast of twenty
+     animals. It runs off the frame edge, so it cannot be cropped out.
+   - **garbled neon** reading "HEAS7"/"HEAST" in `Owl_reacting_with_speed_lines` — the same failure
+     class as the known Rex "Rlay2e" badge.
+   - **placeholder leaderboard text** painted into `Cartoon_owl_presenting_leaderboard`
+     ("1. WINNERS / 2. RUNNERS UP / 3.—", the third row clipped by the board's own edge). The file
+     cannot serve as a live leaderboard plate unless that board is covered.
+   - the owl in `Owl_reacting_with_confetti` is **violet-purple**; in the other five plates it is
+     **brown**.
+   - the owl's **bow tie is a different colour in all six plates** and its jacket changes too. Cut
+     together in one game, the host changes clothes between every reaction.
+3. **The glow checker**, described below. Fixable only by repainting.
 
-| file | detector | truth (observed) |
-|---|---|---|
-| History_quiz_emblem_design | none | DARK checkerboard |
-| Music_quiz_emblem_design | none | DARK checkerboard |
-| Party_game_screen_leaderboard | DARK checker | real neon room, no checker |
-| Quiz_room_waiting_for_game | DARK checker | real bar interior, no checker |
+## If you touch the keyer, read this first
 
-Acting on it would key the background out of a scene plate and leave a checkerboard baked inside an
-emblem. On a mostly-flat 2048 px image a corner sample measures the *frame*, not the *fill*. The same
-defect made an 8×8 average hash report distance 0 between three visibly different emblems — it was
-comparing their shared backdrop. **Eyes decide. Measurements are hints.**
+The two things that make this problem look easy and are both wrong:
 
-**3. LAW 1a is in force.** 26 files means 26 openings and 26 written descriptions. No contact sheets,
-no montages, no group entries, no describing from a filename. The Evidence Protocol adds R5: every
-report ends with a `Not opened:` list, or the word none.
+1. **Do not fit a global checkerboard grid.** It is the obvious approach. The checker was painted by
+   a generative model, not ruled: the period is stable (51.06 → 51.24 across one frame) but the
+   **phase drifts**, so a single global grid is in step at one edge and half a square out elsewhere.
+   It leaves a full-width band of un-keyed checkerboard across the image **while scoring "49.1%
+   cleared, fit 1.20"**. The tool measures local contrast instead and never needs the phase.
+2. **Do not trust any statistic.** Every defect found in this job was invisible in all of them. A
+   collar of surviving checker squares hugging the Geography badge scored 38% clear, 0.11% soft.
+   The only thing that caught any of it was compositing each result over white *and* black and
+   looking at it. `_check/` exists for that, and the sheets are one file each, never a montage.
 
----
+And one thing that looks like a defect and is not: **the pale ring around the Geography badge is
+real artwork.** The source has a mint glow painted outside the rim that washes out the checker
+behind it. It was nearly "fixed" away.
 
-## What the job actually is
+### Known limitation — the glow checker
 
-**Every file is JPEG/RGB. Not one has an alpha channel** — JPEG cannot carry one. So every
-"transparent" background in this folder is *painted artwork*: a literal checkerboard drawn as pixels.
-"Remove the background" means **key that checkerboard out and write a PNG with real alpha.**
+On `Red_cross`, `Green_tick`, `Retro_countdown_clock` and `Thumb`, a checker texture survives inside
+the broad soft glow. The generator did not let the glow *tint* the checkerboard; it drew the checker
+at full strength through it. A dark square inside Red_cross's teal halo samples `[0,1,0]` — pure
+background, no teal in it whatsoever. No unpremultiply recovers colour that was never painted.
 
-Two checkerboard variants exist, confirmed by eye:
-- **LIGHT** — grey/white squares (e.g. `Film_quiz_emblem_icon`, `Sport_quiz_night_emblem`)
-- **DARK** — black/charcoal squares (e.g. `History_quiz_emblem_design`, `Music_quiz_emblem_design`)
-
-A keyer tuned only for light grey will silently pass over every dark one. Handle both, and verify by
-compositing each result over BOTH a white and a black ground — a halo or a surviving checker square
-is invisible against one and obvious against the other.
-
-**Do not key the scene plates.** Two are confirmed real backgrounds and must be left whole:
-- `Quiz_room_waiting_for_game` — bar lounge; the blank white projector screen is a content area
-- `Party_game_screen_leaderboard_ba…` — leaderboard rig; the empty slots are where scores get drawn
-
-The four 2752×1536 owl files are almost certainly scenes too, but **they have not been opened** —
-confirm before deciding.
-
-## The duplicate question
-
-No two files are byte-identical; all 26 md5 digests differ. The only genuine candidates are
-`Quiz_night_animal_emblem_design_2K_20260915044340.jpeg` (2.37 MB) and `…044433.jpeg` (2.31 MB) —
-same prompt stem, 74 seconds apart. Whether they are the *same picture* is a question only looking
-can settle. Open both, side by side in sequence, and say plainly which to keep and why. Other
-apparent matches from hashing are backdrop artefacts, not duplicates.
-
-## Still undecided — ask, do not assume
-
-- **Where processed files go.** Not chosen. `apps/web/public/` is where game art lives, but the
-  naming scheme and whether these replace or supplement existing trivia art is the owner's call.
-- **Whether to keep the source JPEGs.** They are untracked; nothing is committed.
-- **What the emblems are for.** Eight category emblems were seen or implied (music, film, sport,
-  history, science, geography, food/burger, adult). Whether trivia gains categories is a product
-  decision nobody has made.
-
-## Useful things already true
-
-- **No file contains any text.** Six confirmed by eye, and it matters: these reuse under any brand
-  with no re-lettering, which suits the white-label venue feature.
-- Size classes: **2048×2048** ×20 (emblems, icons, props), **2752×1536** ×6 (scenes, owl reactions).
-- Art style matches the existing PlayZoo look — neon on dark, heavy black outlines, mint/purple/pink.
-
-## Definition of done
-
-1. `EVIDENCE.md` lists all 26 with subject, text, and background — one line per file, ending in a
-   `Not opened:` line reading `none`.
-2. A keep/discard call on the `Quiz_night_animal_emblem_design` pair, with the reason.
-3. PNGs with real alpha for every emblem that carries a painted checkerboard, each checked over both
-   white and black.
-4. Scene plates untouched.
-5. Nothing deleted from `GRAPHIC ASSETS/TRIVIA/` without the owner saying so.
+Substituting the locally averaged colour there **was tried and is worse**: where the background tone
+is black, "sits at a background tone" also matches every black outline in the artwork, so the repair
+washes the linework out to muddy grey. Fixing this properly means repainting the glow — inpainting,
+i.e. generating art rather than processing it — so it is left alone and recorded. Visible at 1:1
+over black; not at game size.
