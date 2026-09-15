@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { GameProvider } from "../store/gameStore";
 import { BingoProvider } from "../store/bingoStore";
 import { TriviaProvider } from "../store/triviaStore";
@@ -33,6 +33,40 @@ export function ControlRoute() {
   const [game] = useState<GameType | null>(() =>
     new URLSearchParams(window.location.search).has("game") ? getGameFromUrl() : null,
   );
+  // THE ROOM DECIDES WHICH GAME THIS IS, not the controller's URL.
+  //
+  // A room code reaches the controller with no game attached -- the display says "or enter room
+  // code", ControlPairButton sets ?room= and nothing else, and a re-opened or shared host link can
+  // arrive stripped. Without asking, two things went wrong, both reproduced against a room the
+  // server correctly reported as running trivia:
+  //   * ?room=XXXX and no game  -> "PICK A GAME", making the host choose again for a game the
+  //     display had already chosen.
+  //   * ?game=feud&room=XXXX    -> the SURVEY SHOWDOWN remote, reporting "Display linked (1)"
+  //     while driving a Trivia display. Wrong buttons, no error, nothing to indicate it.
+  // The display minted the room and everyone in the venue is looking at it, so when the two
+  // disagree the room wins. PlayerRoute already resolves this way against the same endpoint.
+  const [resolved, setResolved] = useState(false);
+  const roomInUrl = getRoomFromUrl();
+  useEffect(() => {
+    if (!roomInUrl || resolved) return;
+    let live = true;
+    (async () => {
+      try {
+        const res = await fetch(`/api/room/${encodeURIComponent(roomInUrl)}`);
+        const data = await res.json();
+        // Only act on a room the server actually knows. A room it has never seen (the host is
+        // minting a fresh one) must fall through to the picker, not be treated as a conflict.
+        if (live && data?.game && data.game !== game) {
+          setUrlGame(data.game as GameType);
+          window.location.reload();
+          return;
+        }
+      } catch { /* offline or no such room: fall through to what the URL says */ }
+      if (live) setResolved(true);
+    })();
+    return () => { live = false; };
+  }, [roomInUrl, game, resolved]);
+
   const [room] = useState<string | undefined>(() => {
     const existing = getRoomFromUrl();
     if (existing) return existing;
@@ -45,6 +79,18 @@ export function ControlRoute() {
     }
     return undefined;
   });
+
+  // Never render a remote while the room's real game is still in flight -- rendering the URL's
+  // guess first is what put the Survey remote on screen. This sits BELOW every hook on purpose:
+  // an early return above one would change the hook count between renders the moment the lookup
+  // resolves, which React refuses.
+  if (roomInUrl && !resolved) {
+    return (
+      <div className="ff-backdrop grid h-full place-items-center p-6 text-center">
+        <div className="ff-title text-2xl text-ink/80">Finding room {roomInUrl}…</div>
+      </div>
+    );
+  }
 
   if (!game) {
     return (
