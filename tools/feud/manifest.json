@@ -106,17 +106,13 @@
   },
   {
     "src": "Blank_game-show_panel_flipping_open_2K_202609091004.jpeg",
-    "verdict": "applied",
-    "slot": "prop",
-    "slug": "panel-open",
-    "note": "Answer panel mid-flip with a BLANK WHITE face. The revealed state."
+    "verdict": "rejected",
+    "reason": "REJECTED after opening the file (2026-09-15). Its white face is real, unlike panel-dark's, but it is the same 3/4-perspective object mid-flip -- bezel, hinge assembly, knurled knob, side flap and base bar -- not a flat panel face. Covered onto a wide answer pill it put a hinge-and-knob smear at the left of every revealed slot, directly under the rank number and answer text. Dropped with panel-dark so the hidden and revealed states stay a matched pair; both slot states are now drawn in CSS, which stays crisp at any pill width."
   },
   {
     "src": "Blank_game-show_panel_flipping_open_2K_202609091004 (1).jpeg",
-    "verdict": "applied",
-    "slot": "prop",
-    "slug": "panel-dark",
-    "note": "Answer panel with a BLANK DARK face in a pink neon frame. The hidden state, and white text reads on it."
+    "verdict": "rejected",
+    "reason": "REJECTED after opening the file (2026-09-15). Its note claimed a \"BLANK DARK face in a pink neon frame\" -- that face does not exist. The centre samples rgba(0,0,0,0): it is a transparent hole, and the frame is orange/magenta/teal, not pink. So there is no surface to render answer text onto, which was the one job it was given. It is also a 3/4-perspective object (tilting board, hinge, cog, plinth) with 57% of its pixels transparent, so as a flat background on a wide answer pill background-size:cover showed a 113px band that is 77% transparent -- the cog on the left, a strut on the right, and a void between. That is the artefact the owner reported."
   },
   {
     "src": "Red_team_crest_badge_2K_202609090958.jpeg",

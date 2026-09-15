@@ -42,11 +42,10 @@ export const PROPS = {
   clock: "prop-clock",     // retro clock shedding its numerals — time
 } as const;
 
-/** The answer panel, in its two states. The board hides answers and flips them open. */
-export const PANELS = {
-  hidden: "panel-dark",   // dark face in a pink neon frame; white text reads on it
-  open: "panel-open",     // blank white face — the revealed answer
-} as const;
+// There is no PANELS entry, deliberately. Two panel images were supplied and both are rejected in
+// tools/feud/manifest.json — they are 3/4-perspective objects (tilting board, hinge, cog, plinth),
+// and panel-dark's face is a transparent hole rather than the dark face its note claimed. Neither
+// can act as a flat background on a wide answer pill; AnswerSlot draws both states in CSS instead.
 
 /** Team crests. */
 export const CRESTS = { red: "crest-red", blue: "crest-blue" } as const;
