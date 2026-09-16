@@ -29,8 +29,25 @@ import type { GameType } from "../net/socket";
 // The host controller. Phone-first: if no game is chosen yet, the host picks one here (no display
 // needed), and for Feud/Bingo the controller MINTS ITS OWN ROOM so its participant/team QR works
 // standalone. Murder stays server-authoritative and still pairs to a display-minted room.
+// Games whose CONTROLLER mints the room (phone-first). Bingo is absent on purpose: it uses the
+// fixed BINGO_ROOM so its poster QR can be permanent.
+const MINTS_OWN_ROOM: GameType[] = ["feud", "trivia", "taboo", "headsup", "reverse", "monikers"];
+
+// Pulled out of the useState initializer so the picker can mint IN PLACE. It used to live only
+// inside that initializer, which is why picking a game had to reload the whole page to re-run it.
+function roomFor(game: GameType | null): string | undefined {
+  const existing = getRoomFromUrl();
+  if (existing) return existing; // a typed or scanned code always wins
+  if (game && MINTS_OWN_ROOM.includes(game)) {
+    const code = generateRoomCode();
+    setUrlRoom(code);
+    return code;
+  }
+  return undefined;
+}
+
 export function ControlRoute() {
-  const [game] = useState<GameType | null>(() =>
+  const [game, setGame] = useState<GameType | null>(() =>
     new URLSearchParams(window.location.search).has("game") ? getGameFromUrl() : null,
   );
   // THE ROOM DECIDES WHICH GAME THIS IS, not the controller's URL.
@@ -67,18 +84,7 @@ export function ControlRoute() {
     return () => { live = false; };
   }, [roomInUrl, game, resolved]);
 
-  const [room] = useState<string | undefined>(() => {
-    const existing = getRoomFromUrl();
-    if (existing) return existing;
-    // Feud + Trivia mint a fresh room each session; Bingo uses the FIXED room (see the bingo branch
-    // below) so its poster QR is permanent, so it needs no mint here.
-    if (game === "feud" || game === "trivia" || game === "taboo" || game === "headsup" || game === "reverse" || game === "monikers") {
-      const code = generateRoomCode();
-      setUrlRoom(code);
-      return code;
-    }
-    return undefined;
-  });
+  const [room, setRoom] = useState<string | undefined>(() => roomFor(game));
 
   // Never render a remote while the room's real game is still in flight -- rendering the URL's
   // guess first is what put the Survey remote on screen. This sits BELOW every hook on purpose:
@@ -99,9 +105,17 @@ export function ControlRoute() {
         // server-authoritative and pairs through the display, so offering it here would dead-end.
         games={["feud", "bingo", "trivia", "taboo", "headsup", "reverse", "monikers"]}
         onPick={(g) => {
+          // NO RELOAD. This used to call window.location.reload() so the room useState initializer
+          // would re-run for the chosen game -- which cost a full re-download, re-parse and re-boot
+          // of the entire bundle just to compute a four-character string. Measured 2026-09-16:
+          // opening a remote from cold took 67s and THREE full page boots, and this was one of them.
+          //
+          // It is safe to do in place precisely here: with no game chosen, ControlRoute renders the
+          // picker and mounts NO provider, so no socket has joined any room yet. There is no stale
+          // connection to reset -- which is the reason the Home button still does a hard nav.
           setUrlGame(g);
-          // Reload so the room initializer above mints a fresh room for the chosen game.
-          window.location.reload();
+          setRoom(roomFor(g));
+          setGame(g);
         }}
       />
     );

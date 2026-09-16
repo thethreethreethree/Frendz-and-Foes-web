@@ -16,6 +16,7 @@ import { dirname, join } from "node:path";
 import { existsSync, readdirSync } from "node:fs";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import express from "express";
+import compression from "compression";
 import { Server } from "socket.io";
 // Murder Mystery: The Villagers — the 100-character roster with item-set card art. This replaced the
 // earlier 30-character mode (retired 2026-07-17; its last state is commit 1705229). The `murder2`
@@ -159,6 +160,17 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), (req,
   if (r.error) console.warn("[ff-server] Stripe event not applied:", r.error, v.event?.type);
   res.json({ received: true });
 });
+
+// COMPRESSION — measured 2026-09-16, and it is the single largest cost the host's phone pays.
+//
+// The client bundle is 918,074 bytes. The Render mirror answered in 0.61s because Render's edge
+// applies brotli and sends 259,218 bytes; this box answered the SAME request in 2.16s because
+// express.static does not compress and nginx in front of it was not doing so either. 3.5x the
+// bytes, 3.5x the time, on every single load — and the host controller is the surface that gets
+// opened and re-opened all night.
+//
+// Placed before every route so API JSON benefits too, and before express.static so the bundle does.
+app.use(compression());
 
 app.use(express.json({ limit: "256kb" }));
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
@@ -1138,6 +1150,19 @@ if (existsSync(musicDir)) app.use("/music", express.static(musicDir, { dotfiles:
 // In production, optionally serve the built web app so the whole thing is one process on the LAN.
 const webDist = join(__dirname, "../web/dist");
 if (existsSync(webDist)) {
+  // Vite content-hashes every file in /assets, so the NAME changes whenever the bytes do. Serving
+  // those with `max-age=0` (the default, and what this box was returning) makes the browser
+  // re-validate ~918kB of JS on every open of the remote, which is the one surface a host opens
+  // over and over during a night. A hashed asset can safely be immutable for a year; index.html
+  // itself must NOT be, or a deploy would never reach anyone.
+  app.use(
+    "/assets",
+    express.static(join(webDist, "assets"), {
+      immutable: true,
+      maxAge: "365d",
+      fallthrough: true,
+    }),
+  );
   app.use(express.static(webDist));
   // The Kickstarter campaign is a standalone page (built from kickstarter/), not a SPA route —
   // serve it directly at /kickstarter so it doesn't fall through to the app shell.

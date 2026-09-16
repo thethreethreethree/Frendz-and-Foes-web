@@ -81,13 +81,22 @@ const PROBE = `(() => {
 let failed = 0;
 for (const r of ROUTES) {
   await send("Page.navigate", { url: `${BASE}/${r.path}` });
+  // Wait for the APP, generously, and distinguish "slow to boot" from "cannot scroll". The first
+  // version gave up after 12s and reported that as a scroll defect; on a cold Chrome against a
+  // cold server it cried wolf, and a guard that cries wolf gets ignored -- which is how the
+  // /waitlist regression this file exists for reached production in the first place.
   let info = null;
-  for (let i = 0; i < 15; i++) {
-    await sleep(800);
-    const ok = await ev(`!!document.querySelector('#root')?.firstElementChild`);
-    if (ok) { info = await ev(PROBE); if (info) break; }
+  for (let i = 0; i < 45; i++) {
+    await sleep(500);
+    const booted = await ev(`!!document.querySelector('#root')?.firstElementChild`);
+    const text = ((await ev("document.body ? document.body.innerText : ''")) || "").trim();
+    if (booted && text.length > 8) { info = await ev(PROBE); if (info) break; }
   }
-  if (!info) { console.log(`FAIL  ${r.path || "/"}  never rendered`); failed++; continue; }
+  if (!info) {
+    console.log(`ABORT  ${r.path || "/"}  never rendered in 22s — this is a LOAD problem, not a scroll one`);
+    failed++;
+    continue;
+  }
 
   const overflows = info.contentH > info.innerH + 4;
 
