@@ -65,7 +65,7 @@ export function TeamSetup() {
           <button
             onClick={() => setMode("standard")}
             className={`rounded-lg border-2 px-2 py-2 text-xs font-bold ${
-              mode === "standard" ? "border-ink bg-ink text-canvas" : "border-line bg-surface text-ink"
+              mode === "standard" ? "border-primary bg-primary/15 text-ink" : "border-line bg-surface text-ink"
             }`}
           >
             Standard
@@ -74,7 +74,7 @@ export function TeamSetup() {
           <button
             onClick={() => setMode("randomize")}
             className={`rounded-lg border-2 px-2 py-2 text-xs font-bold ${
-              mode === "randomize" ? "border-grape bg-grape text-white" : "border-line bg-surface text-ink"
+              mode === "randomize" ? "border-primary bg-primary/15 text-ink" : "border-line bg-surface text-ink"
             }`}
           >
             🎲 Randomize Survey
@@ -136,7 +136,23 @@ export function TeamSetup() {
             <span className="text-xs font-semibold text-ink/40">
               {teams.length}/{MAX_TEAMS} (min {MIN_TEAMS})
             </span>
-            <CtrlButton tone="grape" onClick={() => newGame(cleanedTeams(), questions())} className="ml-auto">
+            {/* Same destructive call as resetGame above — it rebuilds the game and clears every
+                score — but it shipped unguarded while its twin confirmed. Rendered at 390px it was
+                also the second-loudest control on the panel, one mis-tap from wiping a live game
+                mid-party. Confirmed now, and quiet: rare and destructive, not a primary action. */}
+            <CtrlButton
+              tone="ink"
+              className="ml-auto"
+              onClick={() => {
+                if (
+                  window.confirm(
+                    "Apply these teams? The game restarts from question 1 and all scores are cleared.",
+                  )
+                ) {
+                  newGame(cleanedTeams(), questions());
+                }
+              }}
+            >
               Apply teams (restart)
             </CtrlButton>
           </div>

@@ -51,7 +51,20 @@ export function RexBubble() {
   // After every hook, never before - an early return above them would break the hooks order.
   // /waitlist is John's page too -- the same reasoning, and on a phone the bubble physically sat on
   // top of his chat: 82% of the Send button at 390px and 412px wide, and over the message text.
-  if (hash.startsWith("#/ask-john") || hash.startsWith("#/waitlist")) return null;
+  //
+  // /control is the third, for the same physical reason rather than a narrative one. Photographed
+  // at 390x844 on 2026-09-16, the bubble covered the word "champions" on Survey Showdown's END GAME
+  // button, sat on START GAME in Foreheads and Off Limits, and cut off the ends of the rules lines
+  // in Encore ("describe the name howev-") and Foreheads ("help you gu-"). The host controller is a
+  // working instrument held mid-party: its bottom-right corner is where the primary action docks,
+  // and someone running a room is not also asking the zookeeper a question. Rex stays everywhere
+  // else, including every display and every player screen.
+  if (
+    hash.startsWith("#/ask-john") ||
+    hash.startsWith("#/waitlist") ||
+    hash.startsWith("#/control")
+  )
+    return null;
 
   return (
     <div className="fixed bottom-4 right-4 z-[9999] flex flex-col items-end gap-3" style={{ fontFamily: "inherit" }}>

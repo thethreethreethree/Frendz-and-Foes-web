@@ -109,7 +109,7 @@ export function MusicControl() {
                 setPos((p) => ({ ...p, currentTime: v }));
                 emitMusic({ action: "seek", value: v });
               }}
-              className="flex-1 accent-pink"
+              className="flex-1 accent-primary"
             />
             <span className="w-9 text-[10px] font-bold text-ink/50">{fmt(pos.duration)}</span>
           </div>
@@ -139,7 +139,7 @@ export function MusicControl() {
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="Search songs…"
-        className="mb-2 w-full rounded-lg border-2 border-ink/15 bg-white px-3 py-2 text-base text-ink outline-none focus:border-teal"
+        className="mb-2 w-full rounded-lg ff-tap border border-line bg-canvas px-3 text-base text-ink outline-none placeholder:text-muted focus:border-primary"
       />
 
       {songs.length === 0 ? (
@@ -153,7 +153,7 @@ export function MusicControl() {
                 <button
                   onClick={() => playAt(i)}
                   className={`flex w-full items-center gap-2 rounded-lg border-2 px-3 py-2 text-left text-sm font-bold ${
-                    now === s.title ? "border-teal bg-teal/15" : "border-ink/10 bg-white"
+                    now === s.title ? "border-secondary bg-secondary/15" : "border-line bg-canvas"
                   }`}
                 >
                   <span className="shrink-0">▶</span>
@@ -178,7 +178,7 @@ export function MusicControl() {
             setVol(v);
             emitMusic({ action: "volume", value: v });
           }}
-          className="flex-1 accent-ink"
+          className="flex-1 accent-primary"
         />
       </div>
     </Section>

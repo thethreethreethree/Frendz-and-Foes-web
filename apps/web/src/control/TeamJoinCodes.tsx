@@ -31,7 +31,7 @@ export function TeamJoinCodes() {
               key={t.id}
               onClick={() => setSel(t.id)}
               className={`flex items-center gap-1.5 rounded-lg border-2 px-2 py-1 text-xs font-bold ${
-                active ? "border-ink bg-ink text-canvas" : "border-line bg-surface text-ink"
+                active ? "border-primary bg-primary/15 text-ink" : "border-line bg-surface text-ink"
               }`}
             >
               <span

@@ -96,7 +96,7 @@ function Setup() {
               key={v}
               onClick={() => t.configure({ version: v })}
               className={`rounded-lg border-2 px-2 py-2 text-sm font-black ${
-                trivia.version === v ? "border-grape bg-grape text-white" : "border-ink/15 bg-surface text-ink"
+                trivia.version === v ? "border-primary bg-primary/15 text-ink" : "border-line bg-surface text-ink"
               }`}
             >
               {v.toUpperCase()}
@@ -117,7 +117,7 @@ function Setup() {
               key={m}
               onClick={() => t.configure({ mode: m })}
               className={`rounded-lg border-2 px-3 py-2 text-left text-sm font-bold ${
-                trivia.mode === m ? "border-grape bg-grape text-white" : "border-ink/15 bg-surface text-ink"
+                trivia.mode === m ? "border-primary bg-primary/15 text-ink" : "border-line bg-surface text-ink"
               }`}
             >
               {label}
@@ -201,7 +201,7 @@ function JoinCodes() {
             key={tm.id}
             onClick={() => setSel(tm.id)}
             className={`flex items-center gap-1.5 rounded-lg border-2 px-2 py-1 text-xs font-bold ${
-              selected?.id === tm.id ? "border-grape bg-grape text-white" : "border-ink/15 bg-surface text-ink"
+              selected?.id === tm.id ? "border-primary bg-primary/15 text-ink" : "border-line bg-surface text-ink"
             }`}
           >
             <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: tm.color ?? "#999" }} />
