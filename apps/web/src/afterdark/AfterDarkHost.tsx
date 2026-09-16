@@ -1,7 +1,7 @@
 import { useAfterDark } from "./useAfterDark";
 import { PlayerRoster } from "../net/PlayerRoster";
 import { caStart, caNext, caReset, caKick } from "../net/afterdark";
-import { StatusPill } from "../net/pairing";
+import { RemoteHeader } from "../control/shell";
 import { getBrand } from "../brand/theme";
 
 // Host controller for "After Dark". Start / Next / Reset. The judge picks + advances on their phone;
@@ -16,7 +16,10 @@ export function AfterDarkHost({ room }: { room: string }) {
 
   return (
     <Wrap>
-      <div className="mb-3 flex items-center justify-between"><div className="ff-title text-2xl">{label} <span className="text-danger text-sm">18+</span></div><StatusPill /></div>
+      <RemoteHeader
+        title={label}
+        badge={<span className="shrink-0 rounded-md bg-danger px-1.5 py-0.5 text-xs font-black text-white">18+</span>}
+      />
       {error && <div className="mb-2 rounded-lg bg-danger px-3 py-2 text-sm font-semibold text-white">{error}</div>}
       <div className="rounded-2xl border border-line bg-surface p-3">
         <div className="text-sm"><b>Players ({state.players.length})</b></div>
@@ -34,6 +37,10 @@ export function AfterDarkHost({ room }: { room: string }) {
         {state.phase === "ended" && <p className="rounded-lg bg-cream px-3 py-2 text-center font-semibold">Game over — see the winner on the display.</p>}
         {state.phase !== "lobby" && <button onClick={caReset} className="w-full rounded-lg border border-line px-4 py-2 text-sm font-semibold text-muted">Reset to lobby</button>}
       </div>
+      {/* See JustOneHost: a Start button for a game nobody could enter, with nothing saying how. */}
+      {state.phase === "lobby" && (
+        <p className="mt-3 text-center text-xs text-muted">Players scan the display's QR to join. 18+ only.</p>
+      )}
     </Wrap>
   );
 }

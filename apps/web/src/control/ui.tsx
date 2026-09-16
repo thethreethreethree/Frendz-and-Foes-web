@@ -156,7 +156,9 @@ export function Field({
       placeholder={placeholder}
       maxLength={maxLength}
       aria-label={ariaLabel}
-      className={`ff-tap w-full min-w-0 rounded-xl border border-line bg-canvas px-3 text-base text-ink outline-none placeholder:text-muted focus:border-primary ${className}`}
+      // min-height rather than .ff-tap: that utility also sets inline-flex and justify-center,
+      // which belong to a button, not to a text field or a left-aligned row.
+      className={`min-h-[44px] w-full min-w-0 rounded-xl border border-line bg-canvas px-3 text-base text-ink outline-none placeholder:text-muted focus:border-primary ${className}`}
     />
   );
 }
@@ -176,7 +178,9 @@ export function Toggle({
       onClick={() => onChange(!checked)}
       role="switch"
       aria-checked={checked}
-      className="ff-tap flex w-full items-center gap-2.5 rounded-xl px-1 text-left text-sm font-bold text-ink"
+      // Not .ff-tap — it forces justify-center, and index.css declares it AFTER @tailwind
+      // utilities, so a justify-start class loses the tie and the row centres itself.
+      className="flex min-h-[44px] w-full items-center justify-start gap-2.5 rounded-xl px-1 text-left text-sm font-bold text-ink"
     >
       <span
         className={`grid h-6 w-6 shrink-0 place-items-center rounded-md border-2 ${

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { HEADSUP_CATEGORIES } from "@ff/engine";
 import { useHeadsUpHost } from "../store/headsupStore";
-import { StatusPill } from "../net/pairing";
+import { RemoteHeader } from "../control/shell";
 import { HowToPlay } from "../net/howtoplay";
 import { getBrand } from "../brand/theme";
 
@@ -22,15 +22,10 @@ export function HeadsUpControl() {
 
   return (
     <div className="flex h-full flex-col overflow-auto bg-canvas p-4 text-ink">
-      <div className="mb-3 flex items-center justify-between">
-        <div className="ff-title text-2xl">{label}</div>
-        <div className="flex items-center gap-2">
-          <StatusPill />
-          {state.phase !== "setup" && (
-            <button onClick={g.reset} className="rounded-lg border border-line px-2.5 py-1 text-xs font-semibold text-muted">Reset</button>
-          )}
-        </div>
-      </div>
+      <RemoteHeader
+        title={label}
+        right={state.phase !== "setup" ? <button onClick={g.reset} className="ff-tap rounded-lg border border-line px-2.5 text-xs font-semibold text-muted">Reset</button> : undefined}
+      />
       {state.phase === "setup" && <Setup />}
       {state.phase === "ready" && <Ready />}
       {state.phase === "turnover" && <TurnOver />}

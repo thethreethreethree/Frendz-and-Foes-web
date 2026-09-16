@@ -69,10 +69,10 @@ function Config({ state, canStart }: { state: V2State; canStart: boolean }) {
     <div className="mt-4 space-y-3">
       {canStart && <p className="rounded-lg bg-surface px-3 py-2 text-sm text-ink/70">This game: <b>{roleComposition(picked)}</b>.</p>}
       <label className="block text-sm font-semibold text-ink/70">Kills to win: {kills}
-        <input type="range" min={2} max={8} value={kills} onChange={(e) => setKills(+e.target.value)} onMouseUp={apply} onTouchEnd={apply} className="w-full" />
+        <input type="range" min={2} max={8} value={kills} onChange={(e) => setKills(+e.target.value)} onMouseUp={apply} onTouchEnd={apply} className="mt-1 w-full accent-primary" />
       </label>
       <label className="block text-sm font-semibold text-ink/70">Kill cooldown: {cooldown}s
-        <input type="range" min={20} max={180} step={5} value={cooldown} onChange={(e) => setCooldown(+e.target.value)} onMouseUp={apply} onTouchEnd={apply} className="w-full" />
+        <input type="range" min={20} max={180} step={5} value={cooldown} onChange={(e) => setCooldown(+e.target.value)} onMouseUp={apply} onTouchEnd={apply} className="mt-1 w-full accent-primary" />
       </label>
       <button disabled={!canStart} onClick={m2Start} className="ff-sticker w-full bg-pink px-4 py-3 font-display text-xl text-white disabled:opacity-40">
         {canStart ? "START GAME" : "Need 3+ players with characters"}
@@ -115,6 +115,14 @@ function PlayerList({ state }: { state: V2State }) {
   return (
     <div className="mt-5">
       <div className="font-display text-lg text-ink">Players</div>
+      {/* This heading sat over nothing at all before a single player joined — a title, then void,
+          on the one remote whose controller exposes no action until people arrive. The host had no
+          way to tell "waiting" from "broken". */}
+      {state.players.length === 0 && (
+        <p className="mt-1 rounded-xl border border-line bg-surface px-3 py-2 text-sm text-muted">
+          Nobody has joined yet. Players scan the QR on the display, then pick a character.
+        </p>
+      )}
       <div className="mt-1 grid grid-cols-2 gap-1 text-sm">
         {state.players.map((p: V2Player) => (
           <div key={p.id} className={`rounded px-2 py-1 ${p.alive ? "bg-surface" : "bg-ink/10 line-through opacity-60"}`}>

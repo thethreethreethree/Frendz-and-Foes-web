@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useOffLimitsHost } from "../store/offlimitsStore";
-import { StatusPill } from "../net/pairing";
+import { RemoteHeader } from "../control/shell";
+import { Toggle } from "../control/ui";
 import { getBrand } from "../brand/theme";
 import { HowToPlay } from "../net/howtoplay";
 
@@ -18,15 +19,10 @@ export function OffLimitsControl() {
 
   return (
     <div className="flex h-full flex-col overflow-auto bg-canvas p-4 text-ink">
-      <div className="mb-3 flex items-center justify-between">
-        <div className="ff-title text-2xl">{label}</div>
-        <div className="flex items-center gap-2">
-          <StatusPill />
-          {state.phase !== "setup" && (
-            <button onClick={g.reset} className="rounded-lg border border-line px-2.5 py-1 text-xs font-semibold text-muted">Reset</button>
-          )}
-        </div>
-      </div>
+      <RemoteHeader
+        title={label}
+        right={state.phase !== "setup" ? <button onClick={g.reset} className="ff-tap rounded-lg border border-line px-2.5 text-xs font-semibold text-muted">Reset</button> : undefined}
+      />
 
       {state.phase === "setup" && <Setup />}
       {state.phase === "ready" && <Ready />}
@@ -85,10 +81,11 @@ function Setup() {
         <label className="block text-sm font-semibold">Play to: {winScore} points
           <input type="range" min={10} max={40} step={5} value={winScore} onChange={(e) => setWinScore(+e.target.value)} className="mt-1 w-full accent-primary" />
         </label>
-        <label className="flex items-center gap-2 text-sm font-semibold">
-          <input type="checkbox" checked={penalize} onChange={(e) => setPenalize(e.target.checked)} className="h-4 w-4 accent-primary" />
+        {/* Was a 16px native checkbox (h-4 w-4) — the smallest interactive target in all fourteen
+            remotes, against the 44px floor index.css documents. Toggle carries ff-tap. */}
+        <Toggle checked={penalize} onChange={setPenalize}>
           Skips cost 1 point
-        </label>
+        </Toggle>
       </section>
 
       {/* Pre-game setup: show the rules on the controller's phone before the game starts. */}
@@ -206,9 +203,23 @@ function Ended() {
         <div className="ff-title text-5xl" style={{ color: winner?.color }}>{winner?.name} 🎉</div>
       </div>
       <Scoreboard />
+      {/* These two buttons shipped with the SAME handler, so the remote offered a choice it did not
+          implement: both dropped the host on the setup screen. RESET (wordgame.ts) rebuilds the game
+          keeping teams and config, which is exactly what "New teams / rules" wants — it was REMATCH
+          that lied. A rematch means straight back into play with the same teams and rules, so it
+          resets and then starts; the reducer applies the two in order, and START's own guard
+          (teams >= 2) is satisfied by the state RESET just produced. */}
       <div className="flex w-full flex-col gap-2">
-        <button onClick={g.reset} className="ff-sticker w-full bg-primary px-4 py-3 font-display text-xl text-primary-ink">REMATCH (same teams)</button>
-        <button onClick={g.reset} className="rounded-lg border border-line px-4 py-2 text-sm font-semibold text-muted">New teams / rules</button>
+        <button
+          onClick={() => {
+            g.reset();
+            g.start();
+          }}
+          className="ff-sticker w-full bg-primary px-4 py-3 font-display text-xl text-primary-ink"
+        >
+          REMATCH (same teams)
+        </button>
+        <button onClick={g.reset} className="ff-tap rounded-lg border border-line px-4 text-sm font-semibold text-muted">New teams / rules</button>
       </div>
     </div>
   );

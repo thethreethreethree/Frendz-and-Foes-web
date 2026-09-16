@@ -52,10 +52,30 @@ export function StatusPill() {
     ok = connected && hosts > 0;
   }
 
+  // CONTRAST. This was `bg-ink/80 ... text-white` — white text on a pill painted from --c-ink,
+  // which is near-white (244 247 255) since the dark default. Measured off the rendered pixels at
+  // 390x844: about 1.4:1, against 4.5:1 for AA body text. It is on ten host controllers and every
+  // display's corner, and the string it renders is the ROOM CODE — the one thing a host reads out
+  // loud to a room of people. It was the least legible text on their phone.
+  //
+  // Now: a surface chip with a hairline, the code at full ink and tabular so it cannot be misread,
+  // the status word muted beside it, and the dot carrying the state. The dot also stopped being
+  // binary — "connected but nothing paired yet" is a different situation from "offline", and
+  // painting both of them tang said the same thing about both.
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-ink/80 px-2.5 py-1 text-xs font-bold text-white">
-      <span className={`h-2.5 w-2.5 rounded-full ${ok ? "bg-buzz-green" : "bg-tang"}`} />
-      {room ? `${room} · ${label}` : "Not linked"}
+    <span className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-2.5 py-1 text-xs">
+      <span
+        className={`h-2.5 w-2.5 shrink-0 rounded-full ${ok ? "bg-success" : connected ? "bg-warning" : "bg-danger"}`}
+        aria-hidden
+      />
+      {room ? (
+        <>
+          <span className="font-display tracking-[0.12em] text-ink">{room}</span>
+          <span className="font-bold text-muted">{label}</span>
+        </>
+      ) : (
+        <span className="font-bold text-muted">Not linked</span>
+      )}
     </span>
   );
 }

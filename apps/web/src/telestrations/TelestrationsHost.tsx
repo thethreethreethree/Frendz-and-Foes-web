@@ -1,7 +1,7 @@
 import { useTelestrations } from "./useTelestrations";
 import { PlayerRoster } from "../net/PlayerRoster";
 import { teStart, teForce, teRevealNext, teReset , teKick} from "../net/telestrations";
-import { StatusPill } from "../net/pairing";
+import { RemoteHeader } from "../control/shell";
 import { getBrand } from "../brand/theme";
 
 // Host controller for "Sketch Relay". Start / Force-next (past a stuck turn) / Reveal-next / Reset.
@@ -13,7 +13,7 @@ export function TelestrationsHost({ room }: { room: string }) {
 
   return (
     <Wrap>
-      <div className="mb-3 flex items-center justify-between"><div className="ff-title text-2xl">{label}</div><StatusPill /></div>
+      <RemoteHeader title={label} />
       {error && <div className="mb-2 rounded-lg bg-danger px-3 py-2 text-sm font-semibold text-white">{error}</div>}
       <div className="rounded-2xl border border-line bg-surface p-3">
         <div className="text-sm"><b>Players ({state.players.length})</b></div>

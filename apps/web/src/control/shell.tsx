@@ -1,5 +1,6 @@
 import { useContext, useState, type ReactNode } from "react";
 import { ConnectionCtx } from "../net/connection";
+import { StatusPill } from "../net/pairing";
 
 // THE HOST REMOTE SHELL — one frame for all fourteen controllers.
 //
@@ -78,6 +79,51 @@ function RoomCode({ room }: { room: string }) {
       <span className="font-display text-xl leading-none tracking-[0.18em] text-ink">{room}</span>
       <span className="text-[10px] font-bold text-muted">{copied ? "copied" : "copy"}</span>
     </button>
+  );
+}
+
+/**
+ * The header on its own, for the remotes not yet migrated onto RemoteShell.
+ *
+ * Ten of the fourteen controllers had no route back to game selection at all — and nine of them
+ * spent that exact top-right slot on the status pill instead. Changing game meant editing the URL
+ * or killing the tab. Migrating all ten onto the full shell is a bigger job than a release can
+ * wait for, but the way out is not optional, so it lands here first.
+ *
+ * The title also truncates: the old headers were a bare `justify-between` with nothing allowed to
+ * shrink, and "Sketch Relay" was already touching the pill at 390px.
+ */
+export function RemoteHeader({
+  title,
+  badge,
+  right,
+}: {
+  title: ReactNode;
+  /** A mark that belongs to the title (18+, a deck badge). */
+  badge?: ReactNode;
+  /** Game-specific controls (Reset). */
+  right?: ReactNode;
+}) {
+  return (
+    <div className="mb-3 flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        <button
+          onClick={goHome}
+          className="ff-tap shrink-0 rounded-xl border border-line bg-surface px-3 text-sm font-bold text-ink"
+          title="Back to game selection"
+        >
+          ⌂
+        </button>
+        <h1 className="ff-title min-w-0 flex-1 truncate text-2xl leading-tight">{title}</h1>
+        {badge}
+      </div>
+      {/* Status on its own row rather than fighting the title for the same line — that fight is
+          what put "Sketch Relay" against the pill at 390px. StatusPill carries the room code. */}
+      <div className="flex items-center gap-2">
+        <StatusPill />
+        {right && <div className="ml-auto flex items-center gap-1.5">{right}</div>}
+      </div>
+    </div>
   );
 }
 

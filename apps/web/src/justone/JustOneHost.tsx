@@ -1,7 +1,7 @@
 import { useJustOne } from "./useJustOne";
 import { PlayerRoster } from "../net/PlayerRoster";
 import { joStart, joReveal, joNext, joReset , joKick} from "../net/justone";
-import { StatusPill } from "../net/pairing";
+import { RemoteHeader } from "../control/shell";
 import { getBrand } from "../brand/theme";
 
 // Host controller for "Solo Clue". Roster + Start / Reveal (force) / Next / Reset. The guesser
@@ -16,10 +16,7 @@ export function JustOneHost({ room }: { room: string }) {
 
   return (
     <Wrap>
-      <div className="mb-3 flex items-center justify-between">
-        <div className="ff-title text-2xl">{label}</div>
-        <StatusPill />
-      </div>
+      <RemoteHeader title={label} />
       {error && <div className="mb-2 rounded-lg bg-danger px-3 py-2 text-sm font-semibold text-white">{error}</div>}
 
       <div className="rounded-2xl border border-line bg-surface p-3">
@@ -46,6 +43,11 @@ export function JustOneHost({ room }: { room: string }) {
           <button onClick={joReset} className="w-full rounded-lg border border-line px-4 py-2 text-sm font-semibold text-muted">Reset to lobby</button>
         )}
       </div>
+      {/* Cover Ops and Sketch Relay told the host how players get in; this one handed them a Start
+          button for a game nobody could enter and said nothing about what it was waiting for. */}
+      {state.phase === "lobby" && (
+        <p className="mt-3 text-center text-xs text-muted">Players scan the display's QR to join.</p>
+      )}
     </Wrap>
   );
 }

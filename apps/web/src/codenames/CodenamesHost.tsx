@@ -1,7 +1,7 @@
 import { useCodenames } from "./useCodenames";
 import { cnStart, cnReset, cnKick, type CnTeam } from "../net/codenames";
 import { PlayerRoster } from "../net/PlayerRoster";
-import { StatusPill } from "../net/pairing";
+import { RemoteHeader } from "../control/shell";
 import { AvatarBadge } from "../net/avatars";
 import { getBrand } from "../brand/theme";
 
@@ -16,10 +16,7 @@ export function CodenamesHost({ room }: { room: string }) {
 
   return (
     <Wrap>
-      <div className="mb-3 flex items-center justify-between">
-        <div className="ff-title text-2xl">{label}</div>
-        <StatusPill />
-      </div>
+      <RemoteHeader title={label} />
       {error && <div className="mb-2 rounded-lg bg-danger px-3 py-2 text-sm font-semibold text-white">{error}</div>}
 
       <div className="grid grid-cols-2 gap-3">
