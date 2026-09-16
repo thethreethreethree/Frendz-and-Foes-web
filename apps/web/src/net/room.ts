@@ -26,6 +26,19 @@ export function setUrlGame(game: GameType): void {
   window.history.replaceState(null, "", u.toString());
 }
 
+// Survey Showdown's chosen topic, carried in the URL like the game and the room so a reload (or a
+// re-opened host link) lands back on the same deck instead of asking again.
+export function getCategoryFromUrl(): string | null {
+  const c = new URLSearchParams(window.location.search).get("cat");
+  return c ? c.trim().toLowerCase() : null;
+}
+
+export function setUrlCategory(cat: string): void {
+  const u = new URL(window.location.href);
+  u.searchParams.set("cat", cat);
+  window.history.replaceState(null, "", u.toString());
+}
+
 export function generateRoomCode(len = 4): string {
   const rnd = crypto.getRandomValues(new Uint32Array(len));
   let s = "";

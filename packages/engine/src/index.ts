@@ -4,6 +4,7 @@ export * from "./engine.js";
 export * from "./qmake.js";
 export * from "./fixtures.js";
 export * from "./bank.js";
+export * from "./survey.js";
 export * from "./bingo.js";
 export * from "./trivia.js";
 export * from "./wordgame.js";

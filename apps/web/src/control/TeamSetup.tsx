@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { buildRandomizedGame, RANDOM_POOL, SAMPLE_QUESTIONS } from "@ff/engine";
+import { buildCategoryGame, surveyCategory } from "@ff/engine";
 import { useGame } from "../store/gameStore";
 import { Section, CtrlButton } from "./ui";
 
@@ -11,26 +11,28 @@ const PALETTE = [
 const MIN_TEAMS = 3;
 const MAX_TEAMS = 12;
 
-type Mode = "standard" | "randomize";
-
 interface EditTeam {
   id: string;
   name: string;
   color: string;
 }
 
-// Custom team names/colors (3–12), survey mode, plus Start / Reset. Each game-building action
-// rebuilds the question set from the chosen mode — Standard = the fixed deck, Randomize Survey =
-// a fresh random draw from the 120-question pool.
-export function TeamSetup() {
+// Custom team names/colors (3–12), the loaded category, plus Start / Reset. Every game-building
+// action rebuilds the question set from the CHOSEN CATEGORY: 30 questions in the bank's authored
+// order (three rounds of ten) plus a wildcard bonus drawn from another topic.
+export function TeamSetup({ categoryId }: { categoryId: string }) {
   const { state, newGame, startNewGame } = useGame();
   const [teams, setTeams] = useState<EditTeam[]>(() =>
     state.teams.map((t, i) => ({ id: t.id, name: t.name, color: t.color ?? PALETTE[i % PALETTE.length] })),
   );
-  const [mode, setMode] = useState<Mode>("standard");
   const [open, setOpen] = useState(state.phase === "setup");
 
-  const questions = () => (mode === "randomize" ? buildRandomizedGame(RANDOM_POOL) : SAMPLE_QUESTIONS);
+  // The chosen category IS the deck now: 30 questions in the bank's authored order (three rounds
+  // of ten) plus a wildcard bonus. The old two-button "Survey mode" -- a fixed 20-question deck or
+  // 21 drawn at random from a 120 pool whose survey counts were all the same template -- is gone,
+  // replaced by the category step before the remote.
+  const category = surveyCategory(categoryId);
+  const questions = () => buildCategoryGame(categoryId);
 
   const cleanedTeams = () =>
     teams.map((t, i) => ({ id: t.id, name: t.name.trim() || `Team ${i + 1}`, color: t.color }));
@@ -58,29 +60,32 @@ export function TeamSetup() {
 
   return (
     <Section title="Teams & setup">
-      {/* Survey mode */}
-      <div className="mb-2">
-        <div className="mb-1 text-[10px] font-black uppercase text-ink/50">Survey mode</div>
-        <div className="grid grid-cols-2 gap-1.5">
-          <button
-            onClick={() => setMode("standard")}
-            className={`rounded-lg border-2 px-2 py-2 text-xs font-bold ${
-              mode === "standard" ? "border-primary bg-primary/15 text-ink" : "border-line bg-surface text-ink"
-            }`}
-          >
-            Standard
-            <span className="block text-[9px] font-semibold opacity-70">The fixed deck</span>
-          </button>
-          <button
-            onClick={() => setMode("randomize")}
-            className={`rounded-lg border-2 px-2 py-2 text-xs font-bold ${
-              mode === "randomize" ? "border-primary bg-primary/15 text-ink" : "border-line bg-surface text-ink"
-            }`}
-          >
-            🎲 Randomize Survey
-            <span className="block text-[9px] font-semibold opacity-70">Random from 120</span>
-          </button>
+      {/* Which deck is loaded. Changing it means a different game, so it is a hard nav back to the
+          category step rather than an in-place swap that would silently discard a live board. */}
+      <div className="mb-2 flex items-center gap-2 rounded-xl border border-line bg-canvas px-3 py-2">
+        <div className="min-w-0 flex-1">
+          <div className="text-[10px] font-black uppercase tracking-wider text-muted">Category</div>
+          <div className="truncate text-sm font-bold text-ink">{category?.title ?? categoryId}</div>
+          <div className="text-[10px] font-semibold text-muted">
+            {category ? `${category.questions.length} questions · 3 rounds + bonus` : "unknown deck"}
+          </div>
         </div>
+        <CtrlButton
+          tone="ink"
+          onClick={() => {
+            if (
+              window.confirm(
+                "Change category? This starts a different game — scores and progress are cleared.",
+              )
+            ) {
+              const u = new URL(window.location.href);
+              u.searchParams.delete("cat");
+              window.location.href = u.toString();
+            }
+          }}
+        >
+          Change
+        </CtrlButton>
       </div>
 
       <div className="mb-2 flex flex-wrap items-center gap-2">

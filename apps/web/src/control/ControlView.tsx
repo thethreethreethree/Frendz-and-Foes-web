@@ -10,6 +10,7 @@ import { IncomingGuesses } from "./IncomingGuesses";
 import { BuzzInPicker } from "./BuzzInPicker";
 import { AnswerKey } from "./AnswerKey";
 import { getBrand } from "../brand/theme";
+import { surveyCategory } from "@ff/engine";
 import {
   ScoreOverride,
   ScreenDirector,
@@ -31,17 +32,18 @@ import {
 //     few seconds all night. It now docks to the bottom of the frame, in the thumb's arc, and the
 //     once-per-game "end game" moved into a panel — the reverse of how they were weighted before.
 //   * THE ROOM CODE WAS UNREADABLE (~1.4:1, white on a pale pill). RemoteShell's header owns it now.
-export function ControlView() {
+export function ControlView({ categoryId }: { categoryId: string }) {
   const g = useGame();
   const q = currentQuestion(g.state);
   const info = turnInfo(g.state);
   const total = g.state.questions.length;
   const playing = g.state.phase === "playing";
   const label = getBrand().games.feud?.label ?? "Survey Showdown";
+  const category = surveyCategory(categoryId);
 
   return (
     <RemoteShell
-      title={label}
+      title={category ? `${label} · ${category.title}` : label}
       badge={
         <span className="shrink-0 rounded-lg bg-surface px-2 py-1 font-display text-xs leading-none text-muted">
           {playing && q
@@ -91,7 +93,7 @@ export function ControlView() {
       {/* PRE-GAME. Both lead while there is no game running, then sink below the judging panels. */}
       {!playing && (
         <>
-          <TeamSetup />
+          <TeamSetup categoryId={categoryId} />
           <TeamJoinCodes />
         </>
       )}
@@ -112,7 +114,7 @@ export function ControlView() {
 
       {playing && (
         <>
-          <TeamSetup />
+          <TeamSetup categoryId={categoryId} />
           <TeamJoinCodes />
         </>
       )}

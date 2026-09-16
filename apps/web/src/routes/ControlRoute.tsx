@@ -23,7 +23,8 @@ import { TelestrationsHost } from "../telestrations/TelestrationsHost";
 import { AfterDarkHost } from "../afterdark/AfterDarkHost";
 import { GamePicker } from "./GamePicker";
 import { SocketConnectionProvider } from "../net/SocketConnection";
-import { BINGO_ROOM, generateRoomCode, getGameFromUrl, getRoomFromUrl, setUrlGame, setUrlRoom } from "../net/room";
+import { BINGO_ROOM, generateRoomCode, getCategoryFromUrl, getGameFromUrl, getRoomFromUrl, setUrlCategory, setUrlGame, setUrlRoom } from "../net/room";
+import { SurveyCategoryPicker } from "../control/SurveyCategoryPicker";
 import type { GameType } from "../net/socket";
 
 // The host controller. Phone-first: if no game is chosen yet, the host picks one here (no display
@@ -85,6 +86,9 @@ export function ControlRoute() {
   }, [roomInUrl, game, resolved]);
 
   const [room, setRoom] = useState<string | undefined>(() => roomFor(game));
+  // Survey Showdown's topic. Held here, beside game and room, because it decides which deck the
+  // remote is built from -- and like them it lives in the URL so a reload does not re-ask.
+  const [surveyCat, setSurveyCat] = useState<string | null>(() => getCategoryFromUrl());
 
   // Never render a remote while the room's real game is still in flight -- rendering the URL's
   // guess first is what put the Survey remote on screen. This sits BELOW every hook on purpose:
@@ -274,9 +278,23 @@ export function ControlRoute() {
     );
   }
 
+  // Survey Showdown asks WHICH TOPIC before it shows the remote. Ten categories will not fit in the
+  // Teams & setup panel, and the choice sets what the whole night is about, so it gets its own step
+  // -- the same shape Trivia already uses for deck version + mode.
+  if (!surveyCat) {
+    return (
+      <SurveyCategoryPicker
+        onPick={(id) => {
+          setUrlCategory(id);
+          setSurveyCat(id);
+        }}
+      />
+    );
+  }
+
   return (
     <GameProvider room={room}>
-      <ControlView />
+      <ControlView categoryId={surveyCat} />
     </GameProvider>
   );
 }
