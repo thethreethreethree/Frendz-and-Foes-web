@@ -43,8 +43,23 @@ export function WaitlistRoute() {
   }
 
   return (
-    <div className="ff-backdrop h-full text-ink">
-      <div className="mx-auto flex h-full w-full max-w-2xl flex-col px-5 pt-8 pb-6">
+    // ff-scroll, and min-h-full rather than h-full.
+    //
+    // index.css sets `body { overflow: hidden }`: every route is a fixed-height box that must carry
+    // its OWN inner scroller. This page had none. On a 390x844 phone the avatar, the headline, the
+    // Kickstarter paragraph, the CTA and its caption consume the viewport before the chat card even
+    // starts, so the composer below the message pane sat off-screen with no way to reach it — the
+    // page did not scroll, so John could talk and nobody could answer him. Reported by the owner
+    // with the card visibly clipped mid-sentence.
+    //
+    // Commit fd927b4 fixed exactly this on /ask-john, /club and /founder. /waitlist was missed, and
+    // the comment on the message pane below still says "The page scrolls" — it did not. This makes
+    // that sentence true.
+    //
+    // h-full would pin the column to the viewport and defeat the scroller; min-h-full lets it grow,
+    // which is what ClubRoute already does.
+    <div className="ff-backdrop ff-scroll h-full text-ink">
+      <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col px-5 pt-8 pb-6">
         {/* Who's talking */}
         <div className="flex items-center gap-3">
           <JohnFace size={52} />
@@ -86,8 +101,9 @@ export function WaitlistRoute() {
           </div>
           {/* min-h keeps the conversation readable on a phone. As pure flex-1 this pane measured
               32px tall on a 375px-wide screen -- 5% of the viewport, with 222px of messages hidden
-              -- because the copy above it took everything. The page scrolls; the chat should not
-              be squeezed to nothing. */}
+              -- because the copy above it took everything. The page scrolls (it does NOW -- see the
+              root above; when this comment was written it did not, which is how the composer ended
+              up unreachable); the chat should not be squeezed to nothing. */}
           <div ref={scroller} className="min-h-[14rem] flex-1 space-y-3 overflow-y-auto px-4 py-4 sm:min-h-0">
             {messages.map((m, i) => (
               <div key={i} className={`flex items-end gap-2 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
