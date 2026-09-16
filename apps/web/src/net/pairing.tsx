@@ -80,16 +80,65 @@ export function StatusPill() {
   );
 }
 
+// How long the host may be gone before the display offers the pairing card again.
+//
+// The server already holds this principle and the display did not: when the last peer leaves a room
+// it waits 60s before dropping it, because (its words) "a host refreshing their phone is not the end
+// of the night, and neither is a player's tunnel dropping for ten seconds." 45s is inside that
+// window, so the card can never reappear for a room the server is about to discard anyway.
+const HOST_GRACE_MS = 45_000;
+
 // Full-screen pairing card shown on the DISPLAY until the host phone connects.
+//
+// IT USED TO INTERRUPT LIVE GAMES. `linked` is computed from the socket's CURRENT state, and a
+// single falsy render put a full-screen QR over the television. Mid-game that happens constantly
+// and for reasons that are not failures: the host's phone locks, Safari backgrounds the tab, the
+// wifi blips, the host reloads their controller, or the DISPLAY's own socket reconnects (which
+// clears `connected` on its own). The server deletes the host's peer the instant their socket drops
+// and re-broadcasts presence with host:0, so the takeover was immediate. Reported by the owner:
+// "the game qr code showed up while i was in the middle of a test".
+//
+// So the question the card answers had to change. It is no longer "is a host attached right now",
+// which is a fact about the last half-second. It is "does this screen still need pairing" — and
+// once a host has linked, a gap is a reconnection, not a request to pair. The card only returns
+// after HOST_GRACE_MS, so a genuinely dead host can still be re-paired without a page reload.
 export function DisplayPairing({ game }: { game: GameType }) {
   const connection = useConnection();
   const room = connection.room;
   const linked = connection.connected && (connection.presence?.host ?? 0) > 0;
 
+  // Has a host EVER been attached to this screen? Before that, the card is exactly right.
+  const [everLinked, setEverLinked] = useState(false);
+  // Gone long enough that this is a real loss rather than a phone locking.
+  const [goneTooLong, setGoneTooLong] = useState(false);
+
+  useEffect(() => {
+    if (linked) {
+      setEverLinked(true);
+      setGoneTooLong(false);
+      return;
+    }
+    // Never linked: the card is already up and no timer is needed.
+    if (!everLinked) return;
+    const t = setTimeout(() => setGoneTooLong(true), HOST_GRACE_MS);
+    return () => clearTimeout(t);
+  }, [linked, everLinked]);
+
   if (!room || linked) {
     return (
       <div className="absolute right-3 top-3 z-40">
         <StatusPill />
+      </div>
+    );
+  }
+
+  // The host has dropped out of a game that was already running. Say so quietly, in the corner,
+  // and leave the game on screen — the room is still watching it.
+  if (everLinked && !goneTooLong) {
+    return (
+      <div className="absolute right-3 top-3 z-40 flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1.5">
+        <span className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-warning" aria-hidden />
+        <span className="text-xs font-bold text-ink">Host reconnecting…</span>
       </div>
     );
   }
