@@ -1221,7 +1221,28 @@ if (existsSync(webDist)) {
   // The Kickstarter campaign is a standalone page (built from kickstarter/), not a SPA route —
   // serve it directly at /kickstarter so it doesn't fall through to the app shell.
   app.get("/kickstarter", (_req, res) => res.sendFile(join(webDist, "kickstarter.html")));
-  app.get("*", (_req, res) => res.sendFile(join(webDist, "index.html")));
+
+  // A MISSING ASSET MUST 404, NOT QUIETLY BECOME THE APP SHELL.
+  //
+  // The catch-all below answers every unknown path with index.html, which is right for SPA routes
+  // (/waitlist, /control) and actively dangerous for a build artefact. Vite content-hashes the
+  // bundle and wipes the old ones on each build, so a browser holding a stale index.html asks for
+  // a filename that no longer exists -- and used to receive 200 text/html. The browser then parses
+  // HTML as JavaScript, throws a SyntaxError, and the app dies or half-boots. Silently, with a 200,
+  // which is also why a deploy check that watches for a 404 waits forever.
+  //
+  // After eight deploys in one afternoon that is not hypothetical, and a clean 404 lets the browser
+  // (and any service worker) fail honestly and re-fetch the shell instead of executing markup.
+  app.get(/\.(js|css|map|json|png|jpe?g|webp|svg|gif|ico|woff2?|ttf|mp3|mp4|webm)$/i, (_req, res) => {
+    res.status(404).type("txt").send("Not found");
+  });
+
+  // index.html itself must always be revalidated, or a client keeps pointing at a bundle that was
+  // deleted by the next deploy -- the precise situation the 404 above exists to surface.
+  app.get("*", (_req, res) => {
+    res.setHeader("Cache-Control", "no-cache, must-revalidate");
+    res.sendFile(join(webDist, "index.html"));
+  });
 }
 
 const httpServer = createServer(app);
