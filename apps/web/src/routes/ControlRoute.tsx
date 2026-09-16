@@ -288,6 +288,11 @@ export function ControlRoute() {
           setUrlCategory(id);
           setSurveyCat(id);
         }}
+        onBack={() => {
+          // The picker had no exit at all -- browser-back only. Hard nav so the socket and
+          // providers reset cleanly, the same reason the Home button does.
+          window.location.href = `${window.location.origin}/#/control`;
+        }}
       />
     );
   }
