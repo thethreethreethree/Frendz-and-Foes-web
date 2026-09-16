@@ -83,7 +83,7 @@ export function BallparkDisplay({ room }: { room: string }) {
           <p className="text-lg text-muted">Everyone lock in a number…</p>
           <div className="flex flex-wrap justify-center gap-2">
             {state.players.map((p) => (
-              <span key={p.id} className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold ${p.guessed ? "bg-success text-white" : "bg-surface text-muted"}`} style={p.guessed ? {} : { border: "1px solid rgb(var(--c-line))" }}><AvatarBadge avatar={p.avatar} name={p.name} size={20} />{p.name}{p.guessed ? " ✓" : " …"}</span>
+              <span key={p.id} className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold ${p.guessed ? "bg-success text-canvas" : "bg-surface text-muted"}`} style={p.guessed ? {} : { border: "1px solid rgb(var(--c-line))" }}><AvatarBadge avatar={p.avatar} name={p.name} size={20} />{p.name}{p.guessed ? " ✓" : " …"}</span>
             ))}
           </div>
         </>

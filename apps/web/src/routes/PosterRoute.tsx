@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { QR } from "../net/pairing";
 import { BINGO_ROOM, bingoPosterUrl } from "../net/room";
 import { BingoLogo } from "../display/Logo";
@@ -6,19 +7,38 @@ import { BingoLogo } from "../display/Logo";
 // encodes the PERMANENT room (bingoPosterUrl), and it uses window.location.origin at runtime — so
 // whatever domain you open this page on is the domain baked into the code. Open <origin>/#/poster,
 // then print (or screenshot) this page.
+//
+// THIS PAGE PRINTS, so it keeps a white ground while the rest of the app is dark. That is exactly
+// what broke it: the page said `bg-white ... text-ink`, and --c-ink went near-white (#f4f7ff) when
+// the theme flipped. On paper the room code, the instructions and the URL came out blank — and so
+// did the first word of the wordmark, because BingoLogo paints it `text-ink` too (Logo.tsx line 53).
+// Only "SCAN TO JOIN" and the QR survived.
+//
+// Patching each element would have missed the logo, which is a shared component nobody would think
+// to check. Instead the poster declares a LIGHT TOKEN SCOPE: every colour in the app resolves from
+// these --c-* variables, so overriding them here re-themes every child correctly, including
+// components this file has never heard of. The brand's own primary is deliberately left alone.
+const PRINT_LIGHT = {
+  "--c-ink": "11 15 26", // near-black text, so it survives a printer
+  "--c-canvas": "255 255 255",
+  "--c-surface": "248 250 252",
+  "--c-muted": "71 85 105", // slate-600: readable on white, unlike the dark theme's #94a3b8
+  "--c-line": "203 213 225",
+} as CSSProperties;
+
 export function PosterRoute() {
   return (
-    <div className="grid min-h-screen place-items-center bg-white p-8 text-ink">
+    <div style={PRINT_LIGHT} className="grid min-h-screen place-items-center bg-canvas p-8 text-ink">
       <div className="flex flex-col items-center gap-6 text-center">
         <BingoLogo className="text-5xl" />
-        <div className="ff-title text-4xl text-grape">SCAN TO JOIN</div>
+        <div className="ff-title text-4xl text-primary">SCAN TO JOIN</div>
         <QR text={bingoPosterUrl()} size={460} />
-        <div className="font-display text-3xl tracking-[0.3em] text-ink">ROOM {BINGO_ROOM}</div>
-        <p className="max-w-md text-lg font-bold text-ink/70">
+        <div className="font-display text-3xl tabular-nums tracking-[0.3em] text-ink">ROOM {BINGO_ROOM}</div>
+        <p className="max-w-md text-lg font-bold text-muted">
           Point your phone camera at the code. Follow every ball and dare on your own screen —
           nothing to install.
         </p>
-        <p className="text-xs font-semibold text-ink/40 break-all">{bingoPosterUrl()}</p>
+        <p className="break-all text-xs font-semibold text-muted">{bingoPosterUrl()}</p>
       </div>
     </div>
   );

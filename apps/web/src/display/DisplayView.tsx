@@ -88,7 +88,7 @@ export function DisplayView() {
 
       {buzzersArmed && (
         <div className="pointer-events-none absolute left-1/2 top-24 z-20 -translate-x-1/2">
-          <div className="ff-sticker animate-pop flex items-center gap-3 bg-buzz-green px-8 py-2 font-display text-4xl tracking-widest text-white">
+          <div className="ff-sticker animate-pop flex items-center gap-3 bg-buzz-green px-8 py-2 font-display text-4xl tracking-widest text-canvas">
             <img src={artUrl(PROPS.buzzer)} alt="" aria-hidden className="h-10 w-auto"
                  style={{ filter: glow("#ffffff", 10) }} />
             BUZZERS LIVE

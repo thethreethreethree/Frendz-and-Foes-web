@@ -80,7 +80,7 @@ export function JustOneDisplay({ room }: { room: string }) {
           <div className="ff-title text-7xl">{word ?? "…"}</div>
           <div className="mt-2 flex flex-wrap justify-center gap-2">
             {state.players.filter((p) => p.id !== state.guesserId).map((p) => (
-              <span key={p.id} className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold ${p.submitted ? "bg-success text-white" : "bg-surface text-muted"}`} style={p.submitted ? {} : { border: "1px solid rgb(var(--c-line))" }}>
+              <span key={p.id} className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold ${p.submitted ? "bg-success text-canvas" : "bg-surface text-muted"}`} style={p.submitted ? {} : { border: "1px solid rgb(var(--c-line))" }}>
                 <AvatarBadge avatar={p.avatar} name={p.name} size={20} />{p.name}{p.submitted ? " ✓" : " …"}
               </span>
             ))}

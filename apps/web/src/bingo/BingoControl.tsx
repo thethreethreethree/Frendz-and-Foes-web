@@ -1,10 +1,11 @@
 import { ballById, dareForBall, isBingoComplete, remainingCount } from "@ff/engine";
 import { useBingo } from "../store/bingoStore";
 import { BingoLogo } from "../display/Logo";
-import { ControlPairButton, QR } from "../net/pairing";
+import { QR } from "../net/pairing";
 import { bingoJoinUrl } from "../net/room";
 import { MusicControl } from "../music/MusicControl";
-import { Section, CtrlButton, HomeButton } from "../control/ui";
+import { Section, CtrlButton } from "../control/ui";
+import { RemoteShell } from "../control/shell";
 
 // Host controller for Frendz Bingo: draw a ball, read its dare (host-only), then reveal it on
 // the display. Plus undo / reset and a log of what's been drawn.
@@ -14,23 +15,22 @@ export function BingoControl() {
   const done = isBingoComplete(bingo);
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-md flex-col overflow-y-auto overflow-x-hidden bg-concrete/40 text-ink">
-      {/* Command bar */}
-      <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-ink/10 bg-surface/95 px-3 py-2 backdrop-blur">
-        <BingoLogo className="text-base" />
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-ink/50">{bingo.drawn.length}/75</span>
-          <HomeButton />
-          <ControlPairButton />
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-3 p-3">
-        <PlayerJoinCode />
-
-        <CtrlButton tone="pink" className="py-4 text-xl" onClick={draw} disabled={done}>
+    // The draw is the whole game: the host presses it every thirty seconds all night. It docks.
+    <RemoteShell
+      title={<BingoLogo className="text-xl" />}
+      badge={
+        <span className="shrink-0 rounded-lg bg-surface px-2 py-1 font-display text-xs leading-none text-muted">
+          {bingo.drawn.length}/75
+        </span>
+      }
+      action={
+        <CtrlButton tone="pink" className="w-full py-4 text-xl" onClick={draw} disabled={done}>
           {done ? "All 75 drawn!" : "🎲 Draw next ball"}
         </CtrlButton>
+      }
+    >
+      <>
+        <PlayerJoinCode />
 
         <Section title="Current ball">
           {cur ? (
@@ -97,8 +97,8 @@ export function BingoControl() {
             </div>
           )}
         </Section>
-      </div>
-    </div>
+      </>
+    </RemoteShell>
   );
 }
 

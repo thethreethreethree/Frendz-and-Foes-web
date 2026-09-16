@@ -71,7 +71,7 @@ export function TelestrationsDisplay({ room }: { room: string }) {
         <p className="mt-2 text-lg text-muted">Everyone's on their phones — pass happens automatically.</p>
         <div className="mt-4 flex flex-wrap justify-center gap-2">
           {state.players.map((p) => (
-            <span key={p.id} className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold ${p.submitted ? "bg-success text-white" : "bg-surface text-muted"}`} style={p.submitted ? {} : { border: "1px solid rgb(var(--c-line))" }}><AvatarBadge avatar={p.avatar} name={p.name} size={20} />{p.name}{p.submitted ? " ✓" : " …"}</span>
+            <span key={p.id} className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold ${p.submitted ? "bg-success text-canvas" : "bg-surface text-muted"}`} style={p.submitted ? {} : { border: "1px solid rgb(var(--c-line))" }}><AvatarBadge avatar={p.avatar} name={p.name} size={20} />{p.name}{p.submitted ? " ✓" : " …"}</span>
           ))}
         </div>
         <div className="mt-3 text-2xl font-semibold text-primary">{done}/{state.players.length} done</div>

@@ -114,7 +114,17 @@ export function ControlRoute() {
           Open the host link from the Murder display QR.
         </div>
       );
-    return <Murder2Host room={room} />;
+    // Murder was the ONE server-authoritative game with no SocketConnectionProvider — every other
+    // one (Cover Ops, Solo Clue, Ballpark, Sketch Relay, After Dark) has had one since the
+    // crash-on-open fix. Nothing crashed here only because its controller rendered nothing that
+    // read the context; the cost was silent instead: no connection status and no room code in its
+    // header, on the game whose host most needs to know whether the display is still listening.
+    // controlProviders.test.mjs guards exactly this and flagged it the moment the shell went in.
+    return (
+      <SocketConnectionProvider room={room}>
+        <Murder2Host room={room} />
+      </SocketConnectionProvider>
+    );
   }
 
   if (game === "codenames") {

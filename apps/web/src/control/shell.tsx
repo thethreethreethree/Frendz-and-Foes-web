@@ -143,7 +143,12 @@ export function RemoteShell({
   title: ReactNode;
   /** Optional mark beside the title (deck badge, 18+, ball count). */
   badge?: ReactNode;
-  /** Room code, when the game has one. Bingo's is a fixed word; Trivia mints one. */
+  /**
+   * Room code, when the game has one. Bingo's is a fixed word; Trivia mints one.
+   * Omit it and the shell reads the room off the connection context — most controllers never
+   * receive it as a prop, and requiring one would have meant threading it through five files
+   * just to display it.
+   */
   room?: string | null;
   /** Game-specific header controls (Undo/Redo, Reset) — kept to the second row, never crowding the title. */
   headerExtra?: ReactNode;
@@ -151,6 +156,8 @@ export function RemoteShell({
   action?: ReactNode;
   children: ReactNode;
 }) {
+  const conn = useMaybeConnection();
+  const code = room ?? conn?.room ?? null;
   return (
     <div className="mx-auto flex h-full w-full max-w-md flex-col bg-canvas text-ink">
       <header className="sticky top-0 z-20 shrink-0 border-b border-line bg-canvas/95 backdrop-blur">
@@ -174,17 +181,20 @@ export function RemoteShell({
           <RemoteStatus />
         </div>
 
-        {(room || headerExtra) && (
+        {(code || headerExtra) && (
           <div className="flex items-center gap-2 px-3 pb-2">
-            {room && <RoomCode room={room} />}
+            {code && <RoomCode room={code} />}
             {headerExtra && <div className="ml-auto flex items-center gap-1.5">{headerExtra}</div>}
           </div>
         )}
       </header>
 
-      {/* ff-scroll carries the notch/home-indicator insets and stops scroll chaining on iOS. */}
+      {/* ff-scroll carries the notch/home-indicator insets and stops scroll chaining on iOS.
+          The inner column is min-h-full so a SHORT screen still fills the viewport: six remotes
+          wasted 45-75% of the phone with their primary action stranded mid-column, and a child
+          marked `mt-auto` now falls to the bottom instead. Long content still scrolls normally. */}
       <div className="ff-scroll min-h-0 flex-1">
-        <div className="flex flex-col gap-3 p-3">{children}</div>
+        <div className="flex min-h-full flex-col gap-3 p-3">{children}</div>
       </div>
 
       {action && (

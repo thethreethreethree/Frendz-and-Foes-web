@@ -96,7 +96,7 @@ export function TriviaDisplay() {
           <>
             <div className="flex items-center gap-3">
               <img src={roundBadge(q.round)} alt="" className="h-16 w-16 object-contain drop-shadow" />
-              <div className="ff-sticker bg-grape px-5 py-1.5 font-display text-2xl tracking-wide text-white">
+              <div className="ff-sticker bg-grape px-5 py-1.5 font-display text-2xl tracking-wide text-canvas">
                 {trivia.phase === "reveal" ? "ANSWER · " : ""}
                 {TRIVIA_ROUNDS[q.round]?.label.toUpperCase()} · QUESTION {triviaQuestionInRound(trivia.currentIndex)} / 10
               </div>
@@ -105,7 +105,7 @@ export function TriviaDisplay() {
               key={q.id}
               initial={{ y: -16, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              className="ff-sticker max-w-4xl bg-grape px-8 py-5 text-center text-3xl font-extrabold text-white"
+              className="ff-sticker max-w-4xl bg-grape px-8 py-5 text-center text-3xl font-extrabold text-canvas"
             >
               {q.prompt}
             </motion.h1>

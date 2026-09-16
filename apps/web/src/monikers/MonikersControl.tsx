@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { MONIKERS_ROUNDS, monikersRound } from "@ff/engine";
 import { useMonikersHost } from "../store/monikersStore";
-import { RemoteHeader } from "../control/shell";
+import { RemoteShell } from "../control/shell";
+import { Field } from "../control/ui";
 import { HowToPlay } from "../net/howtoplay";
 import { getBrand } from "../brand/theme";
 
@@ -16,18 +17,17 @@ export function MonikersControl() {
   const { state } = g;
   const label = getBrand().games.monikers?.label ?? "Encore";
   return (
-    <div className="flex h-full flex-col overflow-auto bg-canvas p-4 text-ink">
-      <RemoteHeader
-        title={label}
-        right={state.phase !== "setup" ? <button onClick={g.reset} className="ff-tap rounded-lg border border-line px-2.5 text-xs font-semibold text-muted">Reset</button> : undefined}
-      />
+    <RemoteShell
+      title={label}
+      headerExtra={state.phase !== "setup" ? <button onClick={g.reset} className="ff-tap rounded-lg border border-line px-2.5 text-xs font-semibold text-muted">Reset</button> : undefined}
+    >
       {state.phase === "setup" && <Setup />}
       {state.phase === "ready" && <Ready />}
       {state.phase === "playing" && <Playing />}
       {state.phase === "turnover" && <TurnOver />}
       {state.phase === "roundover" && <RoundOver />}
       {state.phase === "ended" && <Ended />}
-    </div>
+    </RemoteShell>
   );
 }
 
@@ -55,7 +55,7 @@ function Setup() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="flex flex-1 flex-col gap-5">
       <section className="rounded-2xl border border-line bg-surface p-4">
         <h2 className="mb-1 text-sm font-semibold text-muted">How it works</h2>
         <p className="text-sm text-muted">The same cards are played <b>3 times</b>: {MONIKERS_ROUNDS.map((r) => r.label).join(" → ")}. Teams share the clock each round.</p>
@@ -67,7 +67,7 @@ function Setup() {
           {teams.map((t) => (
             <div key={t.id} className="flex items-center gap-2">
               <span className="h-5 w-5 shrink-0 rounded-full" style={{ backgroundColor: t.color }} />
-              <input value={t.name} onChange={(e) => rename(t.id, e.target.value)} className="flex-1 rounded-lg border border-line px-3 py-2 text-sm" />
+              <Field value={t.name} onChange={(v) => rename(t.id, v)} className="flex-1" ariaLabel="Team name" />
               {teams.length > 2 && <button onClick={() => remove(t.id)} className="px-2 text-lg text-muted">×</button>}
             </div>
           ))}
@@ -85,7 +85,7 @@ function Setup() {
         </label>
       </section>
 
-      <button onClick={start} className="ff-sticker w-full bg-primary px-4 py-4 font-display text-2xl text-primary-ink">START GAME</button>
+      <button onClick={start} className="ff-sticker mt-auto w-full bg-primary px-4 py-4 font-display text-2xl text-primary-ink">START GAME</button>
 
       <HowToPlay game="monikers" />
     </div>
@@ -150,8 +150,8 @@ function Playing() {
         {card && <div className="mt-2 rounded-full bg-primary/10 px-3 py-0.5 text-sm font-bold text-primary">{card.points} pt{card.points > 1 ? "s" : ""}</div>}
       </div>
       <div className="grid grid-cols-[1fr_auto] gap-2">
-        <button onClick={g.got} className="ff-sticker bg-success px-4 py-5 font-display text-2xl text-white">✓ GOT IT</button>
-        <button onClick={g.pass} className="ff-sticker bg-warning px-5 py-5 font-display text-xl text-white">PASS</button>
+        <button onClick={g.got} className="ff-sticker bg-success px-4 py-5 font-display text-2xl text-canvas">✓ GOT IT</button>
+        <button onClick={g.pass} className="ff-sticker bg-warning px-5 py-5 font-display text-xl text-canvas">PASS</button>
       </div>
       <button onClick={g.endTurn} className="text-sm font-semibold text-muted">End turn early</button>
     </div>

@@ -19,8 +19,13 @@ const WORDMARK_COLOR: Record<WordmarkColor, string> = {
 function Wordmark({ parts, className = "" }: { parts: WordmarkPart[]; className?: string }) {
   return (
     <div className={`ff-title inline-flex flex-wrap items-baseline justify-center ${className}`}>
+      {/* whitespace-pre, because these spans are FLEX ITEMS and a flex container collapses the
+          leading space in one. BingoLogo builds its parts as `" " + word`, so the brand's
+          "Bingo Night" rendered as "BingoNight" the moment the header was wide enough to keep it
+          on one line — it had only ever been seen wrapped, which hid the missing space. The
+          default "Play"+"Zoo" wordmark carries no spaces, so preserving them costs it nothing. */}
       {parts.map((p, i) => (
-        <span key={i} className={WORDMARK_COLOR[p.color ?? "ink"]}>
+        <span key={i} className={`whitespace-pre ${WORDMARK_COLOR[p.color ?? "ink"]}`}>
           {p.text}
         </span>
       ))}

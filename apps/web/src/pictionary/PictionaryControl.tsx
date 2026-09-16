@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { usePictionaryHost } from "../store/pictionaryStore";
 import { DrawCanvas } from "./PictionaryCanvas";
-import { RemoteHeader } from "../control/shell";
+import { RemoteShell } from "../control/shell";
+import { Field } from "../control/ui";
 import { HowToPlay } from "../net/howtoplay";
 import { emitPulse } from "../net/socket";
 import { getBrand } from "../brand/theme";
@@ -20,16 +21,15 @@ export function PictionaryControl({ room }: { room: string }) {
   if (state.phase === "playing") return <Playing room={room} />;
 
   return (
-    <div className="flex h-full flex-col overflow-auto bg-canvas p-4 text-ink">
-      <RemoteHeader
-        title={label}
-        right={state.phase !== "setup" ? <button onClick={g.reset} className="ff-tap rounded-lg border border-line px-2.5 text-xs font-semibold text-muted">Reset</button> : undefined}
-      />
+    <RemoteShell
+      title={label}
+      headerExtra={state.phase !== "setup" ? <button onClick={g.reset} className="ff-tap rounded-lg border border-line px-2.5 text-xs font-semibold text-muted">Reset</button> : undefined}
+    >
       {state.phase === "setup" && <Setup />}
       {state.phase === "ready" && <Ready />}
       {state.phase === "turnover" && <TurnOver />}
       {state.phase === "ended" && <Ended />}
-    </div>
+    </RemoteShell>
   );
 }
 
@@ -46,14 +46,14 @@ function Setup() {
   const add = () => setTeams((ts) => (ts.length < 6 ? [...ts, { id: uid(), name: `Team ${ts.length + 1}`, color: TEAM_COLORS[ts.length % TEAM_COLORS.length] }] : ts));
   const start = () => { g.configure({ turnSeconds, winScore, skipPenalty: 0 }); g.setTeams(teams); g.start(); };
   return (
-    <div className="space-y-5">
+    <div className="flex flex-1 flex-col gap-5">
       <section className="rounded-2xl border border-line bg-surface p-4">
         <h2 className="mb-2 text-sm font-semibold text-muted">Teams</h2>
         <div className="space-y-2">
           {teams.map((t) => (
             <div key={t.id} className="flex items-center gap-2">
               <span className="h-5 w-5 shrink-0 rounded-full" style={{ backgroundColor: t.color }} />
-              <input value={t.name} onChange={(e) => rename(t.id, e.target.value)} className="flex-1 rounded-lg border border-line px-3 py-2 text-sm" />
+              <Field value={t.name} onChange={(v) => rename(t.id, v)} className="flex-1" ariaLabel="Team name" />
               {teams.length > 2 && <button onClick={() => remove(t.id)} className="px-2 text-lg text-muted">×</button>}
             </div>
           ))}
@@ -65,9 +65,13 @@ function Setup() {
         <label className="block text-sm font-semibold">Turn length: {turnSeconds}s
           <input type="range" min={30} max={120} step={15} value={turnSeconds} onChange={(e) => setTurnSeconds(+e.target.value)} className="mt-1 w-full accent-primary" /></label>
         <label className="block text-sm font-semibold">Play to: {winScore} points
-          <input type="range" min={5} max={20} step={1} value={winScore} onChange={(e) => setWinScore(+e.target.value)} className="mt-1 w-full accent-primary" /></label>
+          {/* Was min=5 max=20 step=1 while its four copy-paste siblings use 10/40/5 — and all five take
+              the SAME shared default of 20 (DEFAULT_WORDGAME_CONFIG), so Quick Draw alone opened with
+              its slider pinned hard against the right end and no headroom. Same range as the others
+              now; the default lands mid-scale and nobody has to guess why this one looks maxed out. */}
+          <input type="range" min={10} max={40} step={5} value={winScore} onChange={(e) => setWinScore(+e.target.value)} className="mt-1 w-full accent-primary" /></label>
       </section>
-      <button onClick={start} className="ff-sticker w-full bg-primary px-4 py-4 font-display text-2xl text-primary-ink">START GAME</button>
+      <button onClick={start} className="ff-sticker mt-auto w-full bg-primary px-4 py-4 font-display text-2xl text-primary-ink">START GAME</button>
 
       <HowToPlay game="pictionary" />
     </div>
@@ -131,8 +135,8 @@ function Playing({ room }: { room: string }) {
       </div>
 
       <div className="grid grid-cols-[1fr_auto] gap-2">
-        <button onClick={g.got} className="ff-sticker bg-success px-4 py-4 font-display text-2xl text-white">✓ GUESSED (+ next)</button>
-        <button onClick={g.skip} className="ff-sticker bg-warning px-5 py-4 font-display text-xl text-white">SKIP</button>
+        <button onClick={g.got} className="ff-sticker bg-success px-4 py-4 font-display text-2xl text-canvas">✓ GUESSED (+ next)</button>
+        <button onClick={g.skip} className="ff-sticker bg-warning px-5 py-4 font-display text-xl text-canvas">SKIP</button>
       </div>
       <div className="flex items-center justify-between text-sm text-muted"><span>Got this turn: {got}</span><button onClick={g.endTurn} className="font-semibold">End turn</button></div>
     </div>

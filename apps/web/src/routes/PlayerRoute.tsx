@@ -64,7 +64,7 @@ export function PlayerRoute() {
             onChange={(e) => setCode(e.target.value.toUpperCase())}
             maxLength={4}
             placeholder="ABCD"
-            className="mt-4 w-40 rounded-lg border-2 border-ink/20 bg-white px-4 py-3 text-center text-2xl tracking-widest text-ink outline-none focus:border-teal"
+            className="mt-4 min-h-[44px] w-40 rounded-lg border-2 border-line bg-surface px-4 py-3 text-center text-2xl uppercase tracking-widest text-ink outline-none placeholder:text-muted focus:border-primary"
           />
           <button
             disabled={code.length < 3}

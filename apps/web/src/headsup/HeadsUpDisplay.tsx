@@ -86,7 +86,7 @@ export function HeadsUpDisplay() {
           {pub.lastReview.length > 0 && (
             <div className="flex flex-wrap justify-center gap-2">
               {pub.lastReview.map((e, i) => (
-                <span key={i} className={`rounded-full px-3 py-1 text-lg font-semibold ${e.result === "got" ? "bg-success text-white" : "bg-surface text-muted line-through"}`} style={e.result === "got" ? {} : { border: "1px solid rgb(var(--c-line))" }}>
+                <span key={i} className={`rounded-full px-3 py-1 text-lg font-semibold ${e.result === "got" ? "bg-success text-canvas" : "bg-surface text-muted line-through"}`} style={e.result === "got" ? {} : { border: "1px solid rgb(var(--c-line))" }}>
                   {e.word}
                 </span>
               ))}

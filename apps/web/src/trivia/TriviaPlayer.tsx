@@ -106,7 +106,7 @@ function TriviaPlayerView({
               {revealed && <span className="text-buzz-green">Answer revealed</span>}
             </div>
 
-            <div className="rounded-xl bg-grape px-4 py-4 text-center text-lg font-extrabold text-white shadow-pop">
+            <div className="rounded-xl bg-grape px-4 py-4 text-center text-lg font-extrabold text-canvas shadow-pop">
               {q.prompt}
             </div>
 

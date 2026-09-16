@@ -83,8 +83,8 @@ function GuesserReveal({ state }: { state: JoState }) {
       </div>
       <p className="text-sm text-muted">Say your guess out loud, then:</p>
       <div className="grid w-full grid-cols-2 gap-2">
-        <button onClick={() => joJudge(true)} className="ff-sticker bg-success px-4 py-4 font-display text-xl text-white">GOT IT ✓</button>
-        <button onClick={() => joJudge(false)} className="ff-sticker bg-warning px-4 py-4 font-display text-xl text-white">PASS ✗</button>
+        <button onClick={() => joJudge(true)} className="ff-sticker bg-success px-4 py-4 font-display text-xl text-canvas">GOT IT ✓</button>
+        <button onClick={() => joJudge(false)} className="ff-sticker bg-warning px-4 py-4 font-display text-xl text-canvas">PASS ✗</button>
       </div>
     </div>
   );

@@ -95,15 +95,27 @@ export function DisplayPairing({ game }: { game: GameType }) {
   }
 
   return (
-    <div className="absolute inset-0 z-40 grid place-items-center bg-ink/80 backdrop-blur">
-      <div className="ff-sticker bg-white px-10 py-8 text-center text-ink">
-        <div className="font-display text-3xl text-pink">SCAN TO HOST</div>
+    // THE CARD WAS INVISIBLE FROM THE WAIST DOWN.
+    //
+    // It was `bg-white ... text-ink` — a literal white card, and --c-ink is near-white (#f4f7ff)
+    // since the theme went dark. "or enter room code" and the room code itself rendered at about
+    // 1.03:1: present in the DOM, unreadable on the television. The QR still scanned, so anyone
+    // with a working camera never noticed; anyone typing the code by hand was reading nothing.
+    // Same literal-white-under-dark-tokens fault as the music panel, on the FIRST screen a room
+    // full of people looks at.
+    //
+    // The card is now a dark surface, which is also what the rest of the product is. The QR keeps
+    // its own white quiet zone (the QR component supplies it) because a scanner needs the contrast.
+    <div className="absolute inset-0 z-40 grid place-items-center bg-canvas/85 p-6 backdrop-blur">
+      <div className="ff-sticker max-w-full bg-surface px-10 py-8 text-center text-ink">
+        <div className="font-display text-3xl text-primary">SCAN TO HOST</div>
         <div className="mt-4 flex justify-center">
           <QR text={controllerUrl(room, game)} size={200} />
         </div>
-        <div className="mt-4 text-sm font-bold text-ink/60">or enter room code</div>
-        <div className="ff-title text-6xl tracking-[0.3em] text-ink">{room}</div>
-        <div className="mt-3">
+        <div className="mt-5 text-sm font-bold uppercase tracking-wider text-muted">or enter room code</div>
+        {/* tabular-nums so 0/O and 1/I cannot be misread by someone typing it from across a room. */}
+        <div className="ff-title text-6xl tabular-nums tracking-[0.3em] text-ink">{room}</div>
+        <div className="mt-4">
           <StatusPill />
         </div>
       </div>
@@ -123,9 +135,9 @@ export function ControlPairButton() {
         setUrlRoom(code.toUpperCase());
         window.location.reload();
       }}
-      className="inline-flex items-center gap-1.5 rounded-full bg-tang px-2.5 py-1 text-xs font-bold text-white"
+      className="inline-flex items-center gap-1.5 rounded-full bg-tang px-2.5 py-1 text-xs font-bold text-canvas"
     >
-      <span className="h-2.5 w-2.5 rounded-full bg-white" /> Pair display
+      <span className="h-2.5 w-2.5 rounded-full bg-canvas" /> Pair display
     </button>
   );
 }

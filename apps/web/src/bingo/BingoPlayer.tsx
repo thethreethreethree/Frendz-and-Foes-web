@@ -168,7 +168,7 @@ function AllNumbers({
                         ? "scale-110 bg-sun text-canvas ring-2 ring-white"
                         : isDrawn
                           ? "bg-ink text-canvas"
-                          : "bg-white/10 text-white/30"
+                          : "bg-white/10 text-canvas/30"
                     }`}
                   >
                     {b.number}

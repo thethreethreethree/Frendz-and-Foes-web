@@ -11,7 +11,8 @@ import {
 import { useTrivia } from "../store/triviaStore";
 import { QR } from "../net/pairing";
 import { triviaTeamJoinUrl, triviaViewJoinUrl } from "../net/room";
-import { Section, CtrlButton, HomeButton } from "../control/ui";
+import { Section, CtrlButton } from "../control/ui";
+import { RemoteShell } from "../control/shell";
 import { letterTile, versionBadge } from "./assets";
 
 const PALETTE = ["#ff2e9a", "#ff6b35", "#1fd1c6", "#8a4bff", "#ffd23f", "#22c55e", "#3b82f6", "#ef4444"];
@@ -22,31 +23,28 @@ export function TriviaControl() {
   const { trivia } = t;
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-md flex-col overflow-y-auto overflow-x-hidden bg-concrete/40 text-ink">
-      <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-ink/10 bg-surface/95 px-3 py-2 backdrop-blur">
-        <span className="font-display text-lg text-ink">
-          {trivia.phase === "playing" || trivia.phase === "reveal"
-            ? `${trivia.phase === "reveal" ? "REVEAL · " : ""}${TRIVIA_ROUNDS[TRIVIA_DECKS[trivia.version][trivia.currentIndex]?.round ?? 0]?.label} · Q${triviaQuestionInRound(trivia.currentIndex)}/10`
-            : `TRIVIA — ${TRIVIA_VERSION_LABELS[trivia.version].replace("Frendz Trivia ", "")}`}
-        </span>
-        <div className="flex items-center gap-2">
-          {trivia.phase !== "setup" && (
-            <button
-              onClick={() => {
-                if (window.confirm("Reset the game? Returns to setup — you can change the version, mode, and teams. Scores are cleared."))
-                  t.reset();
-              }}
-              className="rounded-lg bg-tang px-2.5 py-1.5 text-xs font-bold text-white"
-            >
-              ↺ Reset
-            </button>
-          )}
-          <img src={versionBadge(trivia.version)} alt={trivia.version} className="h-8 w-8 object-contain" />
-          <HomeButton />
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-3 p-3">
+    <RemoteShell
+      title={
+        trivia.phase === "playing" || trivia.phase === "reveal"
+          ? `${trivia.phase === "reveal" ? "REVEAL · " : ""}${TRIVIA_ROUNDS[TRIVIA_DECKS[trivia.version][trivia.currentIndex]?.round ?? 0]?.label} · Q${triviaQuestionInRound(trivia.currentIndex)}/10`
+          : `Trivia — ${TRIVIA_VERSION_LABELS[trivia.version].replace("Frendz Trivia ", "")}`
+      }
+      badge={<img src={versionBadge(trivia.version)} alt={trivia.version} className="h-8 w-8 shrink-0 object-contain" />}
+      headerExtra={
+        trivia.phase !== "setup" ? (
+          <button
+            onClick={() => {
+              if (window.confirm("Reset the game? Returns to setup — you can change the version, mode, and teams. Scores are cleared."))
+                t.reset();
+            }}
+            className="ff-tap rounded-lg bg-tang px-2.5 text-xs font-bold text-canvas"
+          >
+            ↺ Reset
+          </button>
+        ) : undefined
+      }
+    >
+      <>
         {trivia.phase === "setup" && <Setup />}
         {(trivia.phase === "playing" || trivia.phase === "reveal") && <JoinCodes />}
         {trivia.phase === "playing" && <Play />}
@@ -63,8 +61,8 @@ export function TriviaControl() {
         {trivia.phase !== "setup" && (
           <Scoreboard />
         )}
-      </div>
-    </div>
+      </>
+    </RemoteShell>
   );
 }
 
@@ -156,7 +154,10 @@ function Setup() {
         </Section>
       )}
 
-      <CtrlButton tone="pink" className="w-full py-3 text-xl" onClick={start}>
+      {/* mt-auto: Setup's children are direct children of the shell's min-h-full column, so the
+          primary action drops to the bottom of a short screen instead of floating mid-page with
+          ~380px of dead space under it. */}
+      <CtrlButton tone="pink" className="mt-auto w-full py-3 text-xl" onClick={start}>
         ▶ Start {TRIVIA_VERSION_LABELS[trivia.version]}
       </CtrlButton>
     </>
@@ -239,7 +240,7 @@ function Play() {
   return (
     <>
       <Section title={`${TRIVIA_ROUNDS[q.round]?.label} · Question ${triviaQuestionInRound(trivia.currentIndex)} of 10`}>
-        <div className="rounded-lg bg-grape px-3 py-2 text-center text-sm font-extrabold text-white">{q.prompt}</div>
+        <div className="rounded-lg bg-grape px-3 py-2 text-center text-sm font-extrabold text-canvas">{q.prompt}</div>
         <ul className="mt-2 space-y-1">
           {TRIVIA_LETTERS.map((letter, i) => {
             const isCorrect = q.correct === letter;
@@ -295,7 +296,7 @@ function Reveal() {
   return (
     <>
       <Section title={`Reveal · ${TRIVIA_ROUNDS[q.round]?.label} · Question ${triviaQuestionInRound(trivia.currentIndex)} of 10`}>
-        <div className="rounded-lg bg-grape px-3 py-2 text-center text-sm font-extrabold text-white">{q.prompt}</div>
+        <div className="rounded-lg bg-grape px-3 py-2 text-center text-sm font-extrabold text-canvas">{q.prompt}</div>
         <ul className="mt-2 space-y-1">
           {TRIVIA_LETTERS.map((letter, i) => {
             const isCorrect = q.correct === letter;

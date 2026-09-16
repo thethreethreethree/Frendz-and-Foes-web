@@ -46,7 +46,7 @@ export function TeamView({
         {/* Turn banner */}
         <div
           className={`rounded-lg px-3 py-2 text-center text-sm font-black ${
-            isOurTurn ? "bg-buzz-green text-white" : "bg-sun/70 text-canvas"
+            isOurTurn ? "bg-buzz-green text-canvas" : "bg-sun/70 text-canvas"
           }`}
         >
           {state.phase === "playing"

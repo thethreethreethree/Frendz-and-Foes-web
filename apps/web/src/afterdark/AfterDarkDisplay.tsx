@@ -73,7 +73,7 @@ export function AfterDarkDisplay({ room }: { room: string }) {
       {state.phase === "submitting" && (
         <div className="flex flex-wrap justify-center gap-2">
           {state.players.filter((p) => !p.isJudge).map((p) => (
-            <span key={p.id} className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold ${p.submitted ? "bg-success text-white" : "bg-surface text-muted"}`} style={p.submitted ? {} : { border: "1px solid rgb(var(--c-line))" }}><AvatarBadge avatar={p.avatar} name={p.name} size={20} />{p.name}{p.submitted ? " ✓" : " …"}</span>
+            <span key={p.id} className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold ${p.submitted ? "bg-success text-canvas" : "bg-surface text-muted"}`} style={p.submitted ? {} : { border: "1px solid rgb(var(--c-line))" }}><AvatarBadge avatar={p.avatar} name={p.name} size={20} />{p.name}{p.submitted ? " ✓" : " …"}</span>
           ))}
         </div>
       )}
@@ -91,7 +91,7 @@ export function AfterDarkDisplay({ room }: { room: string }) {
 
       {state.phase === "reveal" && state.winner && (
         <>
-          <div className="ff-title rounded-2xl bg-success px-6 py-4 text-3xl text-white">{fillPrompt(state.prompt!.text, state.winner.cards)}</div>
+          <div className="ff-title rounded-2xl bg-success px-6 py-4 text-3xl text-canvas">{fillPrompt(state.prompt!.text, state.winner.cards)}</div>
           <div className="text-xl font-semibold">🏆 {state.winner.name} wins the round</div>
         </>
       )}

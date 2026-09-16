@@ -1,49 +1,82 @@
 import { useState } from "react";
 import { useMurder2 } from "./useMurder2";
-import { HomeButton } from "../control/ui";
+import { Section } from "../control/ui";
+import { RemoteShell } from "../control/shell";
 import { m2Config, m2Start, m2OpenVote, m2CloseVote, m2Reset, type V2Player, type V2State } from "../net/murder2";
 
 // Host controller (phone) for Murder v2 — configure + start, run town meetings, reset.
 export function Murder2Host({ room }: { room: string }) {
   const { state, error } = useMurder2(room, "host");
-  if (!state) return <Wrap><p className="text-ink/60">Connecting…</p></Wrap>;
+  if (!state) return <div className="grid h-full place-items-center bg-canvas p-4 text-muted">Connecting…</div>;
   const picked = state.players.filter((p) => p.characterId).length;
+  const canStart = picked >= 3;
+
+  // Docked, so the thing the host is waiting to press is under their thumb rather than stranded
+  // halfway up a screen that was ~60% empty.
+  const action =
+    state.phase === "lobby" ? (
+      <button
+        disabled={!canStart}
+        onClick={m2Start}
+        className="ff-sticker w-full bg-primary px-4 py-4 font-display text-xl text-primary-ink disabled:opacity-35"
+      >
+        {canStart ? "START GAME" : "Need 3+ players with characters"}
+      </button>
+    ) : state.phase === "playing" ? (
+      <button onClick={m2OpenVote} className="ff-sticker w-full bg-primary px-4 py-3 font-display text-xl text-primary-ink">OPEN TOWN MEETING</button>
+    ) : state.phase === "voting" ? (
+      <button onClick={m2CloseVote} className="ff-sticker w-full bg-secondary px-4 py-3 font-display text-xl text-canvas">CLOSE VOTE &amp; RESOLVE</button>
+    ) : state.phase === "ended" ? (
+      <div className="space-y-2">
+        <button onClick={() => m2Reset(false)} className="ff-sticker w-full bg-secondary px-4 py-3 font-display text-lg text-canvas">NEXT ROUND (keep players + scores)</button>
+        <button onClick={() => m2Reset(true)} className="min-h-[44px] w-full rounded-lg border border-line px-4 text-sm font-semibold text-muted">End tournament — full reset</button>
+      </div>
+    ) : undefined;
 
   return (
-    <Wrap>
-      {error && <div className="mb-3 rounded-lg bg-danger px-3 py-2 text-sm font-semibold text-white">{error}</div>}
-      <div className="mb-1 flex justify-end"><HomeButton /></div>
-      <div className="ff-title text-2xl text-ink">HOST — The Villagers{state.round ? <span className="ml-2 text-base text-ink/50">Round {state.round}</span> : null}</div>
-      <p className="text-sm text-ink/60">{picked} of {state.players.length} joined players have picked a character.</p>
+    // Murder was the only one of the fourteen with NO card structure at all: labels and raw
+    // controls sitting bare on the page background, an empty "Players" heading, and two sliders
+    // rendering in Chrome's default blue because their className carried no accent. Everything
+    // below now lives in the same Section the rest of the product uses.
+    <RemoteShell
+      title="The Villagers"
+      badge={
+        state.round ? (
+          <span className="shrink-0 rounded-lg bg-surface px-2 py-1 font-display text-xs leading-none text-muted">
+            Round {state.round}
+          </span>
+        ) : undefined
+      }
+      room={room}
+      action={action}
+    >
+      {error && <div className="rounded-lg bg-danger px-3 py-2 text-sm font-semibold text-white">{error}</div>}
 
-      {state.phase === "lobby" && <Config state={state} canStart={picked >= 3} />}
+      {state.phase === "lobby" && <Config state={state} canStart={canStart} />}
 
       {state.phase === "playing" && (
-        <div className="mt-4 space-y-2">
-          <p className="rounded-lg bg-surface px-3 py-2 text-sm">Kills {state.killCount}/{state.killTarget}. Let the room discuss, then call a meeting.</p>
-          <button onClick={m2OpenVote} className="ff-sticker w-full bg-pink px-4 py-3 font-display text-xl text-white">OPEN TOWN MEETING</button>
-        </div>
+        <Section title="Round in progress">
+          <p className="text-sm text-muted">
+            Kills {state.killCount}/{state.killTarget}. Let the room discuss, then call a meeting.
+          </p>
+        </Section>
       )}
 
       {state.phase === "voting" && (
-        <div className="mt-4 space-y-2">
-          <p className="rounded-lg bg-surface px-3 py-2 text-sm">Voting open. Close it when the room has voted (or all living players vote).</p>
+        <Section title="Town meeting">
+          <p className="mb-2 text-sm text-muted">Voting open. Close it when the room has voted (or all living players vote).</p>
           <VoteList state={state} />
-          <button onClick={m2CloseVote} className="ff-sticker w-full bg-teal px-4 py-3 font-display text-xl text-white">CLOSE VOTE & RESOLVE</button>
-        </div>
+        </Section>
       )}
 
       {state.phase === "ended" && (
-        <div className="mt-4 space-y-2">
-          <p className="rounded-lg bg-pink/10 px-3 py-2 font-display text-lg">{state.winner === "town" ? "Town won!" : "Murderer won!"}</p>
+        <Section title={state.winner === "town" ? "Town won!" : "Murderer won!"}>
           <Standings state={state} />
-          <button onClick={() => m2Reset(false)} className="ff-sticker w-full bg-teal px-4 py-2 font-display text-lg text-white">NEXT ROUND (keep players + scores)</button>
-          <button onClick={() => m2Reset(true)} className="rounded-lg border border-ink/20 px-4 py-2 text-sm">End tournament — full reset (drop players + scores)</button>
-        </div>
+        </Section>
       )}
 
-      <PlayerList state={state} />
-    </Wrap>
+      <PlayerList state={state} picked={picked} />
+    </RemoteShell>
   );
 }
 
@@ -66,18 +99,15 @@ function Config({ state, canStart }: { state: V2State; canStart: boolean }) {
   const picked = state.players.filter((p) => p.characterId).length;
   const apply = () => m2Config({ killTarget: kills, cooldownSec: cooldown });
   return (
-    <div className="mt-4 space-y-3">
-      {canStart && <p className="rounded-lg bg-surface px-3 py-2 text-sm text-ink/70">This game: <b>{roleComposition(picked)}</b>.</p>}
+    <Section title="Setup">
+      {canStart && <p className="mb-3 rounded-lg border border-line bg-canvas px-3 py-2 text-sm text-muted">This game: <b className="text-ink">{roleComposition(picked)}</b>.</p>}
       <label className="block text-sm font-semibold text-ink/70">Kills to win: {kills}
         <input type="range" min={2} max={8} value={kills} onChange={(e) => setKills(+e.target.value)} onMouseUp={apply} onTouchEnd={apply} className="mt-1 w-full accent-primary" />
       </label>
       <label className="block text-sm font-semibold text-ink/70">Kill cooldown: {cooldown}s
         <input type="range" min={20} max={180} step={5} value={cooldown} onChange={(e) => setCooldown(+e.target.value)} onMouseUp={apply} onTouchEnd={apply} className="mt-1 w-full accent-primary" />
       </label>
-      <button disabled={!canStart} onClick={m2Start} className="ff-sticker w-full bg-pink px-4 py-3 font-display text-xl text-white disabled:opacity-40">
-        {canStart ? "START GAME" : "Need 3+ players with characters"}
-      </button>
-    </div>
+    </Section>
   );
 }
 
@@ -111,10 +141,9 @@ function VoteList({ state }: { state: V2State }) {
   );
 }
 
-function PlayerList({ state }: { state: V2State }) {
+function PlayerList({ state, picked }: { state: V2State; picked: number }) {
   return (
-    <div className="mt-5">
-      <div className="font-display text-lg text-ink">Players</div>
+    <Section title={`Players — ${picked} of ${state.players.length} have picked a character`}>
       {/* This heading sat over nothing at all before a single player joined — a title, then void,
           on the one remote whose controller exposes no action until people arrive. The host had no
           way to tell "waiting" from "broken". */}
@@ -130,13 +159,9 @@ function PlayerList({ state }: { state: V2State }) {
           </div>
         ))}
       </div>
-    </div>
+    </Section>
   );
 }
 
 const name = (s: V2State, id: string) => s.players.find((p) => p.id === id)?.name || "?";
 const prof = (s: V2State, id: string | null) => s.characters.find((c) => c.id === id)?.profession || "?";
-
-function Wrap({ children }: { children: React.ReactNode }) {
-  return <div className="h-full overflow-auto bg-cream p-4">{children}</div>;
-}

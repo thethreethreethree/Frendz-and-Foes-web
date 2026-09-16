@@ -44,7 +44,7 @@ await send("Page.enable");
 // iPhone-class viewport. The remote is a phone-first surface; photographing it at desktop
 // width would be photographing a thing no host ever sees.
 await send("Emulation.setDeviceMetricsOverride", {
-  width: 390, height: 844, deviceScaleFactor: 2, mobile: true,
+  width: +(process.env.SHOOT_W || 390), height: +(process.env.SHOOT_H || 844), deviceScaleFactor: 2, mobile: !process.env.SHOOT_W,
 });
 
 const shoot = async (name) => {
@@ -55,7 +55,7 @@ const shoot = async (name) => {
 
 for (const game of GAMES) {
   const room = "RD" + Math.floor(1000 + Math.random() * 8999); // wide space: no room collisions
-  await send("Page.navigate", { url: `${BASE}/?room=${room}&game=${game}#/control` });
+  await send("Page.navigate", { url: `${BASE}/?room=${room}&game=${game}#/${process.env.SHOOT_SURFACE || "control"}` });
 
   let text = "";
   for (let i = 0; i < 20; i++) {

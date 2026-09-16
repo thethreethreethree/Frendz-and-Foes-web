@@ -70,7 +70,7 @@ const TONES: Record<string, string> = {
   tang: "bg-tang text-canvas",
   green: "bg-buzz-green text-canvas",
   /** Destructive / stop. */
-  danger: "bg-danger text-white",
+  danger: "bg-danger text-canvas",
   /** Borderless — for tertiary actions that should not compete at all. */
   ghost: "bg-transparent text-muted",
 };

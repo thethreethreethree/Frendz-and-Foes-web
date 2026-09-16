@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useFullCastHost } from "../store/fullcastStore";
-import { RemoteHeader } from "../control/shell";
+import { RemoteShell } from "../control/shell";
+import { Field } from "../control/ui";
 import { HowToPlay } from "../net/howtoplay";
 import { getBrand } from "../brand/theme";
 
@@ -16,17 +17,16 @@ export function FullCastControl() {
   const { state } = g;
   const label = getBrand().games.reverse?.label ?? "Full Cast";
   return (
-    <div className="flex h-full flex-col overflow-auto bg-canvas p-4 text-ink">
-      <RemoteHeader
-        title={label}
-        right={state.phase !== "setup" ? <button onClick={g.reset} className="ff-tap rounded-lg border border-line px-2.5 text-xs font-semibold text-muted">Reset</button> : undefined}
-      />
+    <RemoteShell
+      title={label}
+      headerExtra={state.phase !== "setup" ? <button onClick={g.reset} className="ff-tap rounded-lg border border-line px-2.5 text-xs font-semibold text-muted">Reset</button> : undefined}
+    >
       {state.phase === "setup" && <Setup />}
       {state.phase === "ready" && <Ready />}
       {state.phase === "playing" && <Playing />}
       {state.phase === "turnover" && <TurnOver />}
       {state.phase === "ended" && <Ended />}
-    </div>
+    </RemoteShell>
   );
 }
 
@@ -54,14 +54,14 @@ function Setup() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="flex flex-1 flex-col gap-5">
       <section className="rounded-2xl border border-line bg-surface p-4">
         <h2 className="mb-2 text-sm font-semibold text-muted">Teams</h2>
         <div className="space-y-2">
           {teams.map((t) => (
             <div key={t.id} className="flex items-center gap-2">
               <span className="h-5 w-5 shrink-0 rounded-full" style={{ backgroundColor: t.color }} />
-              <input value={t.name} onChange={(e) => rename(t.id, e.target.value)} className="flex-1 rounded-lg border border-line px-3 py-2 text-sm" />
+              <Field value={t.name} onChange={(v) => rename(t.id, v)} className="flex-1" ariaLabel="Team name" />
               {teams.length > 2 && <button onClick={() => remove(t.id)} className="px-2 text-lg text-muted">×</button>}
             </div>
           ))}
@@ -79,7 +79,7 @@ function Setup() {
         </label>
       </section>
 
-      <button onClick={start} className="ff-sticker w-full bg-primary px-4 py-4 font-display text-2xl text-primary-ink">START GAME</button>
+      <button onClick={start} className="ff-sticker mt-auto w-full bg-primary px-4 py-4 font-display text-2xl text-primary-ink">START GAME</button>
 
       <HowToPlay game="reverse" />
     </div>
@@ -131,8 +131,8 @@ function Playing() {
         <div className="ff-title mt-2 text-4xl">{card?.word ?? "…"}</div>
       </div>
       <div className="grid grid-cols-[1fr_auto] gap-2">
-        <button onClick={g.got} className="ff-sticker bg-success px-4 py-5 font-display text-2xl text-white">✓ GUESSED</button>
-        <button onClick={g.skip} className="ff-sticker bg-warning px-5 py-5 font-display text-xl text-white">SKIP</button>
+        <button onClick={g.got} className="ff-sticker bg-success px-4 py-5 font-display text-2xl text-canvas">✓ GUESSED</button>
+        <button onClick={g.skip} className="ff-sticker bg-warning px-5 py-5 font-display text-xl text-canvas">SKIP</button>
       </div>
       <button onClick={g.endTurn} className="text-sm font-semibold text-muted">End turn early</button>
     </div>

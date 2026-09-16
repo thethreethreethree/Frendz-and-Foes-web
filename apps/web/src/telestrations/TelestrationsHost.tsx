@@ -1,36 +1,45 @@
 import { useTelestrations } from "./useTelestrations";
 import { PlayerRoster } from "../net/PlayerRoster";
 import { teStart, teForce, teRevealNext, teReset , teKick} from "../net/telestrations";
-import { RemoteHeader } from "../control/shell";
+import { RemoteShell } from "../control/shell";
+import { Section } from "../control/ui";
 import { getBrand } from "../brand/theme";
 
 // Host controller for "Sketch Relay". Start / Force-next (past a stuck turn) / Reveal-next / Reset.
+// On RemoteShell since 2026-09-16. This one also had the worst header collision of the fourteen:
+// "Sketch Relay" is the longest game name and the old header was a bare justify-between with
+// nothing allowed to shrink, so it was already touching the status pill at 390px.
 export function TelestrationsHost({ room }: { room: string }) {
   const { state, error } = useTelestrations(room, "host");
   const label = getBrand().games.telestrations?.label ?? "Sketch Relay";
-  if (!state) return <Wrap><p className="text-muted">Connecting…</p></Wrap>;
+  if (!state) return <Connecting />;
   const done = state.players.filter((p) => p.submitted).length;
 
+  const action = (
+    <div className="space-y-2">
+      {state.phase === "lobby" && <button onClick={teStart} className="ff-sticker w-full bg-primary px-4 py-4 font-display text-2xl text-primary-ink">START GAME</button>}
+      {state.phase === "playing" && <button onClick={teForce} className="ff-sticker w-full bg-primary px-4 py-3 font-display text-xl text-primary-ink">FORCE NEXT TURN ({done}/{state.players.length})</button>}
+      {state.phase === "reveal" && <button onClick={teRevealNext} className="ff-sticker w-full bg-primary px-4 py-4 font-display text-2xl text-primary-ink">REVEAL NEXT →</button>}
+      {state.phase === "ended" && <p className="rounded-lg border border-line bg-surface px-3 py-2 text-center font-semibold">All chains revealed!</p>}
+      {state.phase !== "lobby" && <button onClick={teReset} className="min-h-[44px] w-full rounded-lg border border-line px-4 text-sm font-semibold text-muted">Reset to lobby</button>}
+    </div>
+  );
+
   return (
-    <Wrap>
-      <RemoteHeader title={label} />
-      {error && <div className="mb-2 rounded-lg bg-danger px-3 py-2 text-sm font-semibold text-white">{error}</div>}
-      <div className="rounded-2xl border border-line bg-surface p-3">
-        <div className="text-sm"><b>Players ({state.players.length})</b></div>
+    <RemoteShell title={label} room={room} action={action}>
+      {error && <div className="rounded-lg bg-danger px-3 py-2 text-sm font-semibold text-white">{error}</div>}
+
+      <Section title={`Players (${state.players.length})`}>
         <PlayerRoster players={state.players} onRemove={teKick} />
         {state.phase === "playing" && <div className="mt-1 text-sm text-muted">Turn {state.turn + 1}/{state.totalTurns} · {done}/{state.players.length} done</div>}
         {(state.phase === "reveal" || state.phase === "ended") && state.reveal && <div className="mt-1 text-sm text-muted">Revealing book {state.reveal.bookIndex + 1}/{state.totalBooks}</div>}
-      </div>
-      <div className="mt-4 space-y-2">
-        {state.phase === "lobby" && <button onClick={teStart} className="ff-sticker w-full bg-primary px-4 py-4 font-display text-2xl text-primary-ink">START GAME</button>}
-        {state.phase === "playing" && <button onClick={teForce} className="ff-sticker w-full bg-primary px-4 py-3 font-display text-xl text-primary-ink">FORCE NEXT TURN ({done}/{state.players.length})</button>}
-        {state.phase === "reveal" && <button onClick={teRevealNext} className="ff-sticker w-full bg-primary px-4 py-4 font-display text-2xl text-primary-ink">REVEAL NEXT →</button>}
-        {state.phase === "ended" && <p className="rounded-lg bg-cream px-3 py-2 text-center font-semibold">All chains revealed!</p>}
-        {state.phase !== "lobby" && <button onClick={teReset} className="w-full rounded-lg border border-line px-4 py-2 text-sm font-semibold text-muted">Reset to lobby</button>}
-      </div>
-      <p className="mt-3 text-center text-xs text-muted">Players draw &amp; guess on their phones; the reveal plays on the big screen.</p>
-    </Wrap>
+      </Section>
+
+      <p className="text-center text-xs text-muted">Players draw &amp; guess on their phones; the reveal plays on the big screen.</p>
+    </RemoteShell>
   );
 }
 
-function Wrap({ children }: { children: React.ReactNode }) { return <div className="h-full overflow-auto bg-canvas p-4 text-ink">{children}</div>; }
+function Connecting() {
+  return <div className="grid h-full place-items-center bg-canvas p-4 text-muted">Connecting…</div>;
+}
