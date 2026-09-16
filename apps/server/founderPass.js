@@ -66,3 +66,50 @@ export function clearFounderCookie(secure = true) {
 }
 
 export const FOUNDER_PASS_HOURS = PASS_HOURS;
+
+// --- Rooms the founder is hosting --------------------------------------------------------------
+//
+// WHY: the pass above is per-BROWSER, and that is useless for the thing it exists to enable. To
+// test a party game the owner needs a television, their own phone, and several guests' phones —
+// and every one of those is a different browser. A guest scanning the host's QR hit the waitlist
+// page. The only ways out were to hand testers the admin passcode (which is also the superadmin
+// override header on every founder endpoint) or to set GAMES_OPEN=true and give the product away
+// before the campaign.
+//
+// So access becomes room-scoped. A host or display that ALREADY holds a valid founder pass marks
+// the room it is running; anyone who joins THAT room then plays with no passcode and no cookie.
+// Every other room stays shut, and the public gate never moves.
+//
+// A guest can never create one of these: only a hosting surface holding a real signed pass marks a
+// room, so the privilege always originates from the owner's own browser.
+//
+// Entries expire on the same clock as the pass that created them — a room left marked forever would
+// quietly become a permanent public door with a four-character key.
+const founderRooms = new Map(); // CODE -> expiry (ms since epoch)
+
+/** Called when a host/display holding a founder pass joins `code`. Idempotent; refreshes the clock. */
+export function markFounderRoom(code, hours = PASS_HOURS) {
+  if (typeof code !== "string" || !code) return;
+  founderRooms.set(code.toUpperCase(), Date.now() + hours * 3600_000);
+}
+
+/** Is this room currently being hosted by the founder? Sweeps expired entries as it goes. */
+export function isFounderRoom(code) {
+  if (typeof code !== "string" || !code) return false;
+  const key = code.toUpperCase();
+  const exp = founderRooms.get(key);
+  if (exp === undefined) return false;
+  if (exp < Date.now()) { founderRooms.delete(key); return false; }
+  return true;
+}
+
+/** For the founder page: which rooms are open right now, so the owner can see and not guess. */
+export function listFounderRooms() {
+  const now = Date.now();
+  const out = [];
+  for (const [code, exp] of founderRooms) {
+    if (exp < now) { founderRooms.delete(code); continue; }
+    out.push({ room: code, expiresAt: exp });
+  }
+  return out;
+}

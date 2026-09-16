@@ -15,9 +15,20 @@ let founderPass = false;
 // Games open to everyone while nobody's plan is checked. Reported by the server so the founder page
 // can say it out loud: a warning that only appears in the server journal is seen by nobody.
 let unguarded = false;
+// Set when the room named in THIS PAGE'S url is one the founder is currently hosting. The pass
+// above is per-browser, which is useless for the thing it exists to enable: a party test needs a
+// television, the host's phone and several guests' phones, and every one of those is a different
+// browser. A guest scanning the host's QR hit the waitlist. This lets that guest in -- for that one
+// room, while it is being hosted, and for nothing else. The public gate never moves.
+let roomOpen = false;
 
 export function gamesAreOpen(): boolean {
-  return gamesOpen || founderPass;
+  return gamesOpen || founderPass || roomOpen;
+}
+
+/** True when this page is reachable only because the founder is hosting this specific room. */
+export function isGuestOfFounderRoom(): boolean {
+  return roomOpen && !gamesOpen && !founderPass;
 }
 
 /** True when the games are reachable only because of the founder pass -- the UI says so out loud. */
@@ -31,12 +42,18 @@ export async function fetchGate(): Promise<void> {
   try {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 5000);
-    const res = await fetch("/api/status", { signal: ctrl.signal });
+    // Ask about the room this page is for, if it names one. The server answers false for a room
+    // nobody is hosting, so this is not an oracle -- and it is the same single boot-time request,
+    // not an extra round trip.
+    const room = new URLSearchParams(window.location.search).get("room");
+    const url = room ? `/api/status?room=${encodeURIComponent(room)}` : "/api/status";
+    const res = await fetch(url, { signal: ctrl.signal });
     clearTimeout(timer);
     if (!res.ok) return; // stays locked
     const data = await res.json();
     gamesOpen = data && data.gamesOpen === true;
     founderPass = data && data.founder === true;
+    roomOpen = data && data.roomOpen === true;
     unguarded = data && data.unguarded === true;
   } catch {
     // network/error → stays locked (fail closed)

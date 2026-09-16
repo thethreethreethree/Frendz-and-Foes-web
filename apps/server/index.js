@@ -93,7 +93,7 @@ import {
 import { sortQuestions, sortInto } from "./sorting.js";
 import { getEnclosure } from "./enclosures.js";
 import { makeFounderPass, founderFromCookieHeader, founderCookie, clearFounderCookie,
-         FOUNDER_PASS_HOURS } from "./founderPass.js";
+         FOUNDER_PASS_HOURS, markFounderRoom, isFounderRoom, listFounderRooms } from "./founderPass.js";
 import { canAccess, getMessages, addMessage, addRexMessage, addJohnMessage, roomMeta, ROOM_IDS, chatStats } from "./chat.js";
 import { initBanter, noteMessage as banterNote, forceScene } from "./banter.js";
 import { addressedCharacter, ensureTag } from "./mentions.js";
@@ -201,10 +201,16 @@ app.get("/api/room/:code", (req, res) => {
 });
 
 app.get("/api/status", (req, res) => {
+  // ?room= lets a GUEST ask about one specific room. The public gate is unchanged and still shut;
+  // this only reports whether that particular room is currently being hosted by the founder, which
+  // is what lets someone scan the owner's QR and play without a passcode or a cookie of their own.
+  // Asking about a room nobody is hosting answers false, so it is not an oracle for anything.
+  const askedRoom = String(req.query.room || "");
   res.json({
     gamesOpen: process.env.GAMES_OPEN === "true",
     // A valid founder pass opens the games for THIS BROWSER ONLY, while the public gate stays shut.
     founder: !!founderFromCookieHeader(req.headers.cookie),
+    roomOpen: isFounderRoom(askedRoom),
     // So the client can say WHY hosting is refused instead of showing a dead button.
     enforceEntitlements: process.env.ENFORCE_ENTITLEMENTS === "true",
     // Open to everyone AND checking nobody's plan. Surfaced so the founder page can say so.
@@ -1364,18 +1370,35 @@ io.on("connection", (socket) => {
   // socket has no Express request -- and gating only the HTTP side would let the owner reach a
   // screen whose socket then silently ignored every game event.
   const founderPass = !!founderFromCookieHeader(socket.handshake.headers.cookie);
-  const gamesOpen = process.env.GAMES_OPEN === "true" || founderPass;
+  let gamesOpen = process.env.GAMES_OPEN === "true" || founderPass;
 
-  if (gamesOpen) {
+  // Handler registration is LAZY because access is no longer decided entirely at connect time: a
+  // guest with no cookie may still be entitled once we learn WHICH room they are joining. Wiring
+  // the six server-authoritative games only at connect would have left such a guest on a screen
+  // whose socket then ignored every event -- the exact failure the founder pass was written to
+  // avoid on the HTTP side. Idempotent, so a second call cannot double-register a listener.
+  let handlersOn = false;
+  const enableGameHandlers = () => {
+    if (handlersOn) return;
+    handlersOn = true;
     registerMurder2Handlers(io, socket, rooms); // roomKey/now default to uppercase/Date.now here
     registerCodenamesHandlers(io, socket, rooms);
     registerJustOneHandlers(io, socket, rooms);
     registerBallparkHandlers(io, socket, rooms);
     registerTelestrationsHandlers(io, socket, rooms);
     registerAfterDarkHandlers(io, socket, rooms);
-  }
+  };
+  if (gamesOpen) enableGameHandlers();
 
   socket.on("join", ({ room, role, teamId, hostToken, game, brand }) => {
+    // A room the founder is hosting admits its guests. Checked BEFORE the lockdown refusal, and
+    // only ever grants access to that one room -- it cannot mark a room, so a guest can never
+    // manufacture the privilege. Marking happens further down, and only for a hosting surface that
+    // already carries a real signed pass.
+    if (!gamesOpen && typeof room === "string" && isFounderRoom(room)) {
+      gamesOpen = true;
+      enableGameHandlers();
+    }
     if (!gamesOpen) { socket.emit("locked", { waitlist: true }); return; }
     if (typeof room !== "string" || !room) return;
     // Only the hosting surfaces are gated: a "player" phone has no account and never will.
@@ -1388,6 +1411,11 @@ io.on("connection", (socket) => {
       }
     }
     code = room.toUpperCase();
+
+    // The owner's own browser is the ONLY source of this privilege: a real signed pass, on a
+    // hosting surface, naming the room it is running. Refreshed on every hosting join so a night
+    // that runs long does not lock its own guests out mid-game.
+    if (founderPass && (role === "host" || role === "display")) markFounderRoom(code);
 
     // Record the night. Called on EVERY hosting join, not once, because there is no single reliable
     // "game started" moment across fourteen games -- the first hosting join is the closest honest
