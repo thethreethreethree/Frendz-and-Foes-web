@@ -223,3 +223,70 @@ remotes.**
 - The display and player surfaces for all 14 (unchanged from the main manifest).
 - Any width other than 390px, and any theme other than the dark default.
 - No brand other than `defaultBrand` was applied.
+
+---
+
+# ADDENDUM 2 — deployed to playzoo.snapaweb.com, 2026-09-16
+
+## The deploy record contradicted itself; the dates settle it [OBSERVED]
+
+- `.claude/hooks/playzoo-gate.mjs` line 19: "A git push does NOT update playzoo.snapaweb.com...
+  You MUST SSH in and pull+build+restart." Written after a **2026-09-07** incident where an agent
+  called a push a deploy.
+- `docs/handover/2026-09-08-session.md` §2: "**Push-to-deploy is live**: a systemd timer
+  (`frendz-autodeploy.timer`, ~60s) pulls, builds and restarts `frendz-and-foes.service` **only if
+  the build passes**."
+
+The handover is a day later than the incident the hook guards. Push-to-deploy was added in between,
+so the hook's instruction is stale — but its *demand* is not, and was obeyed: prove it, don't claim
+it. The "only if the build passes" clause is why the failing `controlProviders` test below had to be
+fixed before pushing; a red build is silently skipped by the timer and the site simply stays old.
+
+## Proof the change is live — not a 200, and not a claim [OBSERVED]
+
+| | value |
+|---|---|
+| local build produced | `index-B-h2mzR2.js` · `index-DEbgLnP3.css` |
+| live bundle BEFORE push, 12:31 | `index-zmdSYLxG.js` · `index-1kmIu9i7.css` |
+| live bundle AFTER push, 12:33:01 | `index-B-h2mzR2.js` · `index-DEbgLnP3.css` |
+| commit | `09e2295`, pushed `622e330..09e2295 main -> main` |
+
+Fetched from `https://playzoo.snapaweb.com/` itself, and the filename is one that **exists in no
+capture in this document** — it was minted by this session's final build. A negative control was run
+against the same host first: `/crew/does-not-exist.png` returns `text/html 3182`, which is what a
+MISS looks like there, also with status 200.
+
+## Live state of the production box [OBSERVED]
+
+- `GET /api/status` → `{"gamesOpen":false,"founder":false,"enforceEntitlements":false,"unguarded":false}`
+  The public gate is SHUT, as designed before the Kickstarter. Every game surface therefore renders
+  the waitlist interstitial ("The zoo's not open to just anyone… yet.") — confirmed by shooting
+  `#/display` against the live host.
+- `POST /api/founder/pass` with an empty body → `{"error":"Wrong passcode."}`. **ADMIN_PASSCODE is
+  configured on that box**: with no passcode set the same route returns `503 "No admin passcode is
+  configured."` (`index.js` line 220). The founder-pass route is therefore functional.
+- `GET /api/backer/admin/staff/me` → `401 {"error":"Not signed in."}`
+- `GET /api/backer/admin/staff` → `403 {"error":"Only an owner can manage staff."}`
+  The staff subsystem is up and correctly gated. Creating the owner account needs one authenticated
+  call; `reqCan(req, "staff")` accepts an owner session or the `x-admin-passcode` header, and no
+  staff account exists yet, so the passcode is the only door. It was not guessed at.
+
+## SECURITY — flagged, not touched
+
+`docs/handover/2026-09-08-session.md` line 50 carries a **plaintext sudo password** for the deploy
+user, next to the box's IP and username, committed to a repo hosted on GitHub. The value is not
+repeated here. Rotating a live credential and rewriting git history are the owner's decisions, so
+nothing was changed; this is the record that it is known.
+
+## Not opened / not verified
+
+- **The fixed pairing card has NOT been seen on production.** The bundle carrying it is live and
+  verified by hash, but `gamesOpen:false` means the live display renders the waitlist page instead,
+  so the card itself was only ever photographed against localhost. It needs one look through a
+  founder pass before anyone calls it confirmed in production.
+- No game has been started in any browser, local or live: every `playing` / `turnover` /
+  `roundover` / `ended` state across all fourteen games remains unrendered and unreviewed.
+- The gameplay interiors named unopened in the first manifest — scoring, round transitions, win
+  conditions, tie-breaks, deck exhaustion — are unchanged and still unopened. Bingo still has no
+  win detection (`isBingoComplete` means "all 75 balls drawn").
+- The production database was not inspected; no staff account was created by this session.
