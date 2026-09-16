@@ -12,8 +12,9 @@
 import "./env.js"; // MUST be first — loads .env into process.env before any module reads it.
 import { createServer } from "node:http";
 import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
-import { existsSync, readdirSync } from "node:fs";
+import { dirname, extname, join } from "node:path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { brotliCompressSync, gzipSync } from "node:zlib";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import express from "express";
 import compression from "compression";
@@ -170,7 +171,9 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), (req,
 // opened and re-opened all night.
 //
 // Placed before every route so API JSON benefits too, and before express.static so the bundle does.
-app.use(compression());
+// Small responses only. The big /assets files are pre-compressed above and answered before this
+// ever sees them; leaving them to compression() is what produced the 21s outliers.
+app.use(compression({ filter: (req, res) => !req.path.startsWith("/assets/") && compression.filter(req, res) }));
 
 app.use(express.json({ limit: "256kb" }));
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
@@ -1150,19 +1153,70 @@ if (existsSync(musicDir)) app.use("/music", express.static(musicDir, { dotfiles:
 // In production, optionally serve the built web app so the whole thing is one process on the LAN.
 const webDist = join(__dirname, "../web/dist");
 if (existsSync(webDist)) {
-  // Vite content-hashes every file in /assets, so the NAME changes whenever the bytes do. Serving
-  // those with `max-age=0` (the default, and what this box was returning) makes the browser
-  // re-validate ~918kB of JS on every open of the remote, which is the one surface a host opens
-  // over and over during a night. A hashed asset can safely be immutable for a year; index.html
-  // itself must NOT be, or a deploy would never reach anyone.
-  app.use(
-    "/assets",
-    express.static(join(webDist, "assets"), {
-      immutable: true,
-      maxAge: "365d",
-      fallthrough: true,
-    }),
-  );
+  // PRE-COMPRESS THE BUNDLE ONCE, AT BOOT -- not once per request.
+  //
+  // compression() alone made this WORSE under load, which only showed up against the live box:
+  // the same asset answered in 1.65s on one request and timed out past 21s on the next. Gzipping
+  // 918kB of JS on every single GET is real CPU, and this machine hosts ~18 neighbour sites, so
+  // that work is neither free nor reliably scheduled. The page and the API -- both small -- stayed
+  // fast throughout, which is what pointed at per-request compression of one large file.
+  //
+  // Vite content-hashes /assets, so a file's bytes never change under a given name. That makes it
+  // safe to compress each one ONCE here and serve the result forever. Brotli is preferred (it beats
+  // gzip on JS) with gzip as the fallback for anything that does not ask for br. Built with node's
+  // own zlib, so this adds no dependency.
+  const assetsDir = join(webDist, "assets");
+  const precompressed = new Map(); // "index-x.js" -> { br?: Buffer, gz?: Buffer, type: string }
+  if (existsSync(assetsDir)) {
+    const t0 = Date.now();
+    let bytesIn = 0, bytesBr = 0;
+    for (const name of readdirSync(assetsDir)) {
+      if (!/\.(js|css|svg|json|map)$/.test(name)) continue;
+      try {
+        const raw = readFileSync(join(assetsDir, name));
+        if (raw.length < 1024) continue; // not worth a round trip's overhead
+        const br = brotliCompressSync(raw);
+        const gz = gzipSync(raw, { level: 9 });
+        precompressed.set(name, { br, gz });
+        bytesIn += raw.length; bytesBr += br.length;
+      } catch (err) {
+        console.warn(`[ff-server] could not pre-compress ${name}:`, err?.message || err);
+      }
+    }
+    if (precompressed.size) {
+      console.log(
+        `[ff-server] pre-compressed ${precompressed.size} asset(s) in ${Date.now() - t0}ms: ` +
+        `${Math.round(bytesIn / 1024)}kB -> ${Math.round(bytesBr / 1024)}kB brotli`,
+      );
+    }
+  }
+
+  // Serve the pre-made copy when the client accepts it. Content-hashed names mean these can be
+  // immutable for a year -- every asset was previously `max-age=0`, so a browser re-validated the
+  // whole bundle each time the remote was opened, and the remote is the surface a host opens over
+  // and over all night. index.html deliberately stays revalidated, or a deploy never lands.
+  app.get("/assets/:name", (req, res, next) => {
+    const hit = precompressed.get(req.params.name);
+    if (!hit) return next();
+    // Plain string checks on purpose. This line previously used regex word boundaries and the
+    // backslash-b escapes were turned into literal BACKSPACE bytes on the way in, so the test
+    // was /<0x08>br<0x08>/ and never matched. It read correctly in an editor and was wrong in the
+    // bytes: every request silently fell through to express.static and was re-compressed per
+    // request by compression() at its default quality -- 251,481 bytes instead of 209,106, and
+    // the per-request CPU this whole block exists to remove. Only `cat -A` showed it.
+    const accept = String(req.headers["accept-encoding"] || "").toLowerCase();
+    const useBr = accept.includes("br");
+    const body = useBr ? hit.br : accept.includes("gzip") ? hit.gz : null;
+    if (!body) return next(); // client wants it raw; express.static below obliges
+    res.setHeader("Content-Encoding", useBr ? "br" : "gzip");
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    res.setHeader("Vary", "Accept-Encoding");
+    res.type(extname(req.params.name));
+    res.setHeader("Content-Length", String(body.length));
+    res.end(body);
+  });
+
+  app.use("/assets", express.static(assetsDir, { immutable: true, maxAge: "365d", fallthrough: true }));
   app.use(express.static(webDist));
   // The Kickstarter campaign is a standalone page (built from kickstarter/), not a SPA route —
   // serve it directly at /kickstarter so it doesn't fall through to the app shell.
