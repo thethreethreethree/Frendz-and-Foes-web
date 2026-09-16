@@ -55,3 +55,6 @@ Once an amendment file is written, **its text is not edited**. Status is updated
 | [AMD-002](AMD-002-understanding-gate-defaults.md) | Ratify Understanding Gate default thresholds (3 / 2 / 80) | ratified | 2026-05-16 |
 | [AMD-003](AMD-003-per-company-brain.md) | Per-company brain as the §3.4 implementation (DeepSeek primary) | ratified | 2026-05-16 |
 | [AMD-004](AMD-004-ground-up-audit.md) | Ground-up audit as a constitutional practice (§1.7) | ratified | 2026-06-02 |
+| [AMD-005](AMD-005-methodology-in-working-tree.md) | Methodology that governs the build must live in the agent's working tree (§0.1) | ratified | 2026-06-17 |
+| [AMD-006](AMD-006-system-and-user-flow-tracing.md) | System + user flow tracing, the four-layer framework, and the proactive audit rule (§1.5.1, §1.5.2) | ratified | 2026-06-17 |
+| [AMD-007](AMD-007-claim-scope-gate.md) | A claim may not be broader than the evidence that verified it (§1.8) | **proposed** | 2026-09-16 |
