@@ -230,6 +230,19 @@ app.get("/api/status", (req, res) => {
     enforceEntitlements: process.env.ENFORCE_ENTITLEMENTS === "true",
     // Open to everyone AND checking nobody's plan. Surfaced so the founder page can say so.
     unguarded: process.env.GAMES_OPEN === "true" && process.env.ENFORCE_ENTITLEMENTS !== "true",
+    // WHICH BINGO DARE DECK THIS HOST CALLS. See apps/web/src/bingo/dares.ts.
+    //
+    // The owner's written deck (docs/party-dares.md) runs on the RENDER MIRROR ONLY; the public box
+    // keeps the deck it already had. Both hosts deploy from the same branch, so something has to
+    // tell them apart at runtime, and it has to be something neither host has to be configured for:
+    // render.yaml was the obvious seam and it does NOT work — that service is not blueprint-synced,
+    // so a variable added there is ignored (verified 2026-09-17: Render built byte-identical to the
+    // public box). RENDER=true is injected into every Render service automatically, needs no
+    // dashboard, and is absent everywhere else.
+    //
+    // BINGO_DARES overrides it either way, so this can be pinned by hand on any host without a
+    // code change.
+    dares: process.env.BINGO_DARES || (process.env.RENDER ? "party" : "standard"),
   });
 });
 

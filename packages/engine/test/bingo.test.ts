@@ -2,13 +2,15 @@ import { describe, it, expect } from "vitest";
 import {
   BINGO_BALLS,
   DEFAULT_DARES,
-  PARTY_DARES,
   createBingo,
   bingoReducer,
   remainingCount,
   isBingoComplete,
   dareForBall,
 } from "../src/bingo.js";
+// Imported from its own module, not from bingo.js: it is deliberately NOT re-exported there so the
+// public build can leave it out of the bundle entirely. See apps/web/src/bingo/dares.ts.
+import { PARTY_DARES } from "../src/bingoDaresParty.js";
 
 describe("bingo engine", () => {
   it("has 75 balls (B/I/N/G/O) and a dare for each", () => {

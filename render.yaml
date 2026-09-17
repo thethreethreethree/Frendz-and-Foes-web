@@ -26,14 +26,18 @@ services:
       - key: GAMES_OPEN
         value: "true"
       # Bingo's dare deck, RENDER ONLY (owner's instruction, 2026-09-17: "don't add it to the
-      # playzoo.snapaweb.com system just render").
+      # playzoo.snapaweb.com system just render"). "party" = docs/party-dares.md.
       #
-      # "party" = the owner's written deck in docs/party-dares.md. Without this variable the build
-      # ships the original deck, which is what the Hetzner box does — it never reads this file, so
-      # the public site is unaffected by this line, exactly as with GAMES_OPEN above.
+      # THIS LINE IS CURRENTLY INERT AND IS NOT WHAT MAKES THE MIRROR DIFFER. Verified 2026-09-17:
+      # adding it and deploying produced a Render bundle BYTE-IDENTICAL to the public one, because
+      # this service is not blueprint-synced and ignores envVars added here. (GAMES_OPEN above
+      # works because it is also set in the dashboard, not because this file is read.)
       #
-      # This is a VITE_ variable, so it is consumed by `npm run build` in buildCommand and baked
-      # into the bundle. Setting it at runtime would do nothing. See apps/web/src/bingo/dares.ts.
-      # To put this deck on the public site too, change the default in that file — not here.
+      # What actually switches the deck is the SERVER, at runtime: /api/status reports
+      # `dares: "party"` when RENDER=true — which Render injects into every service by itself — and
+      # the client loads the deck accordingly. See apps/server/index.js and
+      # apps/web/src/bingo/dares.ts.
+      #
+      # This entry is kept as a build-time override that still wins if the blueprint is ever synced.
       - key: VITE_BINGO_DARES
         value: "party"

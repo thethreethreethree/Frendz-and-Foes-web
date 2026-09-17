@@ -1,5 +1,5 @@
 import { ballById, dareForBall, isBingoComplete, remainingCount } from "@ff/engine";
-import { ACTIVE_DARES } from "./dares";
+import { activeDares } from "./dares";
 import { useBingo } from "../store/bingoStore";
 import { BingoLogo } from "../display/Logo";
 import { QR } from "../net/pairing";
@@ -44,7 +44,7 @@ export function BingoControl() {
                 <div className="text-[10px] font-black uppercase text-ink/40">
                   Dare (host only) {bingo.dareRevealed ? "· shown on screen" : "· hidden"}
                 </div>
-                <div className="text-sm font-bold">{dareForBall(cur.id, ACTIVE_DARES)}</div>
+                <div className="text-sm font-bold">{dareForBall(cur.id, activeDares())}</div>
               </div>
             </div>
           ) : (

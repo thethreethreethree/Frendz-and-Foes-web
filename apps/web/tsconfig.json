@@ -8,6 +8,9 @@
     ],
     "noEmit": true,
     "paths": {
+      "@ff/engine/party": [
+        "../../packages/engine/src/bingoDaresParty.ts"
+      ],
       "@ff/engine": [
         "../../packages/engine/src/index.ts"
       ]

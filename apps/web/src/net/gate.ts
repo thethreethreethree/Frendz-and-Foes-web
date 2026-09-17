@@ -7,6 +7,8 @@
 // broke open when the status call hiccuped would defeat the whole point — better a stray "join the
 // waitlist" than the doors silently swinging open.
 
+import { loadDares } from "../bingo/dares";
+
 let gamesOpen = false;
 // Set when THIS BROWSER holds a valid founder pass. The cookie itself is HttpOnly and signed, so
 // this flag is only a mirror of what the server already decided -- flipping it in devtools buys
@@ -55,6 +57,10 @@ export async function fetchGate(): Promise<void> {
     founderPass = data && data.founder === true;
     roomOpen = data && data.roomOpen === true;
     unguarded = data && data.unguarded === true;
+    // Which Bingo dare deck this host calls. It rides along on the gate request rather than costing
+    // a second one, and is awaited here so Bingo never renders a dare from the wrong deck first and
+    // swaps it a moment later in front of the room. See bingo/dares.ts.
+    await loadDares(typeof data?.dares === "string" ? data.dares : undefined);
   } catch {
     // network/error → stays locked (fail closed)
   }

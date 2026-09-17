@@ -9,6 +9,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
+      "@ff/engine/party": fileURLToPath(new URL("../../packages/engine/src/bingoDaresParty.ts", import.meta.url)),
       "@ff/engine": fileURLToPath(new URL("../../packages/engine/src/index.ts", import.meta.url)),
     },
   },

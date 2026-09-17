@@ -1,27 +1,52 @@
-import { DEFAULT_DARES, PARTY_DARES } from "@ff/engine";
+import { DEFAULT_DARES } from "@ff/engine";
 
-// WHICH BINGO DECK THIS BUILD SHIPS.
+// WHICH BINGO DARE DECK THIS SITE CALLS.
 //
-// The two deployments run the same `main` branch but are NOT the same environment. Render is the
-// owner's testing mirror (render.yaml already scopes GAMES_OPEN=true to it alone, with the note
-// that "the Hetzner box reads its own environment from a systemd drop-in and never looks at this
-// file"). playzoo.snapaweb.com is the public box.
+// The owner's written deck (docs/party-dares.md) runs on the RENDER MIRROR ONLY. The public box,
+// playzoo.snapaweb.com, keeps the deck it already had.
 //
-// The owner's new dare deck is to run on RENDER ONLY for now. render.yaml sets
-// VITE_BINGO_DARES=party, which Vite bakes in at build time on that host; the Hetzner build never
-// sees the variable and therefore keeps the original deck. Same seam, same precedent, one line.
+// WHY THE SERVER DECIDES AND NOT THE BUILD. Both hosts deploy from the same branch, so something
+// must tell them apart. The first attempt was a build-time flag in render.yaml, beside the
+// GAMES_OPEN that file already scopes to Render — and it did not work: that service is not
+// blueprint-synced, so a variable added to render.yaml is ignored. Verified, not assumed: after
+// that deploy Render served a bundle BYTE-IDENTICAL to the public one. `RENDER=true` is injected
+// into every Render service automatically, needs no dashboard, and exists nowhere else, so the
+// server reports the answer on /api/status — a request the client already makes at boot (see
+// net/gate.ts), so this costs no extra round trip.
 //
-// WHY BUILD-TIME AND NOT hostname SNIFFING. A `location.hostname.includes("onrender")` check would
-// put deployment policy inside render code, ship BOTH decks to every visitor, and silently do the
-// wrong thing on a preview URL, a custom domain or localhost. A build flag is decided once, by the
-// host that is actually doing the deploying, and is visible in the file that configures it.
-//
-// TO PUT THIS DECK ON THE PUBLIC SITE TOO: change the default below to PARTY_DARES (and then the
-// flag is no longer doing anything and can go). That is the owner's call, not this file's.
-const WANTS_PARTY = import.meta.env.VITE_BINGO_DARES === "party";
+// WHY THE PARTY DECK IS A DYNAMIC IMPORT. A static import would bundle all 75 of the owner's dares
+// into the public site too — never displayed, but sitting in the JavaScript for anyone who looked.
+// Importing it only when the server asks for it keeps it in a separate chunk that the public build
+// never fetches, which is what "not on playzoo" should actually mean. It is why PARTY_DARES is
+// deliberately NOT re-exported from @ff/engine.
 
-/** The dare deck this build calls. Pass it to dareForBall(id, ACTIVE_DARES). */
-export const ACTIVE_DARES: string[] = WANTS_PARTY ? PARTY_DARES : DEFAULT_DARES;
+let deck: string[] = DEFAULT_DARES;
+let deckName = "standard";
 
-/** Which deck this build is running — surfaced to the host so the mirror is never a mystery. */
-export const ACTIVE_DARES_NAME = WANTS_PARTY ? "party" : "standard";
+/**
+ * Load the deck this host calls. Awaited once at boot, before first render, alongside the gate —
+ * so every surface can read activeDares() synchronously and never flashes the wrong deck.
+ */
+export async function loadDares(name: string | undefined): Promise<void> {
+  // A build-time pin still wins, so any host can be forced either way without touching the server.
+  const want = (import.meta.env.VITE_BINGO_DARES as string) || name || "standard";
+  if (want !== "party") return; // default deck is already loaded; nothing to fetch
+  try {
+    const mod = await import("@ff/engine/party");
+    deck = mod.PARTY_DARES;
+    deckName = "party";
+  } catch {
+    // Fail to the deck we already have. A chunk that will not load must not take Bingo down with
+    // it -- a host mid-party needs SOME dare on the screen far more than the right one.
+  }
+}
+
+/** The dare deck this host calls. Pass it: dareForBall(id, activeDares()). */
+export function activeDares(): string[] {
+  return deck;
+}
+
+/** Which deck is live — so the mirror is never a mystery when the two sites disagree. */
+export function activeDaresName(): string {
+  return deckName;
+}
