@@ -1,78 +1,90 @@
-# EVIDENCE — Survey Showdown category picker, read before building
+# EVIDENCE — Bingo dares replaced from the owner's party-dares file
 
-**Task:** "change the survey topics of the survey questions... create 10 different survey
-categories, and use this for that [docs/feud-question-bank-with-answers (1).md]. Present it so that
-when they click the game 'Survey Showdown' they get to pick from these 10 different categories."
+**Task:** "Please change the render version bingo game to have these dates [dares] instead.
+`C:\Users\johns\Downloads\Murder Mystery Graphic Assets\party-dares (1).md` please deploy once
+finished changing."
 
-Phase 0 under the Evidence Protocol: the source data and the code that must consume it, opened and
-verified, before any design. R7 — build is gated on this.
+Phase 0 under the Evidence Protocol: the source data and every consumer of it, opened and verified,
+before the edit. R7 — the change is gated on this.
 
 ---
 
 ## 1. The source data [OBSERVED]
 
-| path | bytes | a fact from inside |
+| path | bytes / lines | a fact from inside |
 |---|---|---|
-| `docs/feud-question-bank-with-answers (1).md` | 90,603 (3,947 lines) | line 5 states the contract: "Each question: 100 people surveyed, 8 answers. **Points** = rank (8 = most popular answer, 1 = least). **Surveyed** = how many of the 100 people gave that answer." Line 7: "Round 1 = questions 1–10, Round 2 = 11–20, Round 3 = 21–30." |
+| `C:\Users\johns\Downloads\Murder Mystery Graphic Assets\party-dares (1).md` | 5,093 bytes, 91 lines | titled `# Bingo Dares`; five sections `## B`, `## I`, `## N`, `## G`, `## O`; entry format `- **B1.** Take a selfie with a person from another table.` |
 
-**Ten categories, at these line numbers** — exactly the ten asked for, already in the file:
+Copied into the tree as **`docs/party-dares.md`** so the generated file is reproducible from inside
+the repo (AMD-005: the source for the work must be in the working tree, not on a desktop).
 
-| # | line | category | questions | answers |
-|---|---|---|---|---|
-| 1 | 11 | Night Out | 30 | 240 |
-| 2 | 405 | Dating & Relationships | 30 | 240 |
-| 3 | 799 | Travel & Backpacking | 30 | 240 |
-| 4 | 1193 | Work & Office Life | 30 | 240 |
-| 5 | 1587 | Guilty Pleasures & Bad Habits | 30 | 240 |
-| 6 | 1981 | Food & Drinks | 30 | 240 |
-| 7 | 2375 | Adulting | 30 | 240 |
-| 8 | 2769 | Phones & Social Media | 30 | 240 |
-| 9 | 3163 | Awkward & Embarrassing Moments | 30 | 240 |
-| 10 | 3557 | Naughty but Nice (18+) | 30 | 240 |
+**Counted, not sampled** — every `- **X<n>.**` line parsed:
 
-**300 questions, 2,400 answer rows.**
+| check | result |
+|---|---|
+| total dares | **75** |
+| per column | B 15, I 15, N 15, G 15, O 15 |
+| numbering | 1…75, contiguous, in order, no gaps |
+| column boundaries | B1–B15, I16–I30, N31–N45, G46–G60, O61–O75 |
+| distinct texts | **74 of 75** — `I20` and `I21` are both "Spell your name with your butt!" |
+| longest / average | 115 chars / 55 chars (previous deck: 95 / 70) |
 
 Three records cited by key, different fields (R2):
 
-- **Cat 1, q1** — prompt "Name something you find in your pocket the morning after a big night."
-  Top answer *Receipts*, points 8, surveyed 28. Bottom answer *Coat check ticket*, points 1, surveyed 5.
-- **Cat 5, q15** — prompt "Name something you pretend you didn't see." Third answer *Someone waving*,
-  points 6, surveyed 16.
-- **Cat 10, q30** — prompt "Name something you'd say if your roommate walked in at the worst
-  possible moment." Answers are quoted speech: `"Get out!"` (8, 34) down to `"We're doing yoga"`
-  (1, 1). Note the double quotes inside answer text — they survive parsing; no answer anywhere
-  contains a pipe, which is what the table format would break on.
+- **B1** — "Take a selfie with a person from another table." The only dare ending in a full stop in
+  its column; most are unpunctuated or end in `!`.
+- **N31** — "Raise your cards & get a free shot!" Contains a raw `&` — survives as text, nothing in
+  the path HTML-escapes it.
+- **O66** — "Find someone who's not wearing flip flops and ask them to teach you how to say
+  \"I love you\" in a different language." The longest entry at 115 chars, and one of eight carrying
+  embedded double quotes (`"I'M BATMAN"`, `"Jingle Bells"`, `"Would you rather...?"`,
+  `"I know what you did"`, `"Thank you!"`, `"we did it"`, `"happy birthday"`).
 
-**Parsed and validated, not sampled** — `tools/bank/parse-feud-bank.mjs` reads all 3,947 lines and
-asserts per question: exactly 8 answers, points exactly {8,7,6,5,4,3,2,1}, survey counts
-non-increasing, prompt non-empty. Result: **no structural problems** across all 300.
-
-## 2. The code that must consume it [OBSERVED]
+## 2. The code that consumes it [OBSERVED]
 
 | path | fact from inside |
 |---|---|
-| `packages/engine/src/types.ts` | `Answer` carries `surveyCount` ("Survey popularity shown in parentheses on the slide… Display only") and `rankPoints` ("Rank value 8 (most popular) down to 1. Used as the points awarded in REGULAR rounds"). The markdown's two columns map onto these exactly — nothing has to be invented. |
-| `packages/engine/src/qmake.ts` | `makeQuestion(id, kind, prompt, raw)` sorts by survey count and assigns `rankPoints = 8 - i`. 28 lines; the single builder used by both the curated deck and the random bank. |
-| `packages/engine/src/bank.ts` | line 10: `const COUNTS = [40, 30, 21, 15, 10, 7, 4, 2]` — the existing 100 questions have **template** survey counts, identical on every question. The new bank has *real* per-answer counts. Line 140: `RANDOM_POOL = [...STANDARD_REGULARS, ...NEW_100]`. |
-| `packages/engine/src/bank.ts` line 156 | `buildRandomizedGame(pool, round1 = 10, round2 = 10)` picks `round1 + round2 + 1` distinct questions, the last marked `bonus`. So a game is **21 questions: 10 + 10 + 1 bonus.** |
-| `apps/web/src/control/TeamSetup.tsx` | lines 33 + 63–83: the existing "Survey mode" control is two buttons — `Standard` ("The fixed deck", `SAMPLE_QUESTIONS`) and `🎲 Randomize Survey` ("Random from 120", `buildRandomizedGame(RANDOM_POOL)`). This is the control the category picker has to replace or extend. |
-| `apps/web/src/routes/ControlRoute.tsx` | feud has no pre-game step of its own: `game === "feud"` falls through to `<GameProvider room={room}><ControlView /></GameProvider>`, and ControlView renders the remote immediately. There is **no existing "choose something before you start" screen** for Survey Showdown to hang a category picker on. |
+| `packages/engine/src/bingoDares.ts` | previously 80 lines / 5,969 bytes, `export const DARES: string[]`, 75 entries, header said "Sourced from BINGO_INSTRUCTION.docx". |
+| `packages/engine/src/bingo.ts:36` | `export const DEFAULT_DARES: string[] = DARES;` — the only re-export. |
+| `packages/engine/src/bingo.ts:84-87` | `dareForBall(id, dares = DEFAULT_DARES)` looks the dare up **positionally**: `BINGO_BALLS.findIndex(b => b.id === id)` then `dares[idx]`. **The array index IS the ball.** One missing or extra line shifts every dare after it onto the wrong ball, and nothing in the app would report an error — it would just call the wrong dare all night. This is why the generator validates before it emits. |
+| `packages/engine/src/bingo.ts:22` | `BINGO_BALLS` is `COLUMNS.flatMap(...)` → B1…B15, I16…I30, N31…N45, G46…G60, O61…O75. The markdown's own numbering is **already this order**, so the mapping is identity, not a guess. |
+| `packages/engine/test/bingo.test.ts:17-18` | asserts `DEFAULT_DARES.length === 75` and `dareForBall("B1").length > 0`. |
+| three render surfaces | `BingoControl.tsx:46` (host, host-only preview), `BingoDisplay.tsx:118` (big screen), `BingoPlayer.tsx:90` (every player's phone) — all call `dareForBall(cur.id)`. No fourth consumer: `grep -rn "DARES\|bingoDares"` across `packages`, `apps`, `tools` returns only these plus gitignored `dist/`. |
+| `apps/web/vite.config.ts:12` + `packages/engine/package.json` | `@ff/engine` resolves to `src/index.ts` by BOTH the package `exports` and an explicit Vite alias. `packages/engine/dist/` is **gitignored stale output** and is not what ships — checked, because editing `src` while the build reads a committed `dist` is exactly how a change "lands" without reaching anyone. |
 
-## 3. The one real mismatch
+## 3. How the change was made
 
-The bank is built for **three rounds of ten** (its line 7). The engine builds **two rounds of ten
-plus one bonus** (`buildRandomizedGame`). A category's 30 questions therefore do not map 1:1 onto a
-game, and something has to give. That is a product decision, not a technical one, and it is put to
-the owner rather than chosen quietly.
+`tools/bank/generate-dares.mjs` (new) parses `docs/party-dares.md` and emits `bingoDares.ts`.
+It **refuses to write** unless all 75 are present, contiguously numbered 1…75, and each lands in
+the column its number belongs to. Escaping is `JSON.stringify`, never hand-written — a hand-escaped
+heredoc is what silently turned `\b` into a literal `0x08` byte earlier in this same session and
+disabled a server route for hours.
 
-## 4. Not opened
+## 4. Verification [OBSERVED, post-change]
 
-- The other 9 categories' individual questions — 300 prompts were parsed and validated
-  structurally, but only the 3 records cited above were read as prose.
-- `packages/engine/src/fixtures.ts` — `STANDARD_REGULARS` / `SAMPLE_QUESTIONS`, the current
-  "Standard" deck. Referenced via bank.ts; its contents not read.
-- `packages/engine/test/scoring-and-history.test.ts`, `regular-round.test.ts`, `bonus-round.test.ts`
-  and `random-bank.test.ts` — the tests that will have to keep passing.
-- The display side of Survey Showdown (`apps/web/src/display/`) — it renders questions from engine
-  state, and was not re-read this session.
-- Whether any brand/white-label copy references "Randomize Survey" or the 120-question pool.
+| check | how | result |
+|---|---|---|
+| no mangled bytes | `grep -P '[\x00-\x08\x0b-\x1f]'` over the generated file | none |
+| quotes survived | `cat -A` on all 8 quote-bearing lines | `\"` intact, no stray bytes |
+| text matches source | parsed the emitted array, compared all 75 against the markdown | **0 mismatches** |
+| mapping through the real engine | imported `@ff/engine`, called `dareForBall` for B1/B15/I16/N31/N45/G46/G60/O61/O75 | each returns its own numbered dare; **0 balls** with a missing dare |
+| test suite | `npm test` | **113 pass, 0 fail** (incl. `bingo.test.ts`, 4 tests) |
+| build | `npm run build` | clean, 643 modules, 990.38 kB → 279.16 kB gzip |
+| **reached the bundle** | `grep` the built `assets/index-*.js` | new dares "Raise your cards", "Act out a charade" **present**; old dares "Do 5 push-ups. Yes, here", "Switch seats with the person to your right - no explanation" **absent** |
+
+## 5. Judgement calls, stated not hidden
+
+- **The duplicate is kept verbatim.** `I20` and `I21` are the same text in the owner's file. They
+  are two different balls and two different squares, so it is harmless — and silently rewriting the
+  owner's content would be a worse failure than reporting it. Flagged, not fixed.
+- **"the render version"** — both hosts (playzoo.snapaweb.com and the Render mirror) deploy from the
+  same `main`, so one commit changes both. Verified against playzoo.snapaweb.com per the standing
+  instruction that it is the one that matters.
+
+## 6. Not opened
+
+- The remaining 66 dares were parsed and length-checked but not read as prose for tone.
+- `BingoDisplay.tsx` rendering was read at the dare block only (`min-h-[5rem]`, `max-w-2xl`,
+  `text-2xl`, so longer text wraps and the container grows) — the rest of the display was not
+  re-read this session, and **no live screenshot of a 115-char dare on the display was taken.**
+- Bingo still has **no win detection** (long-standing, unrelated to this change, still open).
