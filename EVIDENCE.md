@@ -122,6 +122,42 @@ Rex the host (pith-helmeted avatar) with a speech bubble "Settle down, you anima
 the painted bingo-balls-and-cards scene in pastels on cream; the artwork's own "frendz Bingo Night"
 lettering shows through behind the dare card.
 
+## 5b. All three surfaces, on the live Render mirror [OBSERVED]
+
+The display was proven by the sweep above. The host phone and the **player's phone** were then
+confirmed on the live mirror too, because a deck that reaches two surfaces out of three is not
+"in Render" — it is a half-deployment that would show a player a different dare from the one the
+host just read out.
+
+| surface | what it rendered, live | deck |
+|---|---|---|
+| host phone (390×844) | "Find someone with whose name starts with the letter K and give them a hug!" and, in a second run, "Let the person to your right tell a joke but you must keep a straight face!" | party |
+| display (1920×1080) | ball **I18** → "Perform to your table a song in a different language" — `docs/party-dares.md` line 25 | party |
+| **player phone** (390×844) | ball **I30** → "Without using words, show us what your love language is!" — `docs/party-dares.md` line 37. The standard deck's ball 30 is "Give everyone at your table a high five in one smooth victory lap". | party |
+
+**Player screenshot, described from opening it (LAW 1):** 390×844 portrait. Top-right a dark pill
+reading "1/75" with a green dot beside it. Below, the painted "FRENDZ BINGO NIGHT" wordmark in
+multi-coloured block letters on cream. Centre: a large orange circle, white ring, reading "I" above
+"30". Directly beneath it a dark navy rounded card, white bold text over two lines: "Without using
+words, show us what your love language is!". Below that "PATTERN SELECTION:" with three small bingo
+cards labelled DIAGONAL, VERTICAL and HORIZONTAL. A white "See all called numbers" button spans the
+bottom, with Rex's pith-helmeted avatar overlapping its right edge.
+
+**A false alarm worth recording, because it looked exactly like a product bug.** Three runs showed
+the display and player frozen at "0/75" while the host drew. Neither the deck nor sync was at fault:
+Bingo's room code is *fixed* (`BINGO`, so its poster QR can be permanent), and the 75-draw sweep had
+left that room **fully drawn** on the live server. A later host joins, inherits "75/75", and
+"Draw next ball" is disabled — so the host's clicks did nothing and the other screens correctly
+showed no change. Clicking Reset first made all three agree immediately. **Two real findings fall
+out of it, neither caused by this change and neither fixed here:**
+
+1. **A fixed room never resets between parties.** The next host to open Bingo inherits whatever the
+   last one left, with no prompt — a full deck is indistinguishable from a broken draw button.
+2. **Render's cold start shows the Kickstarter gate on an open site.** `fetchGate()` aborts after
+   5s and fails closed; a free Render instance takes 30–60s to wake. Observed: all three tabs
+   rendered the doorman ("Name's John — I run the list around here…") while the server was reporting
+   `gamesOpen: true`. A reload once warm fixes it, but the owner testing on the mirror will hit this.
+
 ## 6. Judgement calls, stated not hidden
 
 - **The duplicate is kept verbatim.** `I20` and `I21` are the same text in the owner's file. They are
@@ -137,9 +173,13 @@ lettering shows through behind the dare card.
 ## 7. Not opened
 
 - The remaining 66 dares were parsed, length-checked and rendered, but not read as prose for tone.
-- The **player phone** surface (`BingoPlayer.tsx`) was patched identically to the other two and
-  typechecks, but was **not driven or photographed** — only the host controller and the display were.
-- **Whether `RENDER=true` is genuinely present on the live Render service** is [ASSUMED] from
-  Render's documented default environment at the time of writing; it is confirmed or refuted by the
-  post-deploy check on `/api/status`, reported in the turn.
+- ~~The player phone surface was not driven~~ — **now driven and photographed on live Render** (§5b).
+- ~~Whether `RENDER=true` is present on the live service was ASSUMED~~ — **now [OBSERVED]**: live
+  `https://frendz-and-foes.onrender.com/api/status` returns `"dares":"party"`, which is only
+  reachable through `process.env.RENDER`. playzoo returns `"dares":"standard"`.
+- **playzoo's Bingo was not driven end-to-end**, by instruction ("do not touch play zoo"). Its deck
+  is established from its server reporting `standard`, its main bundle carrying the original 75 and
+  none of the party text, and the identical code path producing 0 party dares across 75 driven draws
+  against a standard-configured host locally.
+- The two findings in §5b (fixed room never resets; cold-start gate) are **reported, not fixed**.
 - Bingo still has **no win detection** (long-standing, unrelated to this change, still open).
