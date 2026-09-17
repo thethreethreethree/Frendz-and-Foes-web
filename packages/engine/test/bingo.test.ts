@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   BINGO_BALLS,
   DEFAULT_DARES,
+  PARTY_DARES,
   createBingo,
   bingoReducer,
   remainingCount,
@@ -16,6 +17,22 @@ describe("bingo engine", () => {
     expect(BINGO_BALLS[74].id).toBe("O75");
     expect(DEFAULT_DARES.length).toBe(75);
     expect(dareForBall("B1").length).toBeGreaterThan(0);
+  });
+
+  // The party deck is the owner's written one (docs/party-dares.md), generated into
+  // bingoDaresParty.ts and shipped on the Render mirror only. dareForBall() is POSITIONAL, so a
+  // deck of the wrong length would not throw -- it would quietly call the wrong dare, or none, for
+  // every ball past the gap. That is the failure this guards.
+  it("carries a SECOND deck (party) that is also exactly one dare per ball", () => {
+    expect(PARTY_DARES.length).toBe(BINGO_BALLS.length);
+    expect(PARTY_DARES.every((d) => typeof d === "string" && d.trim().length > 0)).toBe(true);
+    // Every ball resolves against it, not just the first.
+    for (const b of BINGO_BALLS) {
+      expect(dareForBall(b.id, PARTY_DARES).length).toBeGreaterThan(0);
+    }
+    // It is genuinely a different deck, so a build that picks the wrong one is detectable.
+    expect(PARTY_DARES[0]).not.toBe(DEFAULT_DARES[0]);
+    expect(dareForBall("O75", PARTY_DARES)).toBe(PARTY_DARES[74]);
   });
 
   it("draws without repeats and resets the dare flag each draw", () => {

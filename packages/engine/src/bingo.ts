@@ -35,6 +35,17 @@ export const BINGO_COLUMNS: Record<string, BingoBall[]> = Object.fromEntries(
 /** One dare per ball, in BINGO_BALLS order (B1 first … O75 last). See bingoDares.ts. */
 export const DEFAULT_DARES: string[] = DARES;
 
+/**
+ * The owner's written deck (docs/party-dares.md), generated into bingoDaresParty.ts.
+ *
+ * It is a SECOND deck, not a replacement, because the two deployments are deliberately not the
+ * same: the Render mirror is the owner's testing environment and runs this deck, while
+ * playzoo.snapaweb.com keeps DEFAULT_DARES until the owner says otherwise. The engine stays pure
+ * and does not decide which one is live — it only offers both. The choice is made at build time
+ * in apps/web/src/bingo/dares.ts, the same way render.yaml already scopes GAMES_OPEN to Render.
+ */
+export { PARTY_DARES } from "./bingoDaresParty.js";
+
 export interface BingoState {
   /** Ball ids in the order they were drawn. */
   drawn: string[];

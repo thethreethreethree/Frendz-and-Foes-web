@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { BINGO_COLUMNS, BINGO_LETTERS, ballById, dareForBall } from "@ff/engine";
+import { ACTIVE_DARES } from "./dares";
 import { useBingo } from "../store/bingoStore";
 import { useRexHost, RexBanner } from "../host/RexHost";
 import { BingoLogo } from "../display/Logo";
@@ -115,7 +116,7 @@ export function BingoDisplay() {
                 animate={{ y: 0, opacity: 1 }}
                 className="ff-sticker bg-surface px-5 py-4 text-center text-2xl font-extrabold text-ink"
               >
-                {dareForBall(cur.id)}
+                {dareForBall(cur.id, ACTIVE_DARES)}
               </motion.div>
             ) : cur ? (
               <div className="ff-sticker bg-surface px-5 py-4 text-center font-display text-3xl tracking-widest text-ink/70">

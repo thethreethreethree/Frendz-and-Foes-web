@@ -25,3 +25,15 @@ services:
       # public site on launch day, set GAMES_OPEN=true THERE - do not rely on this line.
       - key: GAMES_OPEN
         value: "true"
+      # Bingo's dare deck, RENDER ONLY (owner's instruction, 2026-09-17: "don't add it to the
+      # playzoo.snapaweb.com system just render").
+      #
+      # "party" = the owner's written deck in docs/party-dares.md. Without this variable the build
+      # ships the original deck, which is what the Hetzner box does — it never reads this file, so
+      # the public site is unaffected by this line, exactly as with GAMES_OPEN above.
+      #
+      # This is a VITE_ variable, so it is consumed by `npm run build` in buildCommand and baked
+      # into the bundle. Setting it at runtime would do nothing. See apps/web/src/bingo/dares.ts.
+      # To put this deck on the public site too, change the default in that file — not here.
+      - key: VITE_BINGO_DARES
+        value: "party"
