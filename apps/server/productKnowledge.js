@@ -12,7 +12,7 @@
 //                  Node server cannot import, so it is mirrored here and guarded by
 //                  productKnowledge.test.mjs, which fails if the two ever disagree.
 //   characters  -> the canonical 20-strong cast roster.
-//   campaign    -> mirrors kickstarter/body.html + kickstarter/build.py (tiers, goal).
+//   campaign    -> REMOVED 2026-10-01. There is no campaign briefing any more; see the note below.
 // If you change any source, run: node apps/server/productKnowledge.test.mjs
 
 import { ENCLOSURES } from "./enclosures.js";
@@ -92,21 +92,22 @@ export const GAMES = [
     "The rotating judge picks the winner. Keep it filthy."]],
 ];
 
-// Reward tiers — mirrors kickstarter/build.py TIERS. Prices are stated exactly or not at all.
-export const TIERS = [
-  ["$15", "Zoo Pass", "Six months of PlayZoo and any five games you choose."],
-  ["$30", "Founding Animal", "A full year, any ten games you choose, and one custom animal character drawn just for you."],
-  ["$50", "Head Keeper", "A full year with EVERY game unlocked, plus TWO custom characters made for you."],
-];
-export const GOAL = "$3,500";
+// THE CROWDFUNDING BRIEFING IS GONE — removed 2026-10-01 on the owner's instruction, while the
+// funding and marketing approach is re-strategised. What used to live here: a TIERS table ($15 Zoo
+// Pass / $30 Founding Animal / $50 Head Keeper), a GOAL of "$3,500", and a MONEY RULE telling the
+// characters to quote them exactly or not at all.
+//
+// It is DELETED rather than commented out or left exported-but-unused. These strings were not
+// decoration: they were loaded into the system prompt of every AI character on the site, so for as
+// long as they exist in this file, Rex and John can quote a price and a deadline for a campaign that
+// is no longer running. A stale number a character states confidently to a customer is worse than no
+// number. If a campaign returns, it returns as new text written for it.
 
 const charLines = CHARACTERS.map(([n, a, r]) => `${n} the ${a} (${r})`).join("; ");
 const gameLines = GAMES.map(([, name, summary, steps]) =>
   `- ${name}: ${summary} How: ${steps.join(" ")}`).join("\n");
 const enclosureLines = ENCLOSURES.map((e) =>
   `- ${e.name} (${e.temperament}) — crest: ${e.crest}. Motto: "${e.motto}" ${e.blurb}`).join("\n");
-const tierLines = TIERS.map(([price, name, what]) => `- ${price} ${name}: ${what}`).join("\n");
-
 export const PRODUCT_KNOWLEDGE =
   "WHAT YOU KNOW ABOUT PLAYZOO (use it in character; never contradict it, never invent games, " +
   "rules, characters, enclosures, prices or dates):\n" +
@@ -124,31 +125,26 @@ export const PRODUCT_KNOWLEDGE =
   "THE 14 GAMES — you know how every one of them is played, so explain any of them properly if " +
   "asked, in your own voice, short and correct:\n" + gameLines + "\n" +
 
-  "THE FOUR ENCLOSURES: PlayZoo's own riff on sorting houses. Every backer answers a short, silly " +
+  "THE FOUR ENCLOSURES: PlayZoo's own riff on sorting houses. Every member answers a short, silly " +
   "5-question quiz and Rex sorts them into ONE enclosure — the answers decide it, it is not random, " +
   "so people who answer alike land together. Each enclosure has its own private group chat, plus a " +
   "General room everybody shares. The four are:\n" + enclosureLines + "\n" +
-  "(John is a Schemer, obviously.) Backers reach their OWN enclosure's room and General — not the " +
+  "(John is a Schemer, obviously.) Members reach their OWN enclosure's room and General — not the " +
   "other three. If someone asks which one they will get, you cannot know before they take the quiz.\n" +
 
-  "THE BACKERS' CLUB: backing on Kickstarter earns a one-time backer CODE. That code unlocks " +
-  "sign-up at /club — Rex checks the code, they make a profile, take the sorting quiz, and land in " +
-  "their enclosure chat with the other backers. The code is their login key; they can add a password " +
-  "afterwards. The club is backers-only; the chat is not open to the public.\n" +
+  "THE CLUB: a member CODE unlocks sign-up at /club — Rex checks the code, they make a profile, take " +
+  "the sorting quiz, and land in their enclosure chat with the other members. The code is their login " +
+  "key; they can add a password afterwards. The club chat is members-only.\n" +
 
-  "THE KICKSTARTER: PlayZoo is crowdfunding FIRST — it is not open for new public accounts yet. " +
-  "Backing the campaign is how someone gets in early. The funding goal is " + GOAL + " — deliberately " +
-  "modest, because the fourteen games are already built. What the money finishes is the art across all " +
-  "of them, Rex's speaking voice, and the system development left to finish version one. It does NOT pay running " +
-  "costs - subscriptions do that after launch. The reward tiers are:\n" + tierLines + "\n" +
-  "MONEY RULE — IMPORTANT: state prices, tiers and the goal EXACTLY as written above or not at all. " +
-  "Never invent a tier, a price, a discount, a deadline, a stretch goal, or a total raised. If you " +
-  "are asked something about the money that is not listed here, say you do not have that number and " +
-  "point them at the campaign page rather than guessing. The campaign lives at /kickstarter on the " +
-  "site (the official Kickstarter.com link is coming soon — send people to that page for now).\n" +
+  "THE DOORS ARE OPEN: anyone can play PlayZoo right now, free, with no account and no sign-up. They " +
+  "put the display on a TV, everyone scans the QR code with their phones, and they play. There is no " +
+  "waiting list to join, no code needed to play, and nothing to buy first.\n" +
 
-  "IF SOMEONE WANTS IN RIGHT NOW: they can't sign up yet, but they can get on the waitlist, and " +
-  "backing the Kickstarter is how they jump the queue.\n" +
+  "MONEY RULE — IMPORTANT: there is NO crowdfunding campaign, NO funding goal, NO reward tiers and NO " +
+  "pledges. Never mention a Kickstarter or any campaign, and never state a price, a tier, a discount, " +
+  "a deadline or an amount raised — you do not have those numbers and there is nothing to sell. If " +
+  "someone asks what it costs or how to back it, tell them it is open and free to play right now, and " +
+  "leave it there.\n" +
 
   "ANYTHING NOT ON THESE LISTS: say you don't know it rather than inventing one. A confident wrong " +
   "answer about PlayZoo is worse than admitting you'd have to check.";

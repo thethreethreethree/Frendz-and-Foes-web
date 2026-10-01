@@ -4,7 +4,7 @@ import { chatWithJohn, type RexMessage } from "../net/host";
 
 // "Ask John" — the PlayZoo support desk, staffed by the least trustworthy animal in the zoo.
 //
-// This is the landing page for the Kickstarter story block where REX tells visitors: "any questions,
+// The support desk. REX tells visitors: "any questions,
 // just ask John — fair warning, he'll try to sell you trash, don't buy it — and call him a trash
 // panda, he loves it." Rex is lying about the last part; John detonates, and (per the agent rules in
 // server/john.js) accuses the visitor of being put up to it by Rex. The gag only lands if the page
@@ -12,8 +12,7 @@ import { chatWithJohn, type RexMessage } from "../net/host";
 //
 // The chat is the same /api/john-chat endpoint the waitlist uses, with `mode: "agent"` — John
 // answers real PlayZoo questions properly, then keeps trying to offload worthless rubbish on the
-// person he's meant to be helping. Deliberately public: visitors arriving from Kickstarter have no
-// backer code yet, so gating this would break the very flow the campaign block creates.
+// person he's meant to be helping. Deliberately public, and since 2026-10-01 everything else is too.
 
 const GREETING =
   "PlayZoo support, John speaking. Before you ask — yes, I've been here since this morning, and yes, " +
@@ -207,23 +206,26 @@ export function AskJohnRoute() {
           </div>
         </div>
 
-        {/* Where they go next. An answered question with no next step is a dead end. */}
+        {/* Where they go next. An answered question with no next step is a dead end — and since
+            2026-10-01 the next step is simply to PLAY, rather than to back a campaign. The two CTAs
+            here were "Back PlayZoo on Kickstarter" and "Get on the list"; both are gone with the
+            campaign, and the doors are open, so they point at the game instead. */}
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <a
-            href="/kickstarter"
+          <Link
+            to="/display"
             className="flex-1 rounded-2xl bg-gradient-to-br from-primary to-accent px-6 py-3.5 text-center font-display text-lg font-extrabold text-white shadow-[0_16px_40px_-12px_rgb(var(--c-primary)/0.6)] transition hover:-translate-y-0.5"
           >
-            🎟️ Back PlayZoo on Kickstarter
-          </a>
+            🎮 Open the big screen
+          </Link>
           <Link
-            to="/waitlist"
+            to="/control"
             className="flex-1 rounded-2xl border border-line bg-surface/70 px-6 py-3.5 text-center font-display text-lg font-extrabold text-ink transition hover:-translate-y-0.5"
           >
-            Get on the list
+            Host controller
           </Link>
         </div>
         <p className="mt-3 text-center text-xs text-muted">
-          John is an AI character. The Kickstarter is real. The sock is not.
+          John is an AI character. PlayZoo is real and free to play. The sock is not real.
         </p>
       </div>
     </div>

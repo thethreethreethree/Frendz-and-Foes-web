@@ -48,9 +48,9 @@ const CAST: { slug: string; emoji: string; name: string; role: string }[] = [
 
 export function HomeRoute() {
   const brand = getBrand();
-  // Pre-launch gate: while the games are locked (until the Kickstarter completes), every play entry
-  // point on this page funnels to the waitlist instead of opening a game. Resolved from the server
-  // at boot; defaults to locked. Flip GAMES_OPEN=true on the box to open everything.
+  // Open by default since 2026-10-01 (server/env.js gamesAreOpen). The shut state still exists for
+  // a host that sets GAMES_OPEN=false, and funnels play entry points to /waitlist rather than into a
+  // game. Resolved from the server at boot.
   const open = gamesAreOpen();
   const { line, say } = useRexHost(null, "PlayZoo");
   const greeted = useRef(false);
@@ -77,30 +77,15 @@ export function HomeRoute() {
     >
       <FloatingAccents />
 
-      {/* Kickstarter badge — anchored to the viewport's right edge (clear of the centred hero text at
-          any width), sits beside the call-to-action, bobs + glows, links to /kickstarter. */}
-      <style>{`
-        @keyframes ks-badge-bob { 0%,100%{transform:translateY(0) rotate(-2.5deg)} 50%{transform:translateY(-10px) rotate(2.5deg)} }
-        @keyframes ks-badge-glow { 0%,100%{filter:drop-shadow(0 8px 18px rgba(0,0,0,.55)) drop-shadow(0 0 6px rgba(236,72,153,.35))} 50%{filter:drop-shadow(0 12px 26px rgba(0,0,0,.6)) drop-shadow(0 0 20px rgba(236,72,153,.8))} }
-        .ks-badge img{ animation: ks-badge-bob 4.5s ease-in-out infinite, ks-badge-glow 2.8s ease-in-out infinite; }
-        .ks-badge:hover img{ animation-play-state: paused; }
-        @media (prefers-reduced-motion: reduce){ .ks-badge img{ animation: none } }
-      `}</style>
-      <a
-        href="/kickstarter"
-        aria-label="Back PlayZoo on Kickstarter"
-        className="ks-badge absolute right-3 top-24 z-20 block w-24 transition-transform duration-300 hover:scale-110 active:scale-95 sm:right-8 sm:top-40 sm:w-48 lg:right-16 lg:top-44 lg:w-60 xl:right-28 xl:w-64"
-      >
-        <img src="/ui/kickstarter-badge.png" alt="Back PlayZoo on Kickstarter" className="w-full" />
-      </a>
+      {/* The floating Kickstarter badge and the "Join the waitlist →" header link both lived here.
+          Removed 2026-10-01 (owner: "remove the Kickstarter and unlock the system fully, no sign up
+          gate") while the funding and marketing approach is re-strategised.
 
-      {/* Top-right header slot — where sign-in/up will live once we launch. For now it's the waitlist. */}
-      <Link
-        to="/waitlist"
-        className="absolute right-3 top-3 z-30 whitespace-nowrap rounded-full border border-line bg-surface/85 px-4 py-2 font-display text-sm font-extrabold text-ink shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:border-primary hover:text-primary sm:right-5 sm:top-4 sm:px-5 sm:py-2.5 sm:text-base"
-      >
-        Join the waitlist →
-      </Link>
+          They were the two UNCONDITIONAL pieces of campaign furniture on this page — rendered
+          whether the games were open or shut — so the `open` branch below could never have retired
+          them on its own. The badge art (/ui/kickstarter-badge.png) is left on disk rather than
+          deleted: nothing else references it, and an unused file is cheaper to restore than to
+          redraw if the campaign comes back. */}
 
       {/* HERO */}
       <section className="relative mx-auto flex max-w-5xl flex-col items-center px-6 pt-16 pb-14 text-center sm:pt-24">
@@ -126,19 +111,20 @@ export function HomeRoute() {
             </>
           ) : (
             <>
+              {/* The shut-door state. It should no longer be reachable — the games default to open
+                  since 2026-10-01 — but the branch stays, because a host that deliberately sets
+                  GAMES_OPEN=false still needs to say something other than a blank row of buttons.
+                  What it must NOT do is advertise a campaign that is not running. */}
               <Link to="/waitlist" className="rounded-2xl bg-gradient-to-br from-primary to-accent px-9 py-4 font-display text-2xl font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,.18),0_18px_46px_-10px_rgb(var(--c-primary)/0.65)] transition duration-150 hover:-translate-y-0.5 hover:scale-[1.03] active:scale-95">
-                🔒 Join the waitlist
+                🔒 Back soon
               </Link>
-              <a href="/kickstarter" className="rounded-2xl border border-line bg-surface/70 px-9 py-4 font-display text-2xl font-extrabold text-ink backdrop-blur transition duration-150 hover:-translate-y-0.5 hover:scale-[1.03] active:scale-95">
-                Back us on Kickstarter
-              </a>
             </>
           )}
         </div>
         <p className="mt-4 text-sm text-muted">
           {open
             ? "No app to install · works on any phone + TV browser"
-            : "🔒 The games unlock when our Kickstarter wraps — get on the waitlist for first access."}
+            : "🔒 The games are closed on this host right now — check back shortly."}
         </p>
       </section>
 
@@ -221,9 +207,9 @@ export function HomeRoute() {
             return (
               <a
                 key={g}
-                // Locked pre-launch: tiles funnel to the waitlist instead of opening the game.
+                // Shut: tiles funnel to /waitlist instead of opening the game.
                 href={open ? `/?game=${g}#/display` : "#/waitlist"}
-                aria-label={open ? meta.label : `${meta.label} — locked until launch, join the waitlist`}
+                aria-label={open ? meta.label : `${meta.label} — not available on this host right now`}
                 className="group relative flex aspect-[4/3] flex-col items-start justify-end overflow-hidden rounded-2xl p-4 text-left text-white transition duration-150 hover:-translate-y-1 hover:brightness-110 active:scale-[0.97]"
                 style={{ background: `linear-gradient(135deg, ${from} 0%, ${to} 100%)`, boxShadow: "0 1px 2px rgb(0 0 0 / 0.3), 0 16px 34px -18px rgb(0 0 0 / 0.7)" }}
               >
@@ -238,7 +224,7 @@ export function HomeRoute() {
                 )}
                 <span className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 skew-x-12 bg-white/20 blur-md transition-transform duration-500 ease-out group-hover:translate-x-[400%]" />
                 <span className="relative font-display text-xl font-extrabold leading-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">{meta.label}</span>
-                <span className="relative mt-0.5 text-xs font-medium text-white/90 drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">{open ? meta.tagline : "Locked · join the waitlist"}</span>
+                <span className="relative mt-0.5 text-xs font-medium text-white/90 drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">{open ? meta.tagline : "Closed right now"}</span>
               </a>
             );
           })}

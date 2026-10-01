@@ -9,7 +9,12 @@
 //               never stored.
 // Presence counts are broadcast so each side can show a live connection status.
 
-import "./env.js"; // MUST be first — loads .env into process.env before any module reads it.
+// MUST be first — loads .env into process.env before any module reads it. The side effect is the
+// point, but the named import matters too: this file calls gamesAreOpen() in three places, and a
+// bare `import "./env.js"` left it an undefined global. Plain JS, so nothing typechecked it; it
+// surfaced as every socket connection timing out in entitlementGate.test.mjs.
+import "./env.js";
+import { gamesAreOpen } from "./env.js";
 import { createServer } from "node:http";
 import { fileURLToPath } from "node:url";
 import { dirname, extname, join } from "node:path";
@@ -222,14 +227,14 @@ app.get("/api/status", (req, res) => {
   // Asking about a room nobody is hosting answers false, so it is not an oracle for anything.
   const askedRoom = String(req.query.room || "");
   res.json({
-    gamesOpen: process.env.GAMES_OPEN === "true",
+    gamesOpen: gamesAreOpen(),
     // A valid founder pass opens the games for THIS BROWSER ONLY, while the public gate stays shut.
     founder: !!founderFromCookieHeader(req.headers.cookie),
     roomOpen: isFounderRoom(askedRoom),
     // So the client can say WHY hosting is refused instead of showing a dead button.
     enforceEntitlements: process.env.ENFORCE_ENTITLEMENTS === "true",
     // Open to everyone AND checking nobody's plan. Surfaced so the founder page can say so.
-    unguarded: process.env.GAMES_OPEN === "true" && process.env.ENFORCE_ENTITLEMENTS !== "true",
+    unguarded: gamesAreOpen() && process.env.ENFORCE_ENTITLEMENTS !== "true",
     // WHICH BINGO DARE DECK THIS HOST CALLS. See apps/web/src/bingo/dares.ts.
     //
     // The owner's written deck (docs/party-dares.md) runs on the RENDER MIRROR ONLY; the public box
@@ -1483,7 +1488,7 @@ io.on("connection", (socket) => {
   // socket has no Express request -- and gating only the HTTP side would let the owner reach a
   // screen whose socket then silently ignored every game event.
   const founderPass = !!founderFromCookieHeader(socket.handshake.headers.cookie);
-  let gamesOpen = process.env.GAMES_OPEN === "true" || founderPass;
+  let gamesOpen = gamesAreOpen() || founderPass;
 
   // Handler registration is LAZY because access is no longer decided entirely at connect time: a
   // guest with no cookie may still be entitled once we learn WHICH room they are joining. Wiring

@@ -1,185 +1,82 @@
-# EVIDENCE — Bingo dares: the owner's deck, on Render only
+# EVIDENCE — a separate John chat, for Brie, about the founder
 
-**Task, in two parts.** First: "Please change the render version bingo game to have these dates
-[dares] instead. `party-dares (1).md` — please deploy once finished changing."
-Then, mid-build: **"don't add it to the playzoo.snapaweb.com system just render."**
+**Task:** "create a separate chat system for John the Racoon, just for John… and I want you to program
+it to have a conversation with a person with the name Brie, short for Britney (the goal is to talk to
+Brie, regarding questions, about me the founder)." Founder facts supplied: John Ramos, owns a
+software development company, currently living in the Philippines, 3 sisters and a half brother,
+favourite colour Red, loves to ride and build motorcycles.
+Follow-up: **"just trigger the conversation with Brie/Britney when she says Hi my name is Brie,
+Britney."**
 
-Phase 0 under the Evidence Protocol: the source data and every consumer of it, opened and verified,
-before the edit. R7 — the change is gated on this.
+Phase 0: what already exists, opened, before any new code. R7 — the build is gated on this.
 
 ---
 
-## 1. The source data [OBSERVED]
+## 1. There is already a John chat system. Three of them, sharing one engine. [OBSERVED]
 
-| path | bytes / lines | a fact from inside |
+| path | bytes | a fact from inside |
 |---|---|---|
-| `C:\Users\johns\Downloads\Murder Mystery Graphic Assets\party-dares (1).md` | 5,093 bytes, 91 lines | titled `# Bingo Dares`; five sections `## B`, `## I`, `## N`, `## G`, `## O`; entry format `- **B1.** Take a selfie with a person from another table.` |
+| `apps/server/john.js` | 11,114 | `johnChat({ room, messages, mode })` → `{ reply, source: "ai"\|"canned" }`, "Never throws". `systemPrompt(mode)` composes `JOHN_PERSONA + BREVITY_RULE + JOHN_KNOWLEDGE`, and appends `JOHN_AGENT_RULES` **only** when `mode === "agent"`. Temperature `0.95`. |
+| `apps/server/voice.js` | — | `BREVITY_RULE`: "Reply in ONE or TWO short sentences. Under 40 words, almost always." `CHAT_MAX_TOKENS = 130`, with the comment that this is "Headroom above a compliant reply, NOT a brake" — lowering it to force brevity truncates mid-word. |
+| `apps/server/productKnowledge.js` | 10,803 | the shared briefing. `CHARACTERS[0]` is `["John", "raccoon", "the schemer"]` — John is cast member #1 of a canonical 20, and the file says "never invent a 21st". |
+| `apps/web/src/routes/AskJohnRoute.tsx` | — | the surface pattern: `ROOM = "ask-john"`, a greeting that is stripped before sending ("it's page furniture, not something John 'said'"), chat box at `h-[min(30rem,65dvh)] min-h-[20rem]` because a flat `30rem` pushed the composer off a phone screen. |
+| `apps/server/index.js:289` | — | `app.post("/api/john-chat")` passes `{ room, messages, mode }` straight through to `johnChat`. |
+| `apps/web/src/net/host.ts:61-64` | — | `chatWithJohn(messages, room?, mode?)` — and `mode` is typed **`"agent"` only**, so a third mode will not compile until that type is widened. This is the one real code obstacle. |
+| `apps/web/src/main.tsx:33-44` | — | `createHashRouter`. `/ask-john` is registered with the comment "Public on purpose". A new page must be added here or it is unreachable. |
 
-Copied into the tree as **`docs/party-dares.md`** so the generated deck is reproducible from inside
-the repo (AMD-005: the source for the work belongs in the working tree, not on a desktop).
+**Three modes exist today, not two** (R2 — the handover summary says two):
+1. `mode` absent → the **waitlist doorman** ("Name's John — I run the list around here").
+2. `mode: "agent"` → the **support desk** on `/ask-john`.
+3. Rex is a separate character entirely (`apps/server/host.js`), not a John mode.
 
-**Counted, not sampled** — every `- **X<n>.**` line parsed:
+**The persona's hard rules I must not break:** the trash-panda trigger (he "ABSOLUTELY DESPISES" it);
+"never lie about the facts"; "NO STAGE DIRECTIONS in ANY notation"; and `stripStageDirections()` runs
+on the output path anyway because, per the handover, "DeepSeek ignored it".
 
-| check | result |
-|---|---|
-| total dares | **75** |
-| per column | B 15, I 15, N 15, G 15, O 15 |
-| numbering | 1…75, contiguous, in order, no gaps |
-| column boundaries | B1–B15, I16–I30, N31–N45, G46–G60, O61–O75 |
-| distinct texts | **74 of 75** — `I20` and `I21` are both "Spell your name with your butt!" |
-| longest / average | 115 chars / 55 chars (previous deck: 95 / 70) |
+**A trap recorded in the handover, verified still live in `speech.js`:** do not "simplify"
+stage-direction stripping into deleting everything in asterisks — that turned `I have a *business*
+degree` into `I have a degree`. Narration is removed; emphasis is unwrapped and the words kept.
 
-Three records cited by key, different fields (R2):
+## 2. Images, opened one at a time (LAW 1 / R3)
 
-- **B1** — "Take a selfie with a person from another table." The only dare in its column ending in a
-  full stop; most are unpunctuated or end in `!`.
-- **N31** — "Raise your cards & get a free shot!" Carries a raw `&`; survives as text, nothing in
-  the render path HTML-escapes it (confirmed on the display, §5).
-- **O66** — "Find someone who's not wearing flip flops and ask them to teach you how to say
-  \"I love you\" in a different language." The longest entry at 115 chars, and one of eight carrying
-  embedded double quotes (`"I'M BATMAN"`, `"Jingle Bells"`, `"Would you rather...?"`,
-  `"I know what you did"`, `"Thank you!"`, `"we did it"`, `"happy birthday"`).
+- **`apps/web/public/avatars/raccoon.png`** — 131,460 bytes. Cartoon raccoon head-and-shoulders in a
+  circular badge with a thick black ring. **No text.** Grey-charcoal fur, dark bandit mask, cream
+  muzzle and brow, black nose, one eyebrow cocked in a sly side-eye, asymmetric grin with a visible
+  fang; a sliver of teal/purple clothing bottom-right. Background inside the circle is flat **hot
+  magenta**. Renders at 44px beside chat bubbles on the near-black canvas (`--c-canvas: 11 15 26`);
+  magenta on near-black is high contrast and there is **no white area**, so no vanishing-on-light risk.
+- **`apps/web/public/crew/john-agent.png`** — 659,864 bytes. John at a call-centre desk inside a heavy
+  **gold/brass ring frame with rivets** — baked into the PNG, *not* a borderless cut-out (the handover
+  flags that an older description got this wrong; confirmed wrong by looking). Headset with boom mic,
+  hands steepled, sly grin, one eye wide one narrowed, sweat bead; dark tee under a neon
+  magenta/cyan/orange flame-print shirt. Behind: monitor reading **"Call Queue"**, board reading
+  **"TARGET"**, desk phone, cup labelled **"Java"**. In front: ashtray of butts, loose cigarettes, a
+  pack reading **"RACCOON REDS"**. At 96–128px the desk detail is illegible — it works as a portrait,
+  not a scene, which is how `/ask-john` already uses it. Per the handover the cigarettes ship **on the
+  owner's explicit call**.
 
-## 2. The code that consumes it [OBSERVED]
+## 3. The decision this task forces, stated rather than taken quietly
 
-| path | fact from inside |
-|---|---|
-| `packages/engine/src/bingo.ts` `dareForBall` | `dareForBall(id, dares = DEFAULT_DARES)` looks the dare up **positionally**: `BINGO_BALLS.findIndex(b => b.id === id)` then `dares[idx]`. **The array index IS the ball.** One missing or extra line shifts every dare after it onto the wrong ball, and nothing in the app would report it — the host would simply call the wrong dare all night. This is why the deck is generated by a validating generator, not hand-typed. |
-| `packages/engine/src/bingo.ts:22` | `BINGO_BALLS` = `COLUMNS.flatMap(...)` → B1…B15, I16…I30, N31…N45, G46…G60, O61…O75. The markdown's own numbering **is already this order**, so the mapping is identity, not a guess. |
-| `packages/engine/test/bingo.test.ts` | asserts `DEFAULT_DARES.length === 75` and `dareForBall("B1").length > 0`. |
-| three render surfaces | `BingoControl.tsx` (host-only preview), `BingoDisplay.tsx` (big screen), `BingoPlayer.tsx` (every player's phone). `grep -rn "DARES\|bingoDares"` across `packages`, `apps`, `tools` returns only these plus gitignored `dist/` — there is no fourth consumer. |
-| `apps/web/vite.config.ts` + `packages/engine/package.json` | `@ff/engine` resolves to `src/index.ts` by BOTH the package `exports` and an explicit Vite alias. `packages/engine/dist/` is **gitignored stale output** and is not what ships — checked, because editing `src` while the build reads a committed `dist` is how a change "lands" without reaching anyone. |
+The founder is a **real living person**. A chat character answering questions about him will be asked
+things the five supplied facts do not cover — where in the Philippines, sisters' names, which
+motorcycles, is he married, how much does he earn. A model at `temperature: 0.95` whose persona says
+he is "three moves ahead" will **happily invent** all of it, in a confident voice, about a real man.
 
-## 3. What was built, and two corrections
+So the founder block is written as a **closed set with an explicit refusal rule**: these are the
+facts; anything else about John Ramos is not known and must be deflected in character, never guessed.
+This is the one place where John's own persona rule — "never lie about the facts" — has to outrank
+his improvisation, and it is why the facts are a separate module with its own test rather than a
+paragraph inside the persona string.
 
-**First pass (commit `23cfafc`, deployed):** replaced `DARES` outright. That put the new deck on
-**both** hosts, because both deploy from the same `main`. The owner then said Render only.
+## 4. Not opened
 
-**Second pass (commit `1471651`, deployed):** restored the public deck and put the new one behind a
-build-time flag in `render.yaml`, beside the `GAMES_OPEN` that file already scopes to Render.
-**It did not work** [OBSERVED]. After that deploy Render served `index-CS01sXlQ.js` — byte-identical
-to playzoo's bundle, `cmp` reporting no difference, with zero party-deck markers in it. That service
-is not blueprint-synced, so a variable added to `render.yaml` is ignored. The file's existing
-`GAMES_OPEN` must be set in the dashboard, which is why the mirror is unlocked while the new flag
-was not. Recorded rather than quietly replaced: this is the reason the mechanism changed.
-
-**Third pass (this commit), the one that works.** The host tells the client which deck to call:
-
-| file | what it does |
-|---|---|
-| `apps/server/index.js` `/api/status` | adds `dares: BINGO_DARES || (RENDER ? "party" : "standard")`. `RENDER=true` is injected into every Render service automatically — needs no dashboard, and exists nowhere else. `BINGO_DARES` pins it by hand on any host. |
-| `apps/web/src/net/gate.ts` | awaits `loadDares(data.dares)` inside the gate fetch the client **already** makes at boot — no extra round trip, and resolved before first render, so no surface flashes the wrong deck at the room. |
-| `apps/web/src/bingo/dares.ts` | `activeDares()`. The party deck is a **dynamic import**, so it splits into its own chunk that the public build never fetches. Falls back to the default deck if the chunk fails: a host mid-party needs *some* dare far more than the right one. |
-| `packages/engine/src/bingo.ts` | `PARTY_DARES` is deliberately **not** re-exported — re-exporting it from the module every surface imports would pull all 75 into the public bundle. Reached via `@ff/engine/party` (package export + Vite alias + tsconfig path). |
-| three surfaces | host, display and player phone all pass `activeDares()`. A flag nobody passes is a flag that does nothing. |
-
-## 4. Verification — the decks [OBSERVED]
-
-| check | how | result |
-|---|---|---|
-| no mangled bytes | `grep -P` for control bytes over the generated deck | none |
-| quotes survived | `cat -A` on all 8 quote-bearing lines | escaped quotes intact, no stray bytes |
-| text matches source | parsed the emitted array against the markdown, all 75 | **0 mismatches** |
-| public deck restored | `git diff 25a4676 -- packages/engine/src/bingoDares.ts` | **empty** |
-| tests | `npm run test:engine` | **69 pass**, including a new one asserting the party deck is also exactly one dare per ball and genuinely differs from the default |
-| typecheck | `npm run typecheck` | clean |
-| **main bundle is clean** | grep the built `index-*.js` | `Raise your cards` 0, `Tequila song` 0, `funniest photo` 0 — the party text is **not in it** |
-| where it went instead | grep every emitted asset | `assets/bingoDaresParty-*.js`, a **4.41 kB** chunk, fetched only when the server says `party` |
-
-## 5. Verification — the live render (R4) [OBSERVED]
-
-Not a capture, and not a reading of class names: the built bundle was served locally and **driven**
-through Chrome DevTools Protocol — a real host controller at 390×844 and a real display at
-1920×1080 on the real Socket.IO relay (`tools/smoke/bingodares.mjs`, kept as a guard). All 75 balls
-drawn, every dare revealed, the display measured on each one. **The same build was run against two
-servers differing only by `RENDER=true`:**
-
-| | public-like host | Render-like host |
-|---|---|---|
-| `/api/status` `dares` | `"standard"` | `"party"` |
-| distinct dares rendered | 73 | 71 |
-| matched the **party** deck | **0** | **69** |
-| matched the **standard** deck | **72** | **0** |
-| longest rendered | 95 chars | **115 chars** |
-| clipped / off-screen | 0 / 0 | 0 / 0 |
-
-The 115-char dare (O66) renders at **672×130px, 4 lines at 24px**, not clipped and fully on screen —
-which was the open doubt about the container, now measured instead of reasoned about.
-
-**The thing present live and absent from every static capture (R4):** the display's state pill read
-**"BINGO · Host linked · 75/75 drawn"**, and on the Render-like host ball **I28** rendered as
-*"Show us the funniest photo you have in your camera roll!"* while the public-like host, running the
-**same bundle**, never rendered that string once. The default deck's I28 is *"Give the person to your
-left a compliment they didn't see coming"*. That single DOM value is the proof the switch reaches the
-render, not merely the build.
-
-**The screenshot, described from opening it (LAW 1):** 1920×1080. "Bingo Night" wordmark top-left,
-"Bingo" in pink and "Night" in purple. Top-right dark pill with a green dot: "BINGO · Host linked ·
-75/75 drawn". Centre: an orange circular ball reading "I" over "28". Directly beneath it a dark navy
-rounded card with white bold text — the revealed dare — sitting legibly over the art. Below that the
-full B/I/N/G/O caller board, 1–75 in five labelled rows, with 28 highlighted orange. Bottom centre:
-Rex the host (pith-helmeted avatar) with a speech bubble "Settle down, you animals!". Background is
-the painted bingo-balls-and-cards scene in pastels on cream; the artwork's own "frendz Bingo Night"
-lettering shows through behind the dare card.
-
-## 5b. All three surfaces, on the live Render mirror [OBSERVED]
-
-The display was proven by the sweep above. The host phone and the **player's phone** were then
-confirmed on the live mirror too, because a deck that reaches two surfaces out of three is not
-"in Render" — it is a half-deployment that would show a player a different dare from the one the
-host just read out.
-
-| surface | what it rendered, live | deck |
-|---|---|---|
-| host phone (390×844) | "Find someone with whose name starts with the letter K and give them a hug!" and, in a second run, "Let the person to your right tell a joke but you must keep a straight face!" | party |
-| display (1920×1080) | ball **I18** → "Perform to your table a song in a different language" — `docs/party-dares.md` line 25 | party |
-| **player phone** (390×844) | ball **I30** → "Without using words, show us what your love language is!" — `docs/party-dares.md` line 37. The standard deck's ball 30 is "Give everyone at your table a high five in one smooth victory lap". | party |
-
-**Player screenshot, described from opening it (LAW 1):** 390×844 portrait. Top-right a dark pill
-reading "1/75" with a green dot beside it. Below, the painted "FRENDZ BINGO NIGHT" wordmark in
-multi-coloured block letters on cream. Centre: a large orange circle, white ring, reading "I" above
-"30". Directly beneath it a dark navy rounded card, white bold text over two lines: "Without using
-words, show us what your love language is!". Below that "PATTERN SELECTION:" with three small bingo
-cards labelled DIAGONAL, VERTICAL and HORIZONTAL. A white "See all called numbers" button spans the
-bottom, with Rex's pith-helmeted avatar overlapping its right edge.
-
-**A false alarm worth recording, because it looked exactly like a product bug.** Three runs showed
-the display and player frozen at "0/75" while the host drew. Neither the deck nor sync was at fault:
-Bingo's room code is *fixed* (`BINGO`, so its poster QR can be permanent), and the 75-draw sweep had
-left that room **fully drawn** on the live server. A later host joins, inherits "75/75", and
-"Draw next ball" is disabled — so the host's clicks did nothing and the other screens correctly
-showed no change. Clicking Reset first made all three agree immediately. **Two real findings fall
-out of it, neither caused by this change and neither fixed here:**
-
-1. **A fixed room never resets between parties.** The next host to open Bingo inherits whatever the
-   last one left, with no prompt — a full deck is indistinguishable from a broken draw button.
-2. **Render's cold start shows the Kickstarter gate on an open site.** `fetchGate()` aborts after
-   5s and fails closed; a free Render instance takes 30–60s to wake. Observed: all three tabs
-   rendered the doorman ("Name's John — I run the list around here…") while the server was reporting
-   `gamesOpen: true`. A reload once warm fixes it, but the owner testing on the mirror will hit this.
-
-## 6. Judgement calls, stated not hidden
-
-- **The duplicate is kept verbatim.** `I20` and `I21` are the same text in the owner's file. They are
-  two different balls and two different squares, so it is harmless — and silently rewriting the
-  owner's content would be the worse failure. Flagged, not fixed.
-- **The party chunk is deployed to playzoo but never fetched there.** With one branch and no
-  per-host build configuration, the *file* exists on both boxes; what differs is which deck the game
-  calls. Physically keeping it off the public box needs either a Render dashboard variable or a
-  separate branch — the owner's call, put to them rather than taken quietly.
-- **The first pass reached playzoo for roughly 25 minutes**, and the second for about 15, before
-  being corrected. Recorded rather than dropped.
-
-## 7. Not opened
-
-- The remaining 66 dares were parsed, length-checked and rendered, but not read as prose for tone.
-- ~~The player phone surface was not driven~~ — **now driven and photographed on live Render** (§5b).
-- ~~Whether `RENDER=true` is present on the live service was ASSUMED~~ — **now [OBSERVED]**: live
-  `https://frendz-and-foes.onrender.com/api/status` returns `"dares":"party"`, which is only
-  reachable through `process.env.RENDER`. playzoo returns `"dares":"standard"`.
-- **playzoo's Bingo was not driven end-to-end**, by instruction ("do not touch play zoo"). Its deck
-  is established from its server reporting `standard`, its main bundle carrying the original 75 and
-  none of the party text, and the identical code path producing 0 party dares across 75 driven draws
-  against a standard-configured host locally.
-- The two findings in §5b (fixed room never resets; cold-start gate) are **reported, not fixed**.
-- Bingo still has **no win detection** (long-standing, unrelated to this change, still open).
+- `apps/server/chat.js` (9,127 bytes) and `apps/server/banter.js` — a different chat surface (backer
+  chat) that also mentions John; not read, and not touched by this work.
+- `apps/server/moderation.js`, `mentions.js` — referenced from the chat path, not read.
+- `apps/server/host.js` — Rex's persona. Not read this session; Rex is not being changed.
+- The live `DEEPSEEK_API_KEY` is **not present in this working tree**, so John's real replies cannot
+  be generated locally — `johnChat` returns its canned fallbacks without a key. Prompt assembly and
+  the trigger are therefore tested directly, and the live reply quality is [UNVERIFIED] until it runs
+  on a host that has the key.
+- `apps/web/public/bg/john-desk.jpg` — used by `/ask-john`; **not opened**, and deliberately not
+  reused on the new page.

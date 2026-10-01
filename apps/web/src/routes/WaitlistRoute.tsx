@@ -2,19 +2,20 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { chatWithJohn, type RexMessage } from "../net/host";
 
-// The pre-launch waitlist, hosted by JOHN the schemer. PlayZoo isn't open for new accounts yet;
-// anyone who tries to sign up lands here. John works the velvet rope — you get "on the list" by
-// backing the Kickstarter — and you can chat with him while you're here. His reply comes from
-// /api/john-chat (DeepSeek), with a canned fallback so the page never dead-ends. The real
-// Kickstarter.com link is coming; for now the CTA points at the on-site /kickstarter campaign.
+// Was the pre-launch waitlist: John working the velvet rope, with a Kickstarter pitch as the way to
+// jump the line. The campaign was pulled on 2026-10-01 and the games were unlocked for everyone, so
+// the pitch had nothing left to sell and the gate had nothing left to gate.
+//
+// The ROUTE SURVIVES on purpose rather than being deleted. It is still the fallback target when a
+// host sets GAMES_OPEN=false (main.tsx GameGate, and the shut branch on the home page), and links to
+// it exist out in the world. Deleting it would turn those into a redirect to the home page with no
+// explanation. What it does now is tell the truth: the doors are open, go and play. John is still
+// here to talk to, because he was the good part.
 
 const GREETING =
-  "Well, well. Look who strolled up to the velvet rope. Name's John — I run the list around here. " +
-  "PlayZoo's not open to the public yet, see… but between you and me? Back us on Kickstarter and I'll " +
-  "make sure you're first through the gate. So — what's your angle? 🦝";
-
-// Point this at the real Kickstarter.com project once it's live; until then it's the on-site campaign.
-const KICKSTARTER_URL = "/kickstarter";
+  "Well, well. Look who strolled up to the velvet rope. Name's John — I used to run the list around " +
+  "here, back when there was a list. Doors are open now, pal, walk straight in. So — what's your " +
+  "angle? 🦝";
 
 export function WaitlistRoute() {
   const [messages, setMessages] = useState<RexMessage[]>([{ role: "assistant", content: GREETING }]);
@@ -74,30 +75,35 @@ export function WaitlistRoute() {
 
         {/* The pitch */}
         <h1 className="ff-title mt-8 text-3xl font-extrabold leading-tight sm:text-4xl" style={{ textWrap: "balance" }}>
-          The zoo's not open to just anyone… <span className="text-primary">yet.</span>
+          The zoo's open. <span className="text-primary">Walk right in.</span>
         </h1>
         <p className="mt-3 text-lg text-muted">
-          Sign-ups are closed, friend — we're not letting the whole jungle in on day one. But here's the thing:
-          back us on <b className="text-ink">Kickstarter</b> and you jump the line. First through the gate, best
-          seats in the enclosure. That's the play.
+          No list, no code, no sign-up, friend. Put the big screen on a telly, everyone scans the QR with their
+          phones, and you're playing. <b className="text-ink">All fourteen games, free.</b> That's the play.
         </p>
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <a
-            href={KICKSTARTER_URL}
-            className="rounded-2xl bg-gradient-to-br from-primary to-accent px-7 py-3.5 text-center font-display text-xl font-extrabold text-white shadow-[0_16px_40px_-12px_rgb(var(--c-primary)/0.6)] transition hover:-translate-y-0.5 hover:scale-[1.02] active:scale-95"
+          <Link
+            to="/display"
+            className="flex-1 rounded-2xl bg-gradient-to-br from-primary to-accent px-7 py-3.5 text-center font-display text-xl font-extrabold text-white shadow-[0_16px_40px_-12px_rgb(var(--c-primary)/0.6)] transition hover:-translate-y-0.5 hover:scale-[1.02] active:scale-95"
           >
-            🎟️ Get on the list — back us on Kickstarter
-          </a>
+            🎮 Open the big screen
+          </Link>
+          <Link
+            to="/control"
+            className="flex-1 rounded-2xl border border-line bg-surface/70 px-7 py-3.5 text-center font-display text-xl font-extrabold text-ink transition hover:-translate-y-0.5 hover:scale-[1.02] active:scale-95"
+          >
+            Host controller
+          </Link>
         </div>
-        <p className="mt-2 text-xs text-muted">The full Kickstarter goes live soon. For now, take a look at the campaign — and tell 'em John sent you.</p>
+        <p className="mt-2 text-xs text-muted">No app, no account. Tell 'em John sent you.</p>
 
         {/* Chat with John */}
         <div className="mt-6 flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-line bg-surface/60 backdrop-blur">
           <div className="flex items-center gap-2 border-b border-line px-4 py-2.5">
             <JohnFace size={28} />
             <span className="text-sm font-bold text-ink">Chat with John</span>
-            <span className="ml-auto text-[11px] font-semibold uppercase tracking-wide text-muted">While you wait</span>
+            <span className="ml-auto text-[11px] font-semibold uppercase tracking-wide text-muted">He's about</span>
           </div>
           {/* min-h keeps the conversation readable on a phone. As pure flex-1 this pane measured
               32px tall on a 375px-wide screen -- 5% of the viewport, with 222px of messages hidden

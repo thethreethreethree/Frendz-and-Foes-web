@@ -10,6 +10,7 @@ import { DisplayRoute } from "./routes/DisplayRoute";
 import { HomeRoute } from "./routes/HomeRoute";
 import { WaitlistRoute } from "./routes/WaitlistRoute";
 import { AskJohnRoute } from "./routes/AskJohnRoute";
+import { JohnRoute } from "./routes/JohnRoute";
 import { ClubRoute } from "./routes/ClubRoute";
 import { FounderRoute } from "./routes/FounderRoute";
 import { RexBubble } from "./rex/RexBubble";
@@ -34,6 +35,9 @@ const router = createHashRouter([
   { path: "/waitlist", element: <WaitlistRoute /> },
   // Public on purpose: the Kickstarter story sends visitors here before they have a backer code.
   { path: "/ask-john", element: <AskJohnRoute /> },
+  // John's own chat — the founder is the subject. Public and ungated on purpose: the conversation
+  // it exists for begins when the guest introduces herself by name, not when she gets past a gate.
+  { path: "/john", element: <JohnRoute /> },
   { path: "/club", element: <ClubRoute /> },
   { path: "/founder", element: <FounderRoute /> },
   { path: "/display", element: <GameGate><DisplayRoute /></GameGate> },

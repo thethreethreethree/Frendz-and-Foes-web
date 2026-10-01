@@ -13,7 +13,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { GAMES, CHARACTERS, PRODUCT_KNOWLEDGE, TIERS, GOAL } from "./productKnowledge.js";
+import { GAMES, CHARACTERS, PRODUCT_KNOWLEDGE } from "./productKnowledge.js";
 import { ENCLOSURES } from "./enclosures.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -66,12 +66,26 @@ for (const e of ENCLOSURES) {
 }
 if (ENCLOSURES.every((e) => PRODUCT_KNOWLEDGE.includes(e.name))) pass("every enclosure appears in the briefing");
 
-for (const [price, name] of TIERS) {
-  if (!PRODUCT_KNOWLEDGE.includes(price) || !PRODUCT_KNOWLEDGE.includes(name)) fail(`tier "${name}" missing from the briefing`);
-}
-if (TIERS.every(([p, n]) => PRODUCT_KNOWLEDGE.includes(p) && PRODUCT_KNOWLEDGE.includes(n))) pass("all reward tiers appear");
-if (!PRODUCT_KNOWLEDGE.includes(GOAL)) fail("funding goal missing"); else pass(`funding goal ${GOAL} appears`);
-if (!/never invent/i.test(PRODUCT_KNOWLEDGE)) fail("the never-invent money rule is missing"); else pass("money rule present");
+// THE CROWDFUNDING CHECKS ARE INVERTED, NOT DELETED (2026-10-01, owner: remove the Kickstarter).
+//
+// This file used to assert that every reward tier and the funding goal APPEARED in the briefing.
+// Now it asserts the opposite, because the risk reversed: the danger is no longer a character who
+// cannot quote the campaign, it is a character who still can. These strings go into the system
+// prompt of every AI on the site, so a stale "$30 Founding Animal" left behind is a price Rex or
+// John will quote, in character, to a real customer, for something that cannot be bought.
+const STALE = ["$15", "$30", "$50", "$3,500", "Zoo Pass", "Founding Animal", "Head Keeper",
+  "Kickstarter", "crowdfund", "pledge", "reward tier", "backing the"];
+const leaked = STALE.filter((s) => {
+  // The money rule must NAME what it forbids ("never mention a Kickstarter"), so ignore that block.
+  const withoutRule = PRODUCT_KNOWLEDGE.replace(/MONEY RULE[\s\S]*?leave it there\.\n/, "");
+  return withoutRule.toLowerCase().includes(s.toLowerCase());
+});
+if (leaked.length) fail(`campaign wording still in the briefing: ${leaked.join(", ")}`);
+else pass("no campaign, tiers, goal or pledge wording remains");
+if (!/no crowdfunding campaign/i.test(PRODUCT_KNOWLEDGE)) fail("the no-campaign money rule is missing");
+else pass("money rule present and says there is nothing to sell");
+if (!/open .*free|free .*no account|no sign-?up/i.test(PRODUCT_KNOWLEDGE)) fail("the doors-are-open line is missing");
+else pass("the briefing says the games are open and free");
 
 console.log(`\n${failed === 0 ? "ALL PASS — the characters' knowledge matches the product" : `${failed} FAILURE(S)`}`);
 process.exit(failed === 0 ? 0 : 1);

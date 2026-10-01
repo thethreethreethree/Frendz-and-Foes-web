@@ -44,10 +44,24 @@ check("Rex's chat prompt assembles the brevity rule",
       /REX_PERSONA \+ "\\n\\n" \+ BREVITY_RULE/.test(host),
       "Rex's free chat had no length rule AT ALL before this");
 
-// It must reach agent mode too — /ask-john builds on the same base.
-check("John's support-desk mode inherits it",
-      /return mode === "agent" \? base \+ "\\n\\n" \+ JOHN_AGENT_RULES : base/.test(john),
-      "agent mode extends `base`, so it only inherits brevity if base carries it");
+// It must reach EVERY John mode, not just the default one.
+//
+// This used to match the source text of one specific ternary. That asserted the shape of an
+// expression rather than the thing it was protecting, so it broke the moment that ternary became an
+// if/else for a third mode — a refactor that changed no behaviour at all — while a mode that
+// genuinely dropped the rule would have sailed through unnoticed. systemPrompt() is exported now, so
+// ask the assembled prompt instead of the file that assembles it.
+const { systemPrompt } = await import("./john.js");
+for (const [label, prompt] of [
+  ["waitlist", systemPrompt("")],
+  ["support desk", systemPrompt("agent")],
+  ["Brie, before the handshake", systemPrompt("brie")],
+  ["Brie, after the handshake", systemPrompt("brie", { brie: true })],
+]) {
+  check(`John's ${label} mode carries the brevity rule`,
+        prompt.includes(V.BREVITY_RULE),
+        "a mode that assembles its own prompt can silently drop the shared rules");
+}
 
 // --- the token cap is HEADROOM, not the brake ---------------------------------------------------------
 check("the cap is above what a compliant reply needs", V.CHAT_MAX_TOKENS >= 110, String(V.CHAT_MAX_TOKENS));

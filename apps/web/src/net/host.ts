@@ -61,7 +61,9 @@ export async function chatWithRex(messages: RexMessage[], room?: string): Promis
 export async function chatWithJohn(
   messages: RexMessage[],
   room?: string,
-  mode?: "agent",
+  // "agent" = the /ask-john support desk. "brie" = John's own chat, where the subject is the
+  // founder and the conversation only starts once the guest introduces herself (server/john.js).
+  mode?: "agent" | "brie",
 ): Promise<string | null> {
   try {
     const ctrl = new AbortController();
