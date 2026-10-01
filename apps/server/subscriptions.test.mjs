@@ -32,13 +32,27 @@ const check = (label, got, want) => {
 
 const DAY = 86400_000;
 
-console.log("\n--- the plans match the campaign ---");
+console.log("\n--- the plans exist, and the characters do NOT quote them ---");
 check("three plans", subs.PLAN_IDS, ["zoo-pass", "founding-animal", "head-keeper"]);
+
+// THIS CHECK IS INVERTED FROM WHAT IT USED TO BE (2026-10-01, owner: remove the Kickstarter).
+//
+// It used to assert each plan's price and name APPEARED in PRODUCT_KNOWLEDGE, because "the
+// characters quote these prices to backers; if they drift apart, one of them is lying." That was
+// right while there was a campaign to quote. Now there is not: the briefing was stripped of every
+// price, tier and goal, so the two have deliberately drifted apart and the lie has changed sides.
+// A character who still quotes "$30 Founding Animal" is quoting a price for something nobody can
+// currently buy.
+//
+// The PLANS THEMSELVES STAY. They are the entitlement model that payments, fulfilment and
+// gamePicks all run on, and existing backers hold them. Deleting them to match the briefing would
+// break real accounts to tidy a prompt. So: the plans are intact, and the characters are silent
+// about them. Both halves are asserted, because each one alone decays — restore the tiers to the
+// briefing and nothing would fail, delete the plans and nothing here would notice either.
 for (const id of subs.PLAN_IDS) {
   const p = subs.PLANS[id];
-  // The characters quote these prices to backers; if they drift apart, one of them is lying.
-  check(`${id} price ${p.price} matches the briefing`, PRODUCT_KNOWLEDGE.includes(p.price), true);
-  check(`${id} name matches the briefing`, PRODUCT_KNOWLEDGE.includes(p.name), true);
+  check(`${id} price ${p.price} is NOT in the briefing`, !PRODUCT_KNOWLEDGE.includes(p.price), true);
+  check(`${id} name is NOT in the briefing`, !PRODUCT_KNOWLEDGE.includes(p.name), true);
 }
 check("head-keeper unlocks everything", subs.PLANS["head-keeper"].games, "all");
 check("zoo-pass is 6 months", subs.PLANS["zoo-pass"].months, 6);

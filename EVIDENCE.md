@@ -80,3 +80,32 @@ paragraph inside the persona string.
   on a host that has the key.
 - `apps/web/public/bg/john-desk.jpg` — used by `/ask-john`; **not opened**, and deliberately not
   reused on the new page.
+
+---
+
+## 8. Found after the fact, by finishing the test run (2026-10-01)
+
+The full suite was never completed in one go — a background run was killed at its time limit — so the
+groups were run individually. That found two failures caused by this work, both already fixed, and
+one of them is a product finding rather than a bug:
+
+1. **`index.js` imported `env.js` for side effects only**, so the `gamesAreOpen()` it calls in three
+   places was an undefined global. Plain JS; nothing typechecked it. It surfaced as every socket
+   connection in `entitlementGate.test.mjs` timing out — not as a wrong answer. [OBSERVED]
+
+2. **The Kickstarter reward tiers and the subscription plans are the same three things.**
+   `subscriptions.test.mjs` cross-checked `PLANS` against `PRODUCT_KNOWLEDGE` with the comment "the
+   characters quote these prices to backers; if they drift apart, one of them is lying." Stripping
+   the tiers from the briefing broke that invariant. [OBSERVED]
+
+   The check is now inverted — each plan's price and name must be **absent** from the briefing —
+   because the lie changed sides: the risk is no longer a character quoting a stale price, it is a
+   character quoting **any** price for something nobody can currently buy. The plans themselves are
+   left intact: `payments.js`, `fulfilment.js` and `gamePicks.js` all run on them and existing
+   backers hold them, so deleting them to tidy a prompt would break real accounts.
+
+   **For the owner:** the billing model ($15 Zoo Pass / $30 Founding Animal / $50 Head Keeper) is
+   still live underneath; only the characters' knowledge of it was removed. That is a decision for
+   the new funding approach, not one to take by guessing.
+
+Final: engine **69 pass**, relay **113 pass**, server **38 pass**, 0 failures.
